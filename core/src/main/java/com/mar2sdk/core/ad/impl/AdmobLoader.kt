@@ -12,6 +12,9 @@ import com.google.android.gms.ads.rewarded.RewardedAd
 import com.google.android.gms.ads.rewarded.RewardedAdLoadCallback
 import com.mar2sdk.core.Core
 import com.mar2sdk.core.ad.status.AdLoadStatus
+import com.mar2sdk.core.log.LogAdEvent
+import com.mar2sdk.core.log.LogAdParam
+import com.mar2sdk.core.log.LogUtil
 
 
 /**
@@ -39,7 +42,7 @@ object AdmobLoader {
 	}
 
 	// 加载开屏
-	fun loadOpen(fillPool : Boolean = false): AdLoadStatus {
+	fun loadOpen(fillPool : Boolean = false, areaKey : String = "preload"): AdLoadStatus {
 		// 检查过期广告
 		checkOpenPool()
 		// 有广告正在加载
@@ -48,12 +51,32 @@ object AdmobLoader {
 		if (openPool.size >= AdmobConfig.openPoolSize) return AdLoadStatus.POOL_FULL
 		// 开始加载开屏广告
 		isLoadingOpen = true
+		LogUtil.log(
+			LogAdEvent.ad_start_loading,
+			mapOf(
+				LogAdParam.ad_platform to LogAdParam.ad_platform_admob,
+				LogAdParam.ad_areakey to areaKey,
+				LogAdParam.ad_format to LogAdParam.ad_format_open,
+				LogAdParam.ad_unit_name to AdmobConfig.openID,
+				LogAdParam.ad_preload to (areaKey == "preload"),
+			)
+		)
 		AppOpenAd.load(
 			Core.app,
 			AdmobConfig.openID,
 			AdRequest.Builder().build(),
 			object : AppOpenAd.AppOpenAdLoadCallback() {
 				override fun onAdLoaded(openAd: AppOpenAd) {
+					LogUtil.log(
+						LogAdEvent.ad_finish_loading,
+						mapOf(
+							LogAdParam.ad_platform to LogAdParam.ad_platform_admob,
+							LogAdParam.ad_areakey to areaKey,
+							LogAdParam.ad_format to LogAdParam.ad_format_open,
+							LogAdParam.ad_unit_name to AdmobConfig.openID,
+							LogAdParam.ad_preload to (areaKey == "preload"),
+						)
+					)
 					openPool[openAd] = System.currentTimeMillis()
 					isLoadingOpen = false
 					if (fillPool) {

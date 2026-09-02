@@ -63,6 +63,18 @@ object AdmobShower {
 		val showCallback = object : FullScreenContentCallback() {
 			override fun onAdFailedToShowFullScreenContent(p0: AdError) {
 				super.onAdFailedToShowFullScreenContent(p0)
+				LogUtil.log(
+					LogAdEvent.ad_show_fail,
+					mapOf(
+						LogAdParam.ad_platform to LogAdParam.ad_platform_admob,
+						LogAdParam.duration to (System.currentTimeMillis() - startShowTime),
+						LogAdParam.ad_areakey to callback.areaKey,
+						LogAdParam.ad_format to LogAdParam.ad_format_open,
+						LogAdParam.ad_source to (currentOpenAd?.responseInfo?.loadedAdapterResponseInfo?.adSourceName ?: LogAdParam.unknow),
+						LogAdParam.ad_unit_name to AdmobConfig.openID,
+						LogAdParam.ad_preload to true,
+					)
+				)
 				AppStatus.isShowingAd = false
 				callback.showFailed(ShowFailResult.FAILED_TO_SHOW_CONTENT)
 			}
@@ -215,6 +227,18 @@ object AdmobShower {
 			if (AdmobLoader.openShowCall === currentOpenCallback) {
 				AdmobLoader.openShowCall = null
 			}
+			 LogUtil.log(
+				 LogAdEvent.ad_show_timeout,
+				 mapOf(
+					 LogAdParam.ad_platform to LogAdParam.ad_platform_admob,
+					 LogAdParam.duration to (System.currentTimeMillis() - startShowTime),
+					 LogAdParam.ad_areakey to callback.areaKey,
+					 LogAdParam.ad_format to LogAdParam.ad_format_open,
+					 LogAdParam.ad_source to (currentOpenAd?.responseInfo?.loadedAdapterResponseInfo?.adSourceName ?: LogAdParam.unknow),
+					 LogAdParam.ad_unit_name to AdmobConfig.openID,
+					 LogAdParam.ad_preload to true,
+				 )
+			 )
 			callback.showFailed(ShowFailResult.LOAD_TIMEOUT)
 		}
 		handler.postDelayed(timeoutTask, showOpenTimeout)

@@ -25,9 +25,9 @@ object AdmobLoader {
 	val videoPool = mutableMapOf<RewardedAd, Long>()
 
 	// 正在加载中的 开屏/插屏/视频 广告
-	private var isLoadingOpen = false
-	private var isLoadingInter = false
-	private var isLoadingVideo = false
+	var isLoadingOpen = false
+	var isLoadingInter = false
+	var isLoadingVideo = false
 
 	// 填充所有广告池
 	fun fillPool() {

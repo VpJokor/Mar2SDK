@@ -1,6 +1,5 @@
 package com.mar2sdk.core.ad
 
-import android.content.Context
 import com.mar2sdk.core.ad.impl.AdmobIniter
 
 /**
@@ -8,7 +7,9 @@ import com.mar2sdk.core.ad.impl.AdmobIniter
  */
 object AdIniter {
 	//初始化广告SDK
-	fun init(context: Context) {
-		AdmobIniter.init(context)
+	fun init() {
+		AdmobIniter.init()
 	}
+
+
 }

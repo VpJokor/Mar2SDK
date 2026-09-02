@@ -6,6 +6,9 @@ import com.mar2sdk.core.ad.AdIniter
 import com.mar2sdk.core.ad.AdShower
 import com.mar2sdk.core.ad.callback.ShowCallback
 import com.mar2sdk.core.ad.status.AdFormat
+import com.mar2sdk.core.firebase.FireBaseUtil
+import com.mar2sdk.core.firebase.SingularUtil
+import com.singular.sdk.Singular
 
 /**
  * 核心库入口
@@ -20,7 +23,11 @@ object Core {
 		this@Core.app = app
 		this@Core.appMod = appMod
 		// 初始化广告SDK
-		AdIniter.init(app)
+		AdIniter.init()
+		// 初始化Firebase
+		FireBaseUtil.init()
+		// 初始化Singular
+		SingularUtil.init()
 	}
 
 	// 展示开屏

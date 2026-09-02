@@ -9,6 +9,7 @@ pluginManagement {
 		}
 		mavenCentral()
 		gradlePluginPortal()
+		maven(url = "https://maven.singular.net/")
 	}
 }
 plugins {
@@ -19,6 +20,7 @@ dependencyResolutionManagement {
 	repositories {
 		google()
 		mavenCentral()
+		maven(url = "https://maven.singular.net/")
 		maven(url = "https://cboost.jfrog.io/artifactory/chartboost-ads/")
 		maven(url = "https://android-sdk.is.com/")
 		maven(url = "https://dl-maven-android.mintegral.com/repository/mbridge_android_sdk_oversea")

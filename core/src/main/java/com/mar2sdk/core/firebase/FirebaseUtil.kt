@@ -13,7 +13,7 @@ import com.google.firebase.remoteconfig.remoteConfig
 import com.google.firebase.remoteconfig.remoteConfigSettings
 import com.mar2sdk.core.Core
 
-object FireBaseUtil {
+object FirebaseUtil {
 
 	private const val TAG = "FireBaseUtil"
 
@@ -42,20 +42,6 @@ object FireBaseUtil {
 
 				// 上传到自己的服务器
 			}
-//		FirebaseMessaging.getInstance().subscribeToTopic("defaultTopic")
-//			.addOnCompleteListener { task ->
-//				if (task.isSuccessful) {
-//					if (desiredTopic == defaultTopic || desiredTopic.isBlank()) {
-//						rememberActiveTopic(defaultTopic)
-//					} else {
-//						FirebaseMessaging.getInstance().unsubscribeFromTopic(defaultTopic)
-//						Log.e(TAG, "initFireBase: topic[$defaultTopic] expired, unsubscribed")
-//					}
-//					Log.e(TAG, "initFireBase: subscribed topic[$defaultTopic] success")
-//				} else {
-//					Log.e(TAG, "initFireBase: subscribed topic[$defaultTopic] failed")
-//				}
-//			}
 	}
 
 	private fun initRemoteConfig() {

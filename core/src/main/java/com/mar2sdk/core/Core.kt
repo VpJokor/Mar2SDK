@@ -22,6 +22,7 @@ object Core {
 	fun init(app: Application, appMod: AppMod) {
 		this@Core.app = app
 		this@Core.appMod = appMod
+		Config.initConfig()
 		// 初始化广告SDK
 		AdIniter.init()
 		// 初始化Firebase

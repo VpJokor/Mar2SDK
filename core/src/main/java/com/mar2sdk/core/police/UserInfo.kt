@@ -8,7 +8,7 @@ object UserInfo {
 	var campaignId = "unknow"
 	var campaignName = "unknow"
 	//ecpm是否为0
-	var paid0 = false
+	var ecpm0 = false
 	//高风险IP
 	var riskIP = false
 }

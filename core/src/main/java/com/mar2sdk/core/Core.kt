@@ -9,6 +9,7 @@ import com.mar2sdk.core.ad.status.AdFormat
 import com.mar2sdk.core.firebase.FirebaseUtil
 import com.mar2sdk.core.firebase.SingularUtil
 import com.mar2sdk.core.log.ThinkingUtil
+import com.mar2sdk.core.police.UserType
 
 /**
  * 核心库入口
@@ -17,6 +18,8 @@ object Core {
 
 	lateinit var app: Application
 	lateinit var appMod: AppMod
+	// 用户分类
+	var userType = UserType.NATURE
 
 	// 初始化SDK
 	fun init(app: Application, appMod: AppMod) {

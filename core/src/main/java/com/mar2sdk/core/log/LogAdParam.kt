@@ -30,26 +30,11 @@ object LogAdParam {
 	const val ad_reward_amount = "reward_amount"
 
 	const val ad_preload = "ad_preload"
-	const val ad_preload_count = "ad_preload_count"
-	const val ad_preload_trigger = "ad_preload_trigger"
 
-	// 本地偏好与兼容字段。
-	const val ads_prefs = "ads_prefs"
-	const val advDisplayCount = "advDisplayCount"
 
 	// 收入上报相关字段和值。
 	const val unknow = "unknow"
-	const val revenue = "Revenue"
-	const val adType = "AdType"
 	const val USD = "USD"
-	const val InterAd = "InterAd"
-	const val OpenAd = "OpenAd"
-	const val BannerAd = "BannerAd"
-	const val RewardedAd = "RewardedAd"
 	const val adMob = "AdMob"
 
-	const val foregroundKey = "foreGroundAdv"
-
-	// 太极 ROAS 缓存 key。
-	const val admobTaichiTroasCache = "AdmobTaichiTroasCache"
 }

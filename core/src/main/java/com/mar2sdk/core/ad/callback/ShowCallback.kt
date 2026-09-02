@@ -13,4 +13,5 @@ interface ShowCallback {
 	fun onClicked()
 	fun onAdClosed()
 	fun onPaid()
+	fun onReward()
 }

@@ -7,6 +7,9 @@ import cn.thinkingdata.analytics.TDAnalytics
 import com.google.firebase.analytics.FirebaseAnalytics
 import com.mar2sdk.core.AppMod
 import com.mar2sdk.core.Core
+import com.mar2sdk.core.firebase.SingularConfig
+import com.singular.sdk.Singular
+import com.singular.sdk.SingularAdData
 import org.json.JSONObject
 
 /**
@@ -49,6 +52,19 @@ object LogUtil {
 			TDAnalytics.track(eventName, jsonObject)
 		} catch (e: Exception) {
 			Log.e(TAG, "logThinking error: ${e.message}")
+		}
+	}
+
+	fun logSingularAdRevenue(adPlatform: String, revenue: Double) {
+		if (!SingularConfig.trackRevenue) {
+			return
+		}
+		try {
+			if (revenue > 0) {
+				Singular.adRevenue(SingularAdData(adPlatform, LogAdParam.USD, revenue))
+			}
+		} catch (e: Exception) {
+			Log.e(TAG, "logSingularAdRevenue error: ${e.message}")
 		}
 	}
 

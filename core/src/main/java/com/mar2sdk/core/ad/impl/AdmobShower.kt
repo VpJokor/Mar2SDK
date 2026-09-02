@@ -29,10 +29,6 @@ object AdmobShower {
 	var showInterTimeout = 10 * 1000L
 	var showVideoTimeout = 10 * 1000L
 
-	// 定时器任务是否执行完毕，防止重复执行
-	var finished = false
-	val handler = Handler(Looper.getMainLooper())
-
 	fun showOpen(activity: Activity, callback: ShowCallback) {
 		if (AppStatus.isShowingAd) {
 			Log.e(TAG, "showOpen: AppStatus.isShowingAd" )
@@ -43,7 +39,13 @@ object AdmobShower {
 		AppStatus.isShowingAd = true
 		//检查广告池广告是否过期
 		AdmobLoader.checkOpenPool()
+		//超时处理相关变量定义
 		val startShowTime = System.currentTimeMillis()
+		var timeoutTask: Runnable? = null
+		// 定时器任务是否执行完毕，防止重复执行
+		var finished = false
+		val handler = Handler(Looper.getMainLooper())
+
 		// TODO: 处理广告展示回调
 		val showCallback = object : FullScreenContentCallback() {
 			override fun onAdFailedToShowFullScreenContent(p0: AdError) {
@@ -92,7 +94,17 @@ object AdmobShower {
 			AdmobLoader.openPool.remove(ad)
 			ad.fullScreenContentCallback = showCallback
 			ad.onPaidEventListener = paidCallback
-			ad.show(activity)
+			try {
+				ad.show(activity)
+			} catch (e: Exception) {
+				Log.e(TAG, "show: ", e)
+				AppStatus.isShowingAd = false
+				// 移除超时定时器
+				timeoutTask?.let {
+					handler.removeCallbacks(it)
+				}
+				callback.showFailed(ShowFailResult.SHOW_AD_EXCEPTION)
+			}
 			AdmobLoader.loadOpen()
 		}
 
@@ -103,12 +115,17 @@ object AdmobShower {
 		}
 
 		if (AdmobLoader.openShowCall != null) {
-			AdmobLoader.openShowCall
+			callback.showFailed(ShowFailResult.OTHER_AD_IS_SHOWING)
+			return
 		}
 
 		val currentOpenCallback = object : AdmobLoader.OpenCallback {
 			override var usedBy: String? = TAG
 			override fun onLoaded(ad: AppOpenAd) {
+				// 移除超时定时器
+				timeoutTask?.let {
+					handler.removeCallbacks(it)
+				}
 				if (System.currentTimeMillis() - startShowTime > showOpenTimeout) {
 					// 展示超时
 					AppStatus.isShowingAd = false
@@ -118,6 +135,10 @@ object AdmobShower {
 			}
 			override fun onLoadFailed(err: LoadAdError) {
 				Log.e(TAG, "Open ad load failed: ${err.message}")
+				// 移除超时定时器
+				timeoutTask?.let {
+					handler.removeCallbacks(it)
+				}
 				AppStatus.isShowingAd = false
 				callback.showFailed(ShowFailResult.LOAD_FAILED)
 			}
@@ -125,7 +146,7 @@ object AdmobShower {
 		AdmobLoader.openShowCall = currentOpenCallback
 
 		// 启动定时器计算超时
-		val timeoutTask = Runnable {
+		 timeoutTask = Runnable {
 			if (finished) return@Runnable
 			finished = true
 			AppStatus.isShowingAd = false
@@ -135,7 +156,6 @@ object AdmobShower {
 			callback.showFailed(ShowFailResult.LOAD_TIMEOUT)
 		}
 		handler.postDelayed(timeoutTask, showOpenTimeout)
-
 		AdmobLoader.loadOpen()
 	}
 

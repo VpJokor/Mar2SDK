@@ -3,10 +3,13 @@ package com.mar2sdk.core.ad
 import android.app.Activity
 import com.mar2sdk.core.ad.callback.ShowCallback
 import com.mar2sdk.core.ad.impl.AdmobShower
+import com.mar2sdk.core.ad.status.AdFormat
+import com.mar2sdk.core.ad.status.AdPlatform
 
 // 广告展示器
 object AdShower {
 	fun showOpen(activity: Activity, callback: ShowCallback) {
+		callback.adPlatform = AdPlatform.ADMOB
 		AdmobShower.showOpen(activity, callback)
 	}
 

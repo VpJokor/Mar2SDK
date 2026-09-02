@@ -1,7 +1,7 @@
 package com.mar2sdk.core.ad.impl
 
 import com.mar2sdk.core.Core
-import com.mar2sdk.core.Mod
+import com.mar2sdk.core.AppMod
 
 //admob的广告配置
 object AdmobConfig {
@@ -13,9 +13,9 @@ object AdmobConfig {
 	var releaseInterID = ""
 	var releaseVideoID = ""
 
-	var openID = if (Core.mod == Mod.TEST) testOpenID else releaseOpenID
-	var interID = if (Core.mod == Mod.TEST) testInterID else releaseInterID
-	var VideoID = if (Core.mod == Mod.TEST) testVideoID else releaseVideoID
+	var openID = if (Core.appMod == AppMod.TEST) testOpenID else releaseOpenID
+	var interID = if (Core.appMod == AppMod.TEST) testInterID else releaseInterID
+	var VideoID = if (Core.appMod == AppMod.TEST) testVideoID else releaseVideoID
 
 
 	//开屏广告过期时间(4小时)

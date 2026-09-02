@@ -1,6 +1,6 @@
 package com.mar2sdk.core
 
-enum class Mod {
+enum class AppMod {
 	TEST,
 	PRE_RELEASE,
 	RELEASE

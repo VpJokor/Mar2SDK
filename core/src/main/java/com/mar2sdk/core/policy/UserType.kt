@@ -1,11 +1,11 @@
-package com.mar2sdk.core.police
+package com.mar2sdk.core.policy
 
 /**
  * 用户分类
  * 审核/自然量/普通买量/高价值用户
  */
 enum class UserType {
-	OFFICE,
+	RISK,
 	NATURE,
 	COMMON,
 	HIGH_VALUE

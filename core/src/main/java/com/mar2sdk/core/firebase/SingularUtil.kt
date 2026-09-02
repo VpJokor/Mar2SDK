@@ -3,13 +3,10 @@ package com.mar2sdk.core.firebase
 import android.util.Log
 import cn.thinkingdata.analytics.TDAnalytics
 import com.mar2sdk.core.Core
-import com.mar2sdk.core.log.LogUtil
-import com.mar2sdk.core.police.UserInfo
+import com.mar2sdk.core.policy.UserInfo
 import com.singular.sdk.Singular
-import com.unity3d.ads.core.extensions.toBuiltInMap
 import org.json.JSONException
 import org.json.JSONObject
-import kotlin.math.log
 
 object SingularUtil {
 	private const val TAG = "SingularUtil"

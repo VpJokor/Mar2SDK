@@ -1,6 +1,4 @@
-package com.mar2sdk.core.police
-
-import com.chartboost.sdk.impl.fa
+package com.mar2sdk.core.policy
 
 object UserInfo {
 	//Singular归因数据
@@ -11,4 +9,5 @@ object UserInfo {
 	var ecpm0 = false
 	//高风险IP
 	var riskIP = false
+	var firstEcpm = 0f
 }

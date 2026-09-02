@@ -1,0 +1,34 @@
+package com.mar2sdk.core.policy
+
+import com.mar2sdk.core.Core
+
+/**
+ * 风控类
+ */
+object RiskUtil {
+	fun init() {
+		requestIPInfo()
+	}
+
+	// 请求IP信息
+	fun requestIPInfo() {
+
+	}
+
+	// 用户分级
+	fun judgeUserType() {
+		if (UserInfo.riskIP || UserInfo.ecpm0) {
+			Core.userType = UserType.RISK
+			return
+		}
+		if (UserInfo.network.equals("organic", ignoreCase = true) || UserInfo.network.isEmpty()) {
+			Core.userType = UserType.NATURE
+		} else {
+			Core.userType = UserType.COMMON
+			if (UserInfo.firstEcpm > PolicyConfig.highUserEcpm) {
+				Core.userType = UserType.HIGH_VALUE
+			}
+		}
+	}
+
+}

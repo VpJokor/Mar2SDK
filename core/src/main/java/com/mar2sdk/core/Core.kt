@@ -9,7 +9,8 @@ import com.mar2sdk.core.ad.status.AdFormat
 import com.mar2sdk.core.firebase.FirebaseUtil
 import com.mar2sdk.core.firebase.SingularUtil
 import com.mar2sdk.core.log.ThinkingUtil
-import com.mar2sdk.core.police.UserType
+import com.mar2sdk.core.policy.RiskUtil
+import com.mar2sdk.core.policy.UserType
 
 /**
  * 核心库入口
@@ -34,6 +35,8 @@ object Core {
 		SingularUtil.init()
 		// 初始化数数
 		ThinkingUtil.init()
+		// 风控辅助初始化
+		RiskUtil.init()
 	}
 
 	// 展示开屏

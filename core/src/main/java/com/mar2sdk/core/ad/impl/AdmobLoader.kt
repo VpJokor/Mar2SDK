@@ -91,7 +91,7 @@ object AdmobLoader {
 					interPool[adInter] = System.currentTimeMillis()
 					isLoadingInter = false
 					if (fillPool) {
-						loadInter(fillPool)
+						loadInter(true)
 					}
 				}
 
@@ -118,7 +118,7 @@ object AdmobLoader {
 					videoPool[ad] = System.currentTimeMillis()
 					isLoadingVideo = false
 					if (fillPool) {
-						loadVideo(fillPool)
+						loadVideo(true)
 					}
 				}
 

@@ -1,11 +1,16 @@
 package com.mar2sdk.core.ad.impl
 
 import android.app.Activity
+import android.os.Build
 import android.util.Log
 import com.google.android.gms.ads.AdError
 import com.google.android.gms.ads.AdValue
 import com.google.android.gms.ads.FullScreenContentCallback
+import com.google.android.gms.ads.LoadAdError
 import com.google.android.gms.ads.OnPaidEventListener
+import com.google.android.gms.ads.appopen.AppOpenAd
+import com.mar2sdk.core.AppStatus
+import com.mar2sdk.core.ad.status.ShowFailResult
 import kotlin.collections.component1
 import kotlin.collections.component2
 
@@ -21,16 +26,22 @@ object AdmobShower {
 	var showInterTimeout = 10 * 1000L
 	var showVideoTimeout = 10 * 1000L
 
-	fun showOpen(activity: Activity, areaKey: String) {
+	fun showOpen(activity: Activity, callback: ShowCallback) {
+		if (AppStatus.isShowingAd) {
+			Log.e(TAG, "showOpen: AppStatus.isShowingAd" )
+			callback.showFailed(ShowFailResult.OTHER_AD_IS_SHOWING)
+			return
+		}
+		//修改APP状态
+		AppStatus.isShowingAd = true
 		//检查广告池广告是否过期
 		AdmobLoader.checkOpenPool()
-		//取广告
-		val openAd = AdmobLoader.openPool.entries.firstOrNull { (_, time) ->
-			System.currentTimeMillis() - time < AdmobConfig.openTimeout
-		}?.key
-		val adShowCallback = object : FullScreenContentCallback() {
+		val startShowTime = System.currentTimeMillis()
+		// TODO: 处理广告展示回调
+		val showCallback = object : FullScreenContentCallback() {
 			override fun onAdFailedToShowFullScreenContent(p0: AdError) {
 				super.onAdFailedToShowFullScreenContent(p0)
+				AppStatus.isShowingAd = false
 			}
 
 			override fun onAdShowedFullScreenContent() {
@@ -39,6 +50,7 @@ object AdmobShower {
 
 			override fun onAdDismissedFullScreenContent() {
 				super.onAdDismissedFullScreenContent()
+				AppStatus.isShowingAd = false
 			}
 
 			override fun onAdImpression() {
@@ -49,21 +61,52 @@ object AdmobShower {
 				super.onAdClicked()
 			}
 		}
-		val adPaidCallback = OnPaidEventListener { adValue ->
+		// TODO: 处理广告收入回调
+		val paidCallback = OnPaidEventListener { adValue ->
 			Log.e(TAG, "showOpen: $adValue" )
 		}
-		if (openAd != null) {
-			// 直接展示
-			openAd.fullScreenContentCallback = adShowCallback
-			openAd.onPaidEventListener = adPaidCallback
-			openAd.show(activity)
 
-		} else if (AdmobLoader.isLoadingOpen) {
-			// TODO: 监听广告加载情况，加载完毕后立即展示
-		} else {
-			// TODO: 监听广告加载情况，加载完毕后立即展示
-			// TODO: 开始加载广告
+		fun show(ad: AppOpenAd) {
+			if (activity.isFinishing || activity.isDestroyed) {
+				callback.showFailed(ShowFailResult.ACTIVITY_IS_FINISHING)
+				return
+			}
+			// 广告只能展示一次，展示前从池中移除
+			AdmobLoader.openPool.remove(ad)
+			ad.fullScreenContentCallback = showCallback
+			ad.onPaidEventListener = paidCallback
+			ad.show(activity)
+			AdmobLoader.loadOpen()
 		}
+
+		val cachedAd = AdmobLoader.openPool.keys.firstOrNull()
+		if (cachedAd != null) {
+			show(cachedAd)
+			return
+		}
+
+		if (AdmobLoader.openShowCall != null) {
+			Log.e(TAG, "showOpen: AdmobLoader.openCall is used by ${AdmobLoader.openShowCall!!.usedBy}" )
+			callback.showFailed(ShowFailResult.OTHER_AD_IS_SHOWING)
+		} else {
+			AdmobLoader.openShowCall = object : AdmobLoader.OpenCallback {
+				override var usedBy: String? = TAG
+				override fun onLoaded(ad: AppOpenAd) {
+					if (System.currentTimeMillis() - startShowTime > showOpenTimeout) {
+						// 展示超时
+						AppStatus.isShowingAd = false
+					} else {
+						show(ad)
+					}
+				}
+				override fun onLoadFailed(err: LoadAdError) {
+					Log.w(TAG, "Open ad load failed: ${err.message}")
+					AppStatus.isShowingAd = false
+					callback.showFailed(ShowFailResult.LOAD_FAILED)
+				}
+			}
+		}
+		AdmobLoader.loadOpen()
 	}
 
 	fun showInter() {
@@ -73,4 +116,11 @@ object AdmobShower {
 	fun showVideo() {
 
 	}
+
+	enum class ShowFail
+	interface ShowCallback {
+		var areaKey: String
+		fun showFailed(reason: ShowFailResult)
+	}
+
 }

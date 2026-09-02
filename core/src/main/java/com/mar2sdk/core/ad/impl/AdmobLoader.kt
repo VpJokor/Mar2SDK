@@ -19,6 +19,8 @@ import com.mar2sdk.core.ad.status.AdLoadStatus
  */
 object AdmobLoader {
 
+	var openShowCall: OpenCallback? = null
+
 	// 广告池，里面放已经加载成功的广告
 	val openPool = mutableMapOf<AppOpenAd, Long>()
 	val interPool = mutableMapOf<InterstitialAd, Long>()
@@ -55,12 +57,19 @@ object AdmobLoader {
 					openPool[openAd] = System.currentTimeMillis()
 					isLoadingOpen = false
 					if (fillPool) {
-						loadOpen(fillPool)
+						loadOpen(true)
 					}
+					// 接口回调供展示用
+					val callback = openShowCall
+					openShowCall = null
+					callback?.onLoaded(openAd)
 				}
 
 				override fun onAdFailedToLoad(loadAdError: LoadAdError) {
 					isLoadingOpen = false
+					val callback = openShowCall
+					openShowCall = null
+					callback?.onLoadFailed(loadAdError)
 				}
 			},
 		)
@@ -142,4 +151,11 @@ object AdmobLoader {
 		}
 	}
 
+	interface OpenCallback {
+		var usedBy: String?
+		//加载成功
+		fun onLoaded(ad: AppOpenAd)
+		//加载失败
+		fun onLoadFailed(err: LoadAdError)
+	}
 }

@@ -3,9 +3,11 @@ package com.mar2sdk.core.log
 import android.annotation.SuppressLint
 import android.os.Bundle
 import android.util.Log
+import cn.thinkingdata.analytics.TDAnalytics
 import com.google.firebase.analytics.FirebaseAnalytics
 import com.mar2sdk.core.AppMod
 import com.mar2sdk.core.Core
+import org.json.JSONObject
 
 /**
  * 打点的类
@@ -17,6 +19,7 @@ object LogUtil {
 			Log.e(TAG, "log: $eventName ${formatParams(params)}")
 		}
 		logFirebase(eventName, params)
+		logThinking(eventName, params)
 	}
 
 	/** 上报 Firebase Analytics 事件，并把 Map 参数转换为 Bundle。 */
@@ -35,6 +38,18 @@ object LogUtil {
 			}
 		}
 		firebaseAnalytics.logEvent(eventName, bundle)
+	}
+
+	fun logThinking(eventName: String, params: Map<String, Any>) {
+		try {
+			val jsonObject = JSONObject()
+			for ((key, value) in params) {
+				jsonObject.put(key, value)
+			}
+			TDAnalytics.track(eventName, jsonObject)
+		} catch (e: Exception) {
+			Log.e(TAG, "logThinking error: ${e.message}")
+		}
 	}
 
 	fun formatParams(params: Map<String, Any?>): String = params.entries.joinToString(", ", "{", "}") { (key, value) -> "$key=$value" }

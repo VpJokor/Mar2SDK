@@ -54,6 +54,9 @@ dependencies {
 	implementation("com.unity3d.ads:unity-ads:4.16.2")
 	implementation("com.google.ads.mediation:unity:4.16.4.0")
 
+	//Singular依赖
 	implementation("com.singular.sdk:singular_sdk:12.9.1")
+	//数数依赖
+	implementation("cn.thinkingdata.android:ThinkingAnalyticsSDK:3.0.3.1")
 
 }

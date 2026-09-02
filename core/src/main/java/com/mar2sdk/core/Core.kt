@@ -8,6 +8,7 @@ import com.mar2sdk.core.ad.callback.ShowCallback
 import com.mar2sdk.core.ad.status.AdFormat
 import com.mar2sdk.core.firebase.FireBaseUtil
 import com.mar2sdk.core.firebase.SingularUtil
+import com.mar2sdk.core.log.ThinkingUtil
 import com.singular.sdk.Singular
 
 /**
@@ -28,6 +29,8 @@ object Core {
 		FireBaseUtil.init()
 		// 初始化Singular
 		SingularUtil.init()
+		// 初始化数数
+		ThinkingUtil.init()
 	}
 
 	// 展示开屏

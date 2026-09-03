@@ -40,7 +40,9 @@ object RiskUtil {
 	}
 
 	fun judgeEcpm() {
-		if (UserInfo.firstAdRevenue == 0.0) {
+		if (UserInfo.firstAdRevenue == -1.0) {
+			UserInfo.ecpmType = EcpmType.ECPM_UNKNOW
+		} else if (UserInfo.firstAdRevenue == 0.0) {
 			UserInfo.ecpmType = EcpmType.ECPM_0
 		} else if (UserInfo.firstAdRevenue > PolicyConfig.highEcpm) {
 			UserInfo.ecpmType = EcpmType.ECPM_H

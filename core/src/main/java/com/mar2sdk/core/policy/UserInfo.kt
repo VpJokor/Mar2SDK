@@ -5,7 +5,7 @@ import com.mar2sdk.core.util.PreferenceUtil
 
 object UserInfo {
 	//ecpm为0,还是普通，还是高价值
-	var ecpmType = EcpmType.ECOM_COMMON
+	var ecpmType = EcpmType.ECPM_UNKNOW
 
 	// APP首次打开时间（只在首次打开时赋值，后面只读取）
 	var firstOpenTime = 0L

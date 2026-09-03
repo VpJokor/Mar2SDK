@@ -22,7 +22,7 @@ object IPUtil {
 	private val cloudCidrs by lazy { loadCidrsFromRaw(R.raw.cloud) }
 	private val googleCidrs by lazy { loadCidrsFromRaw(R.raw.google) }
 
-	fun getIpInfoV2() {
+	fun checkIpInfo() {
 		val result = runCatching {
 			val client = OkHttpClient()
 			val request = Request.Builder()
@@ -139,7 +139,7 @@ object IPUtil {
 		}.getOrElse { emptyList() }
 	}
 
-	private fun parseCidr(cidr: String): com.pdffox.adv.adv.CidrRange? {
+	private fun parseCidr(cidr: String): CidrRange? {
 		val parts = cidr.split("/")
 		if (parts.size != 2) return null
 		val prefix = parts[1].toIntOrNull() ?: return null

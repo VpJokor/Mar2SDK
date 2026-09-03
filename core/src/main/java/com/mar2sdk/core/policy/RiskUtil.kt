@@ -30,7 +30,7 @@ object RiskUtil {
 	// 请求IP信息
 	fun judgeRiskIP() {
 		if (UserInfo.riskIP != RiskType.UNKNOW) return
-		// TODO: 判断IP是否有风险
+		IPUtil.checkIpInfo()
 	}
 
 	// 包名校验 integrity

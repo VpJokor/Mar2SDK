@@ -1,6 +1,5 @@
-package com.mar2sdk.core.ad.impl
+package com.mar2sdk.core.ad.impl.admob
 
-import android.content.Context
 import com.google.android.gms.ads.MobileAds
 import com.mar2sdk.core.Core
 

@@ -1,8 +1,7 @@
 package com.mar2sdk.core.ad
 
-import com.mar2sdk.core.ad.impl.AdmobIniter
-import com.mar2sdk.core.ad.impl.MaxIniter
-import com.mar2sdk.core.ad.impl.ToponIniter
+import com.mar2sdk.core.ad.impl.admob.AdmobIniter
+import com.mar2sdk.core.ad.impl.max.MaxIniter
 
 /**
  * 广告SDK初始化器

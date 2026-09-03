@@ -1,10 +1,8 @@
 package com.mar2sdk.core.ad
 
 import android.app.Activity
-import com.inmobi.media.re
 import com.mar2sdk.core.ad.callback.ShowCallback
-import com.mar2sdk.core.ad.impl.AdmobShower
-import com.mar2sdk.core.ad.status.AdFormat
+import com.mar2sdk.core.ad.impl.admob.AdmobShower
 import com.mar2sdk.core.ad.status.AdPlatform
 import com.mar2sdk.core.ad.status.AdShowStatus
 

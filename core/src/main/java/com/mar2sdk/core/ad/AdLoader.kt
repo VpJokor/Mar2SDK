@@ -1,6 +1,5 @@
 package com.mar2sdk.core.ad
 
-import com.mar2sdk.core.ad.impl.AdmobLoader
 import com.mar2sdk.core.ad.status.AdPlatform
 
 // 广告加载器

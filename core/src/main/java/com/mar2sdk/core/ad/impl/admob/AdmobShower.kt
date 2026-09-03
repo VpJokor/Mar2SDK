@@ -1,4 +1,4 @@
-package com.mar2sdk.core.ad.impl
+package com.mar2sdk.core.ad.impl.admob
 
 import android.app.Activity
 import android.util.Log

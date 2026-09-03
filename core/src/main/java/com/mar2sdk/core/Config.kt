@@ -1,8 +1,11 @@
 package com.mar2sdk.core
 
 import com.mar2sdk.core.ad.AdConfig
-import com.mar2sdk.core.ad.impl.AdmobConfig
-import com.mar2sdk.core.ad.impl.MaxConfig
+import com.mar2sdk.core.ad.impl.admob.AdmobConfig
+import com.mar2sdk.core.ad.impl.max.MaxConfig
+import com.mar2sdk.core.ad.impl.topon.ToponConfig
+import com.mar2sdk.core.ad.impl.tradplus.TradplusConfig
+import com.mar2sdk.core.ad.impl.unity.UnityConfig
 import com.mar2sdk.core.firebase.FirebaseConfig
 import com.mar2sdk.core.firebase.SingularConfig
 import com.mar2sdk.core.log.ThinkingConfig
@@ -39,6 +42,9 @@ object Config {
 		AdConfig.init()
 		AdmobConfig.init()
 		MaxConfig.init()
+		ToponConfig.init()
+		TradplusConfig.init()
+		UnityConfig.init()
 	}
 
 	fun initFirebaseConfig() {

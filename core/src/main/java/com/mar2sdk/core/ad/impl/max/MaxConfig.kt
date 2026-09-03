@@ -1,7 +1,4 @@
-package com.mar2sdk.core.ad.impl
-
-import com.mar2sdk.core.ad.impl.AdmobConfig.loadConfigFromPreference
-import com.mar2sdk.core.ad.impl.AdmobConfig.loadConfigFromRaw
+package com.mar2sdk.core.ad.impl.max
 
 object MaxConfig {
 	fun init() {

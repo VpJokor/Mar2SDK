@@ -1,4 +1,4 @@
-package com.mar2sdk.core.ad.impl
+package com.mar2sdk.core.ad.impl.admob
 
 //admob的广告配置
 object AdmobKey {

@@ -2,6 +2,7 @@ package com.mar2sdk.core
 
 import android.app.Activity
 import android.app.Application
+import com.mar2sdk.core.ad.AdConfig
 import com.mar2sdk.core.ad.AdIniter
 import com.mar2sdk.core.ad.AdShower
 import com.mar2sdk.core.ad.callback.ShowCallback

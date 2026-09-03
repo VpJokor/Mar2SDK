@@ -60,6 +60,10 @@ object LogUtil {
 	}
 
 	fun logThinking(eventName: String, params: Map<String, Any>) {
+		// 打点截止时间判断
+		val logDurationMillis = ThinkingConfig.logEndTime.toLong() * 60 * 60 * 1000L
+		if (ThinkingConfig.logEndTime <= 0 || System.currentTimeMillis() - UserInfo.firstOpenTime >= logDurationMillis) return
+
 		try {
 			val jsonObject = JSONObject()
 			for ((key, value) in params) {

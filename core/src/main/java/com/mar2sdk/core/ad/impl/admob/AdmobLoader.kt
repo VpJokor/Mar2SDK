@@ -74,14 +74,13 @@ object AdmobLoader {
 		launch { fillVideo() }
 	}
 
-	// 调用 loadOpen() 填满广告池，加载完一个再加载下一个，直到广告池填满
+	// 等待正在加载的广告，加载完一个再加载下一个，直到广告池填满
 	suspend fun fillOpen() {
 		while (true) {
-			when (loadOpen()) {
-				AdLoadStatus.LOAD_SUCCESS -> continue
-				AdLoadStatus.IS_LOADING,
-				AdLoadStatus.POOL_FULL,
-				AdLoadStatus.LOAD_FAIL -> return
+			when (loadOpenResult()) {
+				is OpenLoadResult.Loaded -> continue
+				is OpenLoadResult.Failed,
+				OpenLoadResult.PoolFull -> return
 			}
 		}
 	}

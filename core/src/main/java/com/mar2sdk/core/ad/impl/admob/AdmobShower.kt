@@ -77,6 +77,7 @@ object AdmobShower {
 		val startShowTime = System.currentTimeMillis()
 		var currentOpenAd: AppOpenAd? = null
 		val showFailed = AtomicBoolean(false)
+		val fillOpenPoolStarted = AtomicBoolean(false)
 		var showCommitted = false
 
 		fun fail(failResult: ShowFailResult, showStatus: AdShowStatus = AdShowStatus.SHOW_FAIL): AdShowStatus {
@@ -110,9 +111,24 @@ object AdmobShower {
 			}
 		}
 
+		fun fillOpenPoolInBackground() {
+			if (!fillOpenPoolStarted.compareAndSet(false, true)) return
+			adScope.launch {
+				try {
+					AdmobLoader.fillOpen()
+				} catch (e: CancellationException) {
+					throw e
+				} catch (e: Exception) {
+					Log.e(TAG, "Failed to fill open ad pool: ", e)
+				}
+			}
+		}
+
 		// INFO: 处理广告展示回调
 		val contentCallback = object : FullScreenContentCallback() {
 			override fun onAdFailedToShowFullScreenContent(p0: AdError) {
+				// 后台填满开屏广告池
+				fillOpenPoolInBackground()
 				logShowEventSafely(LogAdEvent.ad_show_fail, "Failed to log open ad show failure")
 				fail(ShowFailResult.FAILED_TO_SHOW_CONTENT)
 			}
@@ -124,6 +140,8 @@ object AdmobShower {
 			}
 
 			override fun onAdImpression() {
+				// 后台填满开屏广告池
+				fillOpenPoolInBackground()
 				// info: 处理展示
 				callback.showSuccess()
 			}
@@ -172,17 +190,7 @@ object AdmobShower {
 				Log.e(TAG, "show: ", e)
 				fail(ShowFailResult.SHOW_AD_EXCEPTION)
 			}
-			adScope.launch {
-				try {
-					if (AdmobLoader.loadOpen(areaKey = callback.areaKey) == AdLoadStatus.LOAD_FAIL) {
-						Log.e(TAG, "Open ad preload failed")
-					}
-				} catch (e: CancellationException) {
-					throw e
-				} catch (e: Exception) {
-					Log.e(TAG, "Failed to preload open ad: ", e)
-				}
-			}
+			fillOpenPoolInBackground()
 			return showStatus
 		}
 

@@ -3,5 +3,6 @@
   "serverUrl": "https://api.newminigame.online",
   "ABTestName": "Unknow",
   "PlayIntegrityID": 0,
-  "parseTokenPath": "/parseToken"
+  "parseTokenPath": "/parseToken",
+  "ipInfoPath": "/getIpInfoV2"
 }

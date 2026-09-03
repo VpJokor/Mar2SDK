@@ -1,12 +1,21 @@
 package com.mar2sdk.core.policy
 
+import android.util.Log
 import com.mar2sdk.core.Core
 import com.mar2sdk.core.log.ThinkingUtil
+import kotlinx.serialization.Serializable
+import okhttp3.OkHttpClient
+import okhttp3.Request
+import org.json.JSONObject
+import java.net.InetAddress
+import java.net.UnknownHostException
 
 /**
  * 风控类
  */
 object RiskUtil {
+	private const val TAG = "RiskUtil"
+
 	fun init() {
 		judgeRisk()
 	}
@@ -22,8 +31,6 @@ object RiskUtil {
 	fun judgeRiskIP() {
 		if (UserInfo.riskIP != RiskType.UNKNOW) return
 		// TODO: 判断IP是否有风险
-
-
 	}
 
 	// 包名校验 integrity
@@ -59,5 +66,7 @@ object RiskUtil {
 		ThinkingUtil.setUserAttr("userType", Core.userType.name)
 		UserInfo.saveUserInfo()
 	}
+
+
 
 }

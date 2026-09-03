@@ -15,4 +15,5 @@ object PolicyKey {
 	const val KEY_AB_TEST_NAME = "mar2sdk.policy_config.ABTestName"
 	const val KEY_PLAY_INTEGRITY_ID = "mar2sdk.policy_config.PlayIntegrityID"
 	const val KEY_PARSE_TOKEN_PATH = "mar2sdk.policy_config.parseTokenPath"
+	const val KEY_IP_INFO_PATH = "mar2sdk.policy_config.ipInfoPath"
 }

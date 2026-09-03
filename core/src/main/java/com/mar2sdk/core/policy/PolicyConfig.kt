@@ -17,6 +17,8 @@ object PolicyConfig {
 	var PlayIntegrityID = 0L
 	// PlayIntegrity Token解析路径
 	var parseTokenPath = "/parseToken"
+	// IP信息请求路径
+	var ipInfoPath = "/getIpInfoV2"
 
 	fun init() {
 		loadConfigFromRaw()
@@ -35,6 +37,7 @@ object PolicyConfig {
 			ABTestName = getString("ABTestName")
 			PlayIntegrityID = getLong("PlayIntegrityID")
 			parseTokenPath = getString("parseTokenPath")
+			ipInfoPath = getString("ipInfoPath")
 		}
 	}
 
@@ -46,6 +49,7 @@ object PolicyConfig {
 			ABTestName = PreferenceUtil.getString(KEY_AB_TEST_NAME, ABTestName)
 			PlayIntegrityID = PreferenceUtil.getLong(KEY_PLAY_INTEGRITY_ID, PlayIntegrityID)
 			parseTokenPath = PreferenceUtil.getString(KEY_PARSE_TOKEN_PATH, parseTokenPath)
+			ipInfoPath = PreferenceUtil.getString(KEY_IP_INFO_PATH, ipInfoPath)
 		}
 	}
 
@@ -57,6 +61,7 @@ object PolicyConfig {
 			PreferenceUtil.commitString(KEY_AB_TEST_NAME, ABTestName)
 			PreferenceUtil.commitLong(KEY_PLAY_INTEGRITY_ID, PlayIntegrityID)
 			PreferenceUtil.commitString(KEY_PARSE_TOKEN_PATH, parseTokenPath)
+			PreferenceUtil.commitString(KEY_IP_INFO_PATH, ipInfoPath)
 		}
 	}
 }

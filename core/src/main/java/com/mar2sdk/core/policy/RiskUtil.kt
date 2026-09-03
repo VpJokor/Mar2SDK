@@ -17,7 +17,7 @@ object RiskUtil {
 
 	// 用户分级
 	fun judgeUserType() {
-		if (UserInfo.riskIP || UserInfo.ecpm0) {
+		if (UserInfo.riskIP || UserInfo.ecpmType == EcpmType.ECPM_0) {
 			Core.userType = UserType.RISK
 			return
 		}
@@ -25,7 +25,7 @@ object RiskUtil {
 			Core.userType = UserType.NATURE
 		} else {
 			Core.userType = UserType.COMMON
-			if (UserInfo.firstEcpm > PolicyConfig.highUserEcpm) {
+			if (UserInfo.ecpmType == EcpmType.ECPM_H) {
 				Core.userType = UserType.HIGH_VALUE
 			}
 		}

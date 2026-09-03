@@ -23,6 +23,10 @@ object LogUtil {
 		}
 		logFirebase(eventName, params)
 		logThinking(eventName, params)
+		
+		if (eventName == LogAdEvent.ad_revenue) {
+			// TODO: 判断ecpmType
+		}
 	}
 
 	/** 上报 Firebase Analytics 事件，并把 Map 参数转换为 Bundle。 */

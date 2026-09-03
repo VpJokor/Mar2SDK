@@ -15,6 +15,8 @@ object PolicyConfig {
 	var ABTestName = "Unknow"
 	// PlayIntegrity的项目ID
 	var PlayIntegrityID = 0L
+	// PlayIntegrity Token解析路径
+	var parseTokenPath = "/parseToken"
 
 	fun init() {
 		loadConfigFromRaw()
@@ -32,6 +34,7 @@ object PolicyConfig {
 			serverUrl = getString("serverUrl")
 			ABTestName = getString("ABTestName")
 			PlayIntegrityID = getLong("PlayIntegrityID")
+			parseTokenPath = getString("parseTokenPath")
 		}
 	}
 
@@ -42,6 +45,7 @@ object PolicyConfig {
 			serverUrl = PreferenceUtil.getString(KEY_SERVER_URL, serverUrl)
 			ABTestName = PreferenceUtil.getString(KEY_AB_TEST_NAME, ABTestName)
 			PlayIntegrityID = PreferenceUtil.getLong(KEY_PLAY_INTEGRITY_ID, PlayIntegrityID)
+			parseTokenPath = PreferenceUtil.getString(KEY_PARSE_TOKEN_PATH, parseTokenPath)
 		}
 	}
 
@@ -52,6 +56,7 @@ object PolicyConfig {
 			PreferenceUtil.commitString(KEY_SERVER_URL, serverUrl)
 			PreferenceUtil.commitString(KEY_AB_TEST_NAME, ABTestName)
 			PreferenceUtil.commitLong(KEY_PLAY_INTEGRITY_ID, PlayIntegrityID)
+			PreferenceUtil.commitString(KEY_PARSE_TOKEN_PATH, parseTokenPath)
 		}
 	}
 }

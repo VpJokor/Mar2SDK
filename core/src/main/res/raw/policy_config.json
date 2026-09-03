@@ -2,5 +2,6 @@
   "highEcpm": 0.0,
   "serverUrl": "https://api.newminigame.online",
   "ABTestName": "Unknow",
-  "PlayIntegrityID": 0
+  "PlayIntegrityID": 0,
+  "parseTokenPath": "/parseToken"
 }

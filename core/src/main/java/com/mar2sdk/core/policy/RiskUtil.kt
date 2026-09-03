@@ -16,7 +16,6 @@ object RiskUtil {
 		judgePackage()
 		judgeEcpm()
 		judgeUserType()
-		ThinkingUtil.setUserAttr("userType", Core.userType.name)
 	}
 
 	// 请求IP信息
@@ -30,8 +29,7 @@ object RiskUtil {
 	// 包名校验 integrity
 	fun judgePackage() {
 		if (UserInfo.riskPackage != RiskType.UNKNOW) return
-		// TODO: 判断包名是否有风险
-
+		PlayIntegrityUtil.requestPlayIntegrity()
 	}
 
 	fun judgeEcpm() {
@@ -42,7 +40,6 @@ object RiskUtil {
 		} else {
 			UserInfo.ecpmType = EcpmType.ECOM_COMMON
 		}
-
 	}
 
 	// 用户分级
@@ -59,6 +56,8 @@ object RiskUtil {
 				Core.userType = UserType.HIGH_VALUE
 			}
 		}
+		ThinkingUtil.setUserAttr("userType", Core.userType.name)
+		UserInfo.saveUserInfo()
 	}
 
 }

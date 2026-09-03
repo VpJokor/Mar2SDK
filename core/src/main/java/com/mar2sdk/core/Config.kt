@@ -5,6 +5,7 @@ import com.mar2sdk.core.firebase.FirebaseConfig
 import com.mar2sdk.core.firebase.SingularConfig
 import com.mar2sdk.core.log.ThinkingConfig
 import com.mar2sdk.core.policy.PolicyConfig
+import com.mar2sdk.core.policy.UserInfo
 import com.mar2sdk.core.util.PreferenceUtil
 
 /**
@@ -14,11 +15,16 @@ object Config {
 
 	fun initConfig() {
 		PreferenceUtil.init(Core.app)
+		initUserInfo()
 		initPolicyConfig()
 		initAdmobConfig()
 		initFirebaseConfig()
 		initSingularConfig()
 		initThinkingConfig()
+	}
+
+	fun initUserInfo() {
+		UserInfo.init()
 	}
 
 	fun initPolicyConfig() {

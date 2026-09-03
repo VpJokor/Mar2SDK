@@ -7,23 +7,29 @@ import com.mar2sdk.core.Core
  */
 object RiskUtil {
 	fun init() {
-		requestIPInfo()
+		judgeRisk()
+	}
+
+	fun judgeRisk() {
+		judgeRiskIP()
+		judgeEcpm()
+		judgeUserType()
 	}
 
 	// 请求IP信息
-	fun requestIPInfo() {
+	fun judgeRiskIP() {
 
 	}
 
-	fun judgeEcpm(ad_revenue: Double) {
-		if (ad_revenue == 0.0) {
+	fun judgeEcpm() {
+		if (UserInfo.firstAdRevenue == 0.0) {
 			UserInfo.ecpmType = EcpmType.ECPM_0
-		} else if (ad_revenue > PolicyConfig.highEcpm) {
+		} else if (UserInfo.firstAdRevenue > PolicyConfig.highEcpm) {
 			UserInfo.ecpmType = EcpmType.ECPM_H
 		} else {
 			UserInfo.ecpmType = EcpmType.ECOM_COMMON
 		}
-		// TODO: 持久化数据
+
 	}
 
 	// 用户分级

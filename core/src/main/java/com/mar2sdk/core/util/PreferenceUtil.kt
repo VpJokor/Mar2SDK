@@ -58,8 +58,7 @@ object PreferenceUtil {
 	}
 
 	/** 读取 String。 */
-	fun getString(key: String?, failValue: String?): String? =
-		sharedPreferences?.getString(key, failValue) ?: failValue
+	fun getString(key: String?, failValue: String): String = sharedPreferences?.getString(key, failValue) ?: failValue
 
 	/** 同步写入 Int。 */
 	fun commitInt(key: String?, value: Int) = update { putInt(key, value) }

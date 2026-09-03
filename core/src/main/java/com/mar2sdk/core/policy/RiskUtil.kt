@@ -13,6 +13,7 @@ object RiskUtil {
 
 	fun judgeRisk() {
 		judgeRiskIP()
+		judgePackage()
 		judgeEcpm()
 		judgeUserType()
 		ThinkingUtil.setUserAttr("userType", Core.userType.name)
@@ -20,11 +21,16 @@ object RiskUtil {
 
 	// 请求IP信息
 	fun judgeRiskIP() {
+		if (UserInfo.riskIP != RiskType.UNKNOW) return
+		// TODO: 判断IP是否有风险
+
 
 	}
 
 	// 包名校验 integrity
 	fun judgePackage() {
+		if (UserInfo.riskPackage != RiskType.UNKNOW) return
+		// TODO: 判断包名是否有风险
 
 	}
 
@@ -41,7 +47,7 @@ object RiskUtil {
 
 	// 用户分级
 	fun judgeUserType() {
-		if (UserInfo.riskIP || UserInfo.riskPackage || UserInfo.ecpmType == EcpmType.ECPM_0) {
+		if (UserInfo.riskIP == RiskType.RISK || UserInfo.riskPackage == RiskType.RISK || UserInfo.ecpmType == EcpmType.ECPM_0) {
 			Core.userType = UserType.RISK
 			return
 		}

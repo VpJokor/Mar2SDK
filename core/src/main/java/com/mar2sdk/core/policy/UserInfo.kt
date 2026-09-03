@@ -18,9 +18,9 @@ object UserInfo {
 	var campaignName = "unknow"
 
 	//高风险IP
-	var riskIP = false
+	var riskIP = RiskType.UNKNOW
 	//高风险包
-	var riskPackage = false
+	var riskPackage = RiskType.UNKNOW
 
 	fun init() {
 		//首次打开时间
@@ -37,8 +37,12 @@ object UserInfo {
 		campaignId = PreferenceUtil.getString(PolicyKey.KEY_CAMPAIGN_Id, "unknow")
 		campaignName = PreferenceUtil.getString(PolicyKey.KEY_CAMPAIGN_NAME, "unknow")
 
-		riskIP = PreferenceUtil.getBoolean(PolicyKey.KEY_RISK_IP, false)
-		riskPackage = PreferenceUtil.getBoolean(PolicyKey.KEY_RISK_PACKAGE, false)
+		riskIP = RiskType.valueOf(
+			PreferenceUtil.getString(PolicyKey.KEY_RISK_IP, riskIP.name)
+		)
+		riskPackage = RiskType.valueOf(
+			PreferenceUtil.getString(PolicyKey.KEY_RISK_PACKAGE, riskPackage.name)
+		)
 	}
 
 	fun saveUserInfo() {
@@ -46,8 +50,8 @@ object UserInfo {
 		PreferenceUtil.commitString(PolicyKey.KEY_NETWORK, network)
 		PreferenceUtil.commitString(PolicyKey.KEY_CAMPAIGN_Id, campaignId)
 		PreferenceUtil.commitString(PolicyKey.KEY_CAMPAIGN_NAME, campaignName)
-		PreferenceUtil.commitBoolean(PolicyKey.KEY_RISK_IP, riskIP)
-		PreferenceUtil.commitBoolean(PolicyKey.KEY_RISK_PACKAGE, riskPackage)
+		PreferenceUtil.commitString(PolicyKey.KEY_RISK_IP, riskIP.name)
+		PreferenceUtil.commitString(PolicyKey.KEY_RISK_PACKAGE, riskPackage.name)
 	}
 
 }

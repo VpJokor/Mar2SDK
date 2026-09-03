@@ -6,7 +6,6 @@ import com.mar2sdk.core.ad.impl.max.MaxConfig
 import com.mar2sdk.core.ad.impl.topon.ToponConfig
 import com.mar2sdk.core.ad.impl.tradplus.TradplusConfig
 import com.mar2sdk.core.ad.impl.unity.UnityConfig
-import com.mar2sdk.core.firebase.FirebaseConfig
 import com.mar2sdk.core.firebase.SingularConfig
 import com.mar2sdk.core.log.ThinkingConfig
 import com.mar2sdk.core.policy.PolicyConfig
@@ -48,7 +47,7 @@ object Config {
 	}
 
 	fun initFirebaseConfig() {
-		FirebaseConfig
+
 	}
 
 	fun initSingularConfig() {

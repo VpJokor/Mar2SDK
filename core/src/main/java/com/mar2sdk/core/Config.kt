@@ -34,7 +34,6 @@ object Config {
 
 	fun initPolicyConfig() {
 		PolicyConfig.init()
-		RiskUtil.init()
 	}
 
 	fun initAdConfig() {

@@ -14,17 +14,29 @@ object AdShower {
 	// 一直等待到 AdmobShower.showOpen 返回结果再返回
 	suspend fun showOpen(adPlatform: AdPlatform = AdPlatform.ADMOB, activity: Activity, callback: ShowCallback): AdShowStatus {
 		callback.adPlatform = adPlatform
-		return AdmobShower.showOpen(activity, callback)
+		return when(adPlatform) {
+			AdPlatform.ADMOB -> AdmobShower.showOpen(activity, callback)
+			// TODO implement Max/UNITY/TRADPLUS/TOPON
+			else -> AdmobShower.showOpen(activity, callback)
+		}
 	}
 
 	suspend fun showInter(adPlatform: AdPlatform = AdPlatform.ADMOB, activity: Activity, callback: ShowCallback): AdShowStatus {
 		callback.adPlatform = adPlatform
-		return AdmobShower.showInter(activity, callback)
+		return when(adPlatform) {
+			AdPlatform.ADMOB -> AdmobShower.showInter(activity, callback)
+			// Max/UNITY/TRADPLUS/TOPON
+			else -> AdmobShower.showInter(activity, callback)
+		}
 	}
 
 	suspend fun showVideo(adPlatform: AdPlatform = AdPlatform.ADMOB, activity: Activity, callback: ShowCallback): AdShowStatus {
 		callback.adPlatform = adPlatform
-		return AdmobShower.showVideo(activity, callback)
+		return when(adPlatform) {
+			AdPlatform.ADMOB -> AdmobShower.showVideo(activity, callback)
+			// TODO implement Max/UNITY/TRADPLUS/TOPON
+			else -> AdmobShower.showVideo(activity, callback)
+		}
 	}
 
 }

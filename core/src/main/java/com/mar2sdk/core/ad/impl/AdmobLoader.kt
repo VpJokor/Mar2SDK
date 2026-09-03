@@ -17,7 +17,6 @@ import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.withContext
 
 
@@ -36,9 +35,27 @@ object AdmobLoader {
 		) : OpenLoadResult
 		data object PoolFull : OpenLoadResult
 	}
+	internal sealed interface InterLoadResult {
+		data class Loaded(val ad: InterstitialAd) : InterLoadResult
+		data class Failed(
+			val loadError: LoadAdError? = null,
+			val exception: Exception? = null,
+		) : InterLoadResult
+		data object PoolFull : InterLoadResult
+	}
+	internal sealed interface VideoLoadResult {
+		data class Loaded(val ad: RewardedAd) : VideoLoadResult
+		data class Failed(
+			val loadError: LoadAdError? = null,
+			val exception: Exception? = null,
+		) : VideoLoadResult
+		data object PoolFull : VideoLoadResult
+	}
 
 	// 展示等待超时后不取消实际加载，加载完成的广告仍然放入广告池
 	private var openLoadDeferred: CompletableDeferred<OpenLoadResult>? = null
+	private var interLoadDeferred: CompletableDeferred<InterLoadResult>? = null
+	private var videoLoadDeferred: CompletableDeferred<VideoLoadResult>? = null
 
 	// 广告池，里面放已经加载成功的广告
 	val openPool = mutableMapOf<AppOpenAd, Long>()
@@ -182,8 +199,58 @@ object AdmobLoader {
 		if (isLoadingInter) return@withContext AdLoadStatus.IS_LOADING
 		// 检查广告池是否满
 		if (interPool.size >= AdmobConfig.interPoolSize) return@withContext AdLoadStatus.POOL_FULL
+
+		when (startInterLoad(areaKey).await()) {
+			is InterLoadResult.Loaded -> AdLoadStatus.LOAD_SUCCESS
+			is InterLoadResult.Failed -> AdLoadStatus.LOAD_FAIL
+			InterLoadResult.PoolFull -> AdLoadStatus.POOL_FULL
+		}
+	}
+
+	internal suspend fun loadInterResult(areaKey: String = "preload"): InterLoadResult = withContext(Dispatchers.Main.immediate) {
+		// 检查过期广告
+		checkInterPool()
+		interLoadDeferred?.let { return@withContext it.await() }
+		// 检查广告池是否满
+		if (interPool.size >= AdmobConfig.interPoolSize) return@withContext InterLoadResult.PoolFull
+		startInterLoad(areaKey).await()
+	}
+
+	private fun startInterLoad(areaKey: String): CompletableDeferred<InterLoadResult> {
+		val loadDeferred = CompletableDeferred<InterLoadResult>()
+		interLoadDeferred = loadDeferred
+		isLoadingInter = true
+		try {
+			logInterLoad(LogAdEvent.ad_start_loading, areaKey)
+			val loadCallback = object : InterstitialAdLoadCallback() {
+				override fun onAdLoaded(interstitialAd: InterstitialAd) {
+					try {
+						logInterLoad(LogAdEvent.ad_finish_loading, areaKey)
+					} catch (error: Exception) {
+						Log.e(TAG, "Failed to log loaded interstitial ad", error)
+					}
+					try {
+						interPool[interstitialAd] = System.currentTimeMillis()
+					} finally {
+						completeInterLoad(loadDeferred, InterLoadResult.Loaded(interstitialAd))
+					}
+				}
+
+				override fun onAdFailedToLoad(loadAdError: LoadAdError) {
+					completeInterLoad(loadDeferred, InterLoadResult.Failed(loadError = loadAdError))
+				}
+			}
+			InterstitialAd.load(Core.app, AdmobConfig.interID, AdRequest.Builder().build(), loadCallback)
+		} catch (error: Exception) {
+			Log.e(TAG, "Failed to start loading interstitial ad", error)
+			completeInterLoad(loadDeferred, InterLoadResult.Failed(exception = error))
+		}
+		return loadDeferred
+	}
+
+	private fun logInterLoad(eventName: String, areaKey: String) {
 		LogUtil.log(
-			LogAdEvent.ad_start_loading,
+			eventName,
 			mapOf(
 				LogAdParam.ad_platform to LogAdParam.ad_platform_admob,
 				LogAdParam.ad_areakey to areaKey,
@@ -192,48 +259,17 @@ object AdmobLoader {
 				LogAdParam.ad_preload to (areaKey == "preload"),
 			)
 		)
-		// 开始加载插屏广告
-		isLoadingInter = true
-		suspendCancellableCoroutine { continuation ->
-			try {
-				val loadCallback = object : InterstitialAdLoadCallback() {
-					override fun onAdLoaded(interstitialAd: InterstitialAd) {
-						isLoadingInter = false
-						try {
-							LogUtil.log(
-								LogAdEvent.ad_finish_loading,
-								mapOf(
-									LogAdParam.ad_platform to LogAdParam.ad_platform_admob,
-									LogAdParam.ad_areakey to areaKey,
-									LogAdParam.ad_format to LogAdParam.ad_format_inter,
-									LogAdParam.ad_unit_name to AdmobConfig.interID,
-									LogAdParam.ad_preload to (areaKey == "preload"),
-								)
-							)
-							interPool[interstitialAd] = System.currentTimeMillis()
-						} finally {
-							if (continuation.isActive) {
-								continuation.resumeWith(Result.success(AdLoadStatus.LOAD_SUCCESS))
-							}
-						}
-					}
+	}
 
-					override fun onAdFailedToLoad(loadAdError: LoadAdError) {
-						isLoadingInter = false
-						if (continuation.isActive) {
-							continuation.resumeWith(Result.success(AdLoadStatus.LOAD_FAIL))
-						}
-					}
-				}
-				InterstitialAd.load(Core.app, AdmobConfig.interID, AdRequest.Builder().build(), loadCallback)
-			} catch (error: Exception) {
-				Log.e(TAG, "Failed to start loading interstitial ad", error)
-				isLoadingInter = false
-				if (continuation.isActive) {
-					continuation.resumeWith(Result.success(AdLoadStatus.LOAD_FAIL))
-				}
-			}
+	private fun completeInterLoad(
+		loadDeferred: CompletableDeferred<InterLoadResult>,
+		result: InterLoadResult,
+	) {
+		if (interLoadDeferred === loadDeferred) {
+			interLoadDeferred = null
+			isLoadingInter = false
 		}
+		loadDeferred.complete(result)
 	}
 
 	// 加载视频
@@ -244,8 +280,58 @@ object AdmobLoader {
 		if (isLoadingVideo) return@withContext AdLoadStatus.IS_LOADING
 		// 检查广告池是否满
 		if (videoPool.size >= AdmobConfig.videoPoolSize) return@withContext AdLoadStatus.POOL_FULL
+
+		when (startVideoLoad(areaKey).await()) {
+			is VideoLoadResult.Loaded -> AdLoadStatus.LOAD_SUCCESS
+			is VideoLoadResult.Failed -> AdLoadStatus.LOAD_FAIL
+			VideoLoadResult.PoolFull -> AdLoadStatus.POOL_FULL
+		}
+	}
+
+	internal suspend fun loadVideoResult(areaKey: String = "preload"): VideoLoadResult = withContext(Dispatchers.Main.immediate) {
+		// 检查过期广告
+		checkVideoPool()
+		videoLoadDeferred?.let { return@withContext it.await() }
+		// 检查广告池是否满
+		if (videoPool.size >= AdmobConfig.videoPoolSize) return@withContext VideoLoadResult.PoolFull
+		startVideoLoad(areaKey).await()
+	}
+
+	private fun startVideoLoad(areaKey: String): CompletableDeferred<VideoLoadResult> {
+		val loadDeferred = CompletableDeferred<VideoLoadResult>()
+		videoLoadDeferred = loadDeferred
+		isLoadingVideo = true
+		try {
+			logVideoLoad(LogAdEvent.ad_start_loading, areaKey)
+			val loadCallback = object : RewardedAdLoadCallback() {
+				override fun onAdLoaded(rewardedAd: RewardedAd) {
+					try {
+						logVideoLoad(LogAdEvent.ad_finish_loading, areaKey)
+					} catch (error: Exception) {
+						Log.e(TAG, "Failed to log loaded rewarded ad", error)
+					}
+					try {
+						videoPool[rewardedAd] = System.currentTimeMillis()
+					} finally {
+						completeVideoLoad(loadDeferred, VideoLoadResult.Loaded(rewardedAd))
+					}
+				}
+
+				override fun onAdFailedToLoad(loadAdError: LoadAdError) {
+					completeVideoLoad(loadDeferred, VideoLoadResult.Failed(loadError = loadAdError))
+				}
+			}
+			RewardedAd.load(Core.app, AdmobConfig.VideoID, AdRequest.Builder().build(), loadCallback)
+		} catch (error: Exception) {
+			Log.e(TAG, "Failed to start loading rewarded ad", error)
+			completeVideoLoad(loadDeferred, VideoLoadResult.Failed(exception = error))
+		}
+		return loadDeferred
+	}
+
+	private fun logVideoLoad(eventName: String, areaKey: String) {
 		LogUtil.log(
-			LogAdEvent.ad_start_loading,
+			eventName,
 			mapOf(
 				LogAdParam.ad_platform to LogAdParam.ad_platform_admob,
 				LogAdParam.ad_areakey to areaKey,
@@ -254,48 +340,17 @@ object AdmobLoader {
 				LogAdParam.ad_preload to (areaKey == "preload"),
 			)
 		)
-		// 开始加载视频广告
-		isLoadingVideo = true
-		suspendCancellableCoroutine { continuation ->
-			try {
-				val loadCallback = object : RewardedAdLoadCallback() {
-					override fun onAdLoaded(rewardedAd: RewardedAd) {
-						isLoadingVideo = false
-						try {
-							LogUtil.log(
-								LogAdEvent.ad_finish_loading,
-								mapOf(
-									LogAdParam.ad_platform to LogAdParam.ad_platform_admob,
-									LogAdParam.ad_areakey to areaKey,
-									LogAdParam.ad_format to LogAdParam.ad_format_video,
-									LogAdParam.ad_unit_name to AdmobConfig.VideoID,
-									LogAdParam.ad_preload to (areaKey == "preload"),
-								)
-							)
-							videoPool[rewardedAd] = System.currentTimeMillis()
-						} finally {
-							if (continuation.isActive) {
-								continuation.resumeWith(Result.success(AdLoadStatus.LOAD_SUCCESS))
-							}
-						}
-					}
+	}
 
-					override fun onAdFailedToLoad(loadAdError: LoadAdError) {
-						isLoadingVideo = false
-						if (continuation.isActive) {
-							continuation.resumeWith(Result.success(AdLoadStatus.LOAD_FAIL))
-						}
-					}
-				}
-				RewardedAd.load(Core.app, AdmobConfig.VideoID, AdRequest.Builder().build(), loadCallback)
-			} catch (error: Exception) {
-				Log.e(TAG, "Failed to start loading rewarded ad", error)
-				isLoadingVideo = false
-				if (continuation.isActive) {
-					continuation.resumeWith(Result.success(AdLoadStatus.LOAD_FAIL))
-				}
-			}
+	private fun completeVideoLoad(
+		loadDeferred: CompletableDeferred<VideoLoadResult>,
+		result: VideoLoadResult,
+	) {
+		if (videoLoadDeferred === loadDeferred) {
+			videoLoadDeferred = null
+			isLoadingVideo = false
 		}
+		loadDeferred.complete(result)
 	}
 
 	// 检查并移除开屏广告池过期广告

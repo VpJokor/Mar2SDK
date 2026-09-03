@@ -6,6 +6,8 @@ import com.google.android.gms.ads.AdError
 import com.google.android.gms.ads.FullScreenContentCallback
 import com.google.android.gms.ads.OnPaidEventListener
 import com.google.android.gms.ads.appopen.AppOpenAd
+import com.google.android.gms.ads.interstitial.InterstitialAd
+import com.google.android.gms.ads.rewarded.RewardedAd
 import com.google.firebase.analytics.FirebaseAnalytics
 import com.mar2sdk.core.AppStatus
 import com.mar2sdk.core.ad.callback.ShowCallback
@@ -228,12 +230,358 @@ object AdmobShower {
 		}
 	}
 
-	fun showInter(activity: Activity, callback: ShowCallback) {
+	suspend fun showInter(activity: Activity, callback: ShowCallback): AdShowStatus = withContext(Dispatchers.Main.immediate) {
+		LogUtil.log(
+			LogAdEvent.ad_occur,
+			mapOf(
+				LogAdParam.ad_platform to LogAdParam.ad_platform_admob,
+				LogAdParam.ad_areakey to callback.areaKey,
+				LogAdParam.ad_format to LogAdParam.ad_format_inter,
+				LogAdParam.ad_unit_name to AdmobConfig.interID,
+			)
+		)
+		if (AppStatus.isShowingAd) {
+			Log.e(TAG, "showInter: AppStatus.isShowingAd")
+			callback.showFailed(ShowFailResult.OTHER_AD_IS_SHOWING)
+			return@withContext AdShowStatus.OTHER_AD_IS_SHOWING
+		}
+		//检查广告池广告是否过期
+		AdmobLoader.checkInterPool()
 
+		//修改APP状态
+		AppStatus.isShowingAd = true
+		val startShowTime = System.currentTimeMillis()
+		var currentInterAd: InterstitialAd? = null
+		val showFailed = AtomicBoolean(false)
+		var showCommitted = false
+
+		fun fail(failResult: ShowFailResult, showStatus: AdShowStatus = AdShowStatus.SHOW_FAIL): AdShowStatus {
+			if (showFailed.compareAndSet(false, true)) {
+				AppStatus.isShowingAd = false
+				callback.showFailed(failResult)
+			}
+			return showStatus
+		}
+
+		fun logShowEvent(eventName: String) {
+			LogUtil.log(
+				eventName,
+				mapOf(
+					LogAdParam.ad_platform to LogAdParam.ad_platform_admob,
+					LogAdParam.duration to (System.currentTimeMillis() - startShowTime),
+					LogAdParam.ad_areakey to callback.areaKey,
+					LogAdParam.ad_format to LogAdParam.ad_format_inter,
+					LogAdParam.ad_source to (currentInterAd?.responseInfo?.loadedAdapterResponseInfo?.adSourceName ?: LogAdParam.unknow),
+					LogAdParam.ad_unit_name to AdmobConfig.interID,
+					LogAdParam.ad_preload to true,
+				)
+			)
+		}
+
+		fun logShowEventSafely(eventName: String, errorMessage: String) {
+			try {
+				logShowEvent(eventName)
+			} catch (e: Exception) {
+				Log.e(TAG, errorMessage, e)
+			}
+		}
+
+		// INFO: 处理广告展示回调
+		val contentCallback = object : FullScreenContentCallback() {
+			override fun onAdFailedToShowFullScreenContent(p0: AdError) {
+				logShowEventSafely(LogAdEvent.ad_show_fail, "Failed to log interstitial ad show failure")
+				fail(ShowFailResult.FAILED_TO_SHOW_CONTENT)
+			}
+
+			override fun onAdDismissedFullScreenContent() {
+				logShowEventSafely(LogAdEvent.ad_close, "Failed to log interstitial ad close")
+				AppStatus.isShowingAd = false
+				callback.onAdClosed()
+			}
+
+			override fun onAdImpression() {
+				// info: 处理展示
+				callback.showSuccess()
+			}
+
+			override fun onAdClicked() {
+				logShowEvent(LogAdEvent.ad_click)
+				callback.onClicked()
+			}
+		}
+		// INFO: 处理广告收入回调
+		val paidCallback = OnPaidEventListener { adValue ->
+			Log.e(TAG, "showInter: $adValue")
+			// info: 处理收入打点
+			val revenue = adValue.valueMicros / 1_000_000.0
+			val revenueParams = mapOf(
+				LogAdParam.ad_areakey to callback.areaKey,
+				FirebaseAnalytics.Param.AD_PLATFORM to LogAdParam.ad_platform_admob,
+				FirebaseAnalytics.Param.AD_UNIT_NAME to AdmobConfig.interID,
+				FirebaseAnalytics.Param.AD_FORMAT to LogAdParam.ad_format_inter,
+				FirebaseAnalytics.Param.AD_SOURCE to (currentInterAd?.responseInfo?.loadedAdapterResponseInfo?.adSourceName ?: LogAdParam.unknow),
+				FirebaseAnalytics.Param.CURRENCY to adValue.currencyCode,
+				FirebaseAnalytics.Param.VALUE to revenue,
+				LogAdParam.ad_preload to true,
+			)
+			LogUtil.log(LogAdEvent.ad_impression, revenueParams)
+			LogUtil.log(LogAdEvent.ad_revenue, revenueParams)
+			LogUtil.logSingularAdRevenue(LogAdParam.adMob, revenue)
+			callback.onPaid()
+		}
+
+		suspend fun show(ad: InterstitialAd): AdShowStatus {
+			currentCoroutineContext().ensureActive()
+			currentInterAd = ad
+			if (activity.isFinishing || activity.isDestroyed) {
+				return fail(ShowFailResult.ACTIVITY_IS_FINISHING)
+			}
+			showCommitted = true
+			val showStatus = try {
+				// 广告只能展示一次，展示前从池中移除
+				AdmobLoader.interPool.remove(ad)
+				ad.fullScreenContentCallback = contentCallback
+				ad.onPaidEventListener = paidCallback
+				ad.show(activity)
+				if (showFailed.get()) AdShowStatus.SHOW_FAIL else AdShowStatus.SHOW_SUCCESS
+			} catch (e: Exception) {
+				Log.e(TAG, "show: ", e)
+				fail(ShowFailResult.SHOW_AD_EXCEPTION)
+			}
+			adScope.launch {
+				try {
+					if (AdmobLoader.loadInter(areaKey = callback.areaKey) == AdLoadStatus.LOAD_FAIL) {
+						Log.e(TAG, "Interstitial ad preload failed")
+					}
+				} catch (e: CancellationException) {
+					throw e
+				} catch (e: Exception) {
+					Log.e(TAG, "Failed to preload interstitial ad: ", e)
+				}
+			}
+			return showStatus
+		}
+
+		try {
+			val interAd = AdmobLoader.interPool.keys.firstOrNull() ?: when (
+				val loadResult = try {
+					withTimeoutOrNull(showInterTimeout) {
+						AdmobLoader.loadInterResult(areaKey = callback.areaKey)
+					}
+				} catch (e: CancellationException) {
+					throw e
+				} catch (e: Exception) {
+					AdmobLoader.InterLoadResult.Failed(exception = e)
+				}
+			) {
+				null -> {
+					logShowEventSafely(LogAdEvent.ad_show_timeout, "Failed to log interstitial ad timeout")
+					return@withContext fail(ShowFailResult.LOAD_TIMEOUT, AdShowStatus.TIMEOUT)
+				}
+				is AdmobLoader.InterLoadResult.Loaded -> loadResult.ad
+				is AdmobLoader.InterLoadResult.Failed -> {
+					val failResult = if (loadResult.loadError != null) {
+						Log.e(TAG, "Interstitial ad load failed: ${loadResult.loadError.message}")
+						ShowFailResult.LOAD_FAILED
+					} else {
+						loadResult.exception?.let {
+							Log.e(TAG, "showInter: ", it)
+						}
+						ShowFailResult.LOAD_AD_EXCEPTION
+					}
+					return@withContext fail(failResult, AdShowStatus.LOAD_FAIL)
+				}
+				AdmobLoader.InterLoadResult.PoolFull ->
+					AdmobLoader.interPool.keys.firstOrNull() ?: return@withContext fail(
+						ShowFailResult.LOAD_AD_EXCEPTION,
+						AdShowStatus.LOAD_FAIL,
+					)
+			}
+			show(interAd)
+		} catch (e: CancellationException) {
+			if (!showCommitted) {
+				AppStatus.isShowingAd = false
+			}
+			throw e
+		}
 	}
 
-	fun showVideo(activity: Activity, callback: ShowCallback) {
+	suspend fun showVideo(activity: Activity, callback: ShowCallback): AdShowStatus = withContext(Dispatchers.Main.immediate) {
+		LogUtil.log(
+			LogAdEvent.ad_occur,
+			mapOf(
+				LogAdParam.ad_platform to LogAdParam.ad_platform_admob,
+				LogAdParam.ad_areakey to callback.areaKey,
+				LogAdParam.ad_format to LogAdParam.ad_format_video,
+				LogAdParam.ad_unit_name to AdmobConfig.VideoID,
+			)
+		)
+		if (AppStatus.isShowingAd) {
+			Log.e(TAG, "showVideo: AppStatus.isShowingAd")
+			callback.showFailed(ShowFailResult.OTHER_AD_IS_SHOWING)
+			return@withContext AdShowStatus.OTHER_AD_IS_SHOWING
+		}
+		//检查广告池广告是否过期
+		AdmobLoader.checkVideoPool()
 
+		//修改APP状态
+		AppStatus.isShowingAd = true
+		val startShowTime = System.currentTimeMillis()
+		var currentVideoAd: RewardedAd? = null
+		val showFailed = AtomicBoolean(false)
+		var showCommitted = false
+
+		fun fail(failResult: ShowFailResult, showStatus: AdShowStatus = AdShowStatus.SHOW_FAIL): AdShowStatus {
+			if (showFailed.compareAndSet(false, true)) {
+				AppStatus.isShowingAd = false
+				callback.showFailed(failResult)
+			}
+			return showStatus
+		}
+
+		fun logShowEvent(eventName: String) {
+			LogUtil.log(
+				eventName,
+				mapOf(
+					LogAdParam.ad_platform to LogAdParam.ad_platform_admob,
+					LogAdParam.duration to (System.currentTimeMillis() - startShowTime),
+					LogAdParam.ad_areakey to callback.areaKey,
+					LogAdParam.ad_format to LogAdParam.ad_format_video,
+					LogAdParam.ad_source to (currentVideoAd?.responseInfo?.loadedAdapterResponseInfo?.adSourceName ?: LogAdParam.unknow),
+					LogAdParam.ad_unit_name to AdmobConfig.VideoID,
+					LogAdParam.ad_preload to true,
+				)
+			)
+		}
+
+		fun logShowEventSafely(eventName: String, errorMessage: String) {
+			try {
+				logShowEvent(eventName)
+			} catch (e: Exception) {
+				Log.e(TAG, errorMessage, e)
+			}
+		}
+
+		// INFO: 处理广告展示回调
+		val contentCallback = object : FullScreenContentCallback() {
+			override fun onAdFailedToShowFullScreenContent(p0: AdError) {
+				logShowEventSafely(LogAdEvent.ad_show_fail, "Failed to log rewarded ad show failure")
+				fail(ShowFailResult.FAILED_TO_SHOW_CONTENT)
+			}
+
+			override fun onAdDismissedFullScreenContent() {
+				logShowEventSafely(LogAdEvent.ad_close, "Failed to log rewarded ad close")
+				AppStatus.isShowingAd = false
+				callback.onAdClosed()
+			}
+
+			override fun onAdImpression() {
+				// info: 处理展示
+				callback.showSuccess()
+			}
+
+			override fun onAdClicked() {
+				logShowEvent(LogAdEvent.ad_click)
+				callback.onClicked()
+			}
+		}
+		// INFO: 处理广告收入回调
+		val paidCallback = OnPaidEventListener { adValue ->
+			Log.e(TAG, "showVideo: $adValue")
+			// info: 处理收入打点
+			val revenue = adValue.valueMicros / 1_000_000.0
+			val revenueParams = mapOf(
+				LogAdParam.ad_areakey to callback.areaKey,
+				FirebaseAnalytics.Param.AD_PLATFORM to LogAdParam.ad_platform_admob,
+				FirebaseAnalytics.Param.AD_UNIT_NAME to AdmobConfig.VideoID,
+				FirebaseAnalytics.Param.AD_FORMAT to LogAdParam.ad_format_video,
+				FirebaseAnalytics.Param.AD_SOURCE to (currentVideoAd?.responseInfo?.loadedAdapterResponseInfo?.adSourceName ?: LogAdParam.unknow),
+				FirebaseAnalytics.Param.CURRENCY to adValue.currencyCode,
+				FirebaseAnalytics.Param.VALUE to revenue,
+				LogAdParam.ad_preload to true,
+			)
+			LogUtil.log(LogAdEvent.ad_impression, revenueParams)
+			LogUtil.log(LogAdEvent.ad_revenue, revenueParams)
+			LogUtil.logSingularAdRevenue(LogAdParam.adMob, revenue)
+			callback.onPaid()
+		}
+
+		suspend fun show(ad: RewardedAd): AdShowStatus {
+			currentCoroutineContext().ensureActive()
+			currentVideoAd = ad
+			if (activity.isFinishing || activity.isDestroyed) {
+				return fail(ShowFailResult.ACTIVITY_IS_FINISHING)
+			}
+			showCommitted = true
+			val showStatus = try {
+				// 广告只能展示一次，展示前从池中移除
+				AdmobLoader.videoPool.remove(ad)
+				ad.fullScreenContentCallback = contentCallback
+				ad.onPaidEventListener = paidCallback
+				ad.show(activity) {
+					callback.onReward()
+				}
+				if (showFailed.get()) AdShowStatus.SHOW_FAIL else AdShowStatus.SHOW_SUCCESS
+			} catch (e: Exception) {
+				Log.e(TAG, "show: ", e)
+				fail(ShowFailResult.SHOW_AD_EXCEPTION)
+			}
+			adScope.launch {
+				try {
+					if (AdmobLoader.loadVideo(areaKey = callback.areaKey) == AdLoadStatus.LOAD_FAIL) {
+						Log.e(TAG, "Rewarded ad preload failed")
+					}
+				} catch (e: CancellationException) {
+					throw e
+				} catch (e: Exception) {
+					Log.e(TAG, "Failed to preload rewarded ad: ", e)
+				}
+			}
+			return showStatus
+		}
+
+		try {
+			val videoAd = AdmobLoader.videoPool.keys.firstOrNull() ?: when (
+				val loadResult = try {
+					withTimeoutOrNull(showVideoTimeout) {
+						AdmobLoader.loadVideoResult(areaKey = callback.areaKey)
+					}
+				} catch (e: CancellationException) {
+					throw e
+				} catch (e: Exception) {
+					AdmobLoader.VideoLoadResult.Failed(exception = e)
+				}
+			) {
+				null -> {
+					logShowEventSafely(LogAdEvent.ad_show_timeout, "Failed to log rewarded ad timeout")
+					return@withContext fail(ShowFailResult.LOAD_TIMEOUT, AdShowStatus.TIMEOUT)
+				}
+				is AdmobLoader.VideoLoadResult.Loaded -> loadResult.ad
+				is AdmobLoader.VideoLoadResult.Failed -> {
+					val failResult = if (loadResult.loadError != null) {
+						Log.e(TAG, "Rewarded ad load failed: ${loadResult.loadError.message}")
+						ShowFailResult.LOAD_FAILED
+					} else {
+						loadResult.exception?.let {
+							Log.e(TAG, "showVideo: ", it)
+						}
+						ShowFailResult.LOAD_AD_EXCEPTION
+					}
+					return@withContext fail(failResult, AdShowStatus.LOAD_FAIL)
+				}
+				AdmobLoader.VideoLoadResult.PoolFull ->
+					AdmobLoader.videoPool.keys.firstOrNull() ?: return@withContext fail(
+						ShowFailResult.LOAD_AD_EXCEPTION,
+						AdShowStatus.LOAD_FAIL,
+					)
+			}
+			show(videoAd)
+		} catch (e: CancellationException) {
+			if (!showCommitted) {
+				AppStatus.isShowingAd = false
+			}
+			throw e
+		}
 	}
 
 

@@ -12,18 +12,18 @@ import com.mar2sdk.core.ad.status.AdShowStatus
 object AdShower {
 
 	// 一直等待到 AdmobShower.showOpen 返回结果再返回
-	suspend fun showOpen(activity: Activity, callback: ShowCallback): AdShowStatus {
-		callback.adPlatform = AdPlatform.ADMOB
+	suspend fun showOpen(adPlatform: AdPlatform = AdPlatform.ADMOB, activity: Activity, callback: ShowCallback): AdShowStatus {
+		callback.adPlatform = adPlatform
 		return AdmobShower.showOpen(activity, callback)
 	}
 
-	suspend fun showInter(activity: Activity, callback: ShowCallback): AdShowStatus {
-		callback.adPlatform = AdPlatform.ADMOB
+	suspend fun showInter(adPlatform: AdPlatform = AdPlatform.ADMOB, activity: Activity, callback: ShowCallback): AdShowStatus {
+		callback.adPlatform = adPlatform
 		return AdmobShower.showInter(activity, callback)
 	}
 
-	suspend fun showVideo(activity: Activity, callback: ShowCallback): AdShowStatus {
-		callback.adPlatform = AdPlatform.ADMOB
+	suspend fun showVideo(adPlatform: AdPlatform = AdPlatform.ADMOB, activity: Activity, callback: ShowCallback): AdShowStatus {
+		callback.adPlatform = adPlatform
 		return AdmobShower.showVideo(activity, callback)
 	}
 

@@ -42,7 +42,7 @@ object Config {
 	}
 
 	fun initSingularConfig() {
-		SingularConfig
+		SingularConfig.init()
 	}
 
 	fun initThinkingConfig() {

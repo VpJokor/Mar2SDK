@@ -1,7 +1,6 @@
 package com.mar2sdk.core.policy
 
 import com.mar2sdk.core.Core
-import com.mar2sdk.core.Core.userType
 import com.mar2sdk.core.log.ThinkingUtil
 
 /**
@@ -16,11 +15,16 @@ object RiskUtil {
 		judgeRiskIP()
 		judgeEcpm()
 		judgeUserType()
-		ThinkingUtil.setUserAttr("userType", userType.name)
+		ThinkingUtil.setUserAttr("userType", Core.userType.name)
 	}
 
 	// 请求IP信息
 	fun judgeRiskIP() {
+
+	}
+
+	// 包名校验 integrity
+	fun judgePackage() {
 
 	}
 
@@ -37,7 +41,7 @@ object RiskUtil {
 
 	// 用户分级
 	fun judgeUserType() {
-		if (UserInfo.riskIP || UserInfo.ecpmType == EcpmType.ECPM_0) {
+		if (UserInfo.riskIP || UserInfo.riskPackage || UserInfo.ecpmType == EcpmType.ECPM_0) {
 			Core.userType = UserType.RISK
 			return
 		}

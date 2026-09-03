@@ -1,6 +1,5 @@
 package com.mar2sdk.core.policy
 
-
 import com.mar2sdk.core.log.ThinkingUtil
 import com.mar2sdk.core.util.PreferenceUtil
 
@@ -20,6 +19,8 @@ object UserInfo {
 
 	//高风险IP
 	var riskIP = false
+	//高风险包
+	var riskPackage = false
 
 	fun init() {
 		//首次打开时间
@@ -37,6 +38,7 @@ object UserInfo {
 		campaignName = PreferenceUtil.getString(PolicyKey.KEY_CAMPAIGN_NAME, "unknow")
 
 		riskIP = PreferenceUtil.getBoolean(PolicyKey.KEY_RISK_IP, false)
+		riskPackage = PreferenceUtil.getBoolean(PolicyKey.KEY_RISK_PACKAGE, false)
 	}
 
 	fun saveUserInfo() {
@@ -45,6 +47,7 @@ object UserInfo {
 		PreferenceUtil.commitString(PolicyKey.KEY_CAMPAIGN_Id, campaignId)
 		PreferenceUtil.commitString(PolicyKey.KEY_CAMPAIGN_NAME, campaignName)
 		PreferenceUtil.commitBoolean(PolicyKey.KEY_RISK_IP, riskIP)
+		PreferenceUtil.commitBoolean(PolicyKey.KEY_RISK_PACKAGE, riskPackage)
 	}
 
 }

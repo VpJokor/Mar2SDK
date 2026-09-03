@@ -40,7 +40,6 @@ object RiskUtil {
 	}
 
 	fun judgeEcpm() {
-		if (UserInfo.ecpmType != EcpmType.ECPM_UNKNOW) return
 		if (UserInfo.firstAdRevenue == 0.0) {
 			UserInfo.ecpmType = EcpmType.ECPM_0
 		} else if (UserInfo.firstAdRevenue > PolicyConfig.highEcpm) {
@@ -48,7 +47,6 @@ object RiskUtil {
 		} else {
 			UserInfo.ecpmType = EcpmType.ECOM_COMMON
 		}
-		UserInfo.saveUserInfo()
 	}
 
 	// 用户分级

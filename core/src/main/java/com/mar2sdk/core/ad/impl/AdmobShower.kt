@@ -1,14 +1,9 @@
 package com.mar2sdk.core.ad.impl
 
 import android.app.Activity
-import android.os.Build
-import android.os.Handler
-import android.os.Looper
 import android.util.Log
 import com.google.android.gms.ads.AdError
-import com.google.android.gms.ads.AdValue
 import com.google.android.gms.ads.FullScreenContentCallback
-import com.google.android.gms.ads.LoadAdError
 import com.google.android.gms.ads.OnPaidEventListener
 import com.google.android.gms.ads.appopen.AppOpenAd
 import com.google.firebase.analytics.FirebaseAnalytics
@@ -24,9 +19,12 @@ import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.currentCoroutineContext
+import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.launch
-import kotlin.collections.component1
-import kotlin.collections.component2
+import kotlinx.coroutines.withContext
+import kotlinx.coroutines.withTimeoutOrNull
+import java.util.concurrent.atomic.AtomicBoolean
 
 /**
  * 开屏广告展示器
@@ -54,7 +52,7 @@ object AdmobShower {
 	 *  2. 如果广告池里没有广告且正在加载广告，则下一个广告加载完毕后立即展示(如果超时则放入广告池不展示)，并返回  AdShowStatus
 	 *  3. 如果广告池里没有广告且没有正在加载的广告，则开始加载广告，等广告加载完毕后立即展示(如果超时则放入广告池不展示)，并返回  AdShowStatus
 	 */
-	suspend fun showOpen(activity: Activity, callback: ShowCallback) : AppStatus {
+	suspend fun showOpen(activity: Activity, callback: ShowCallback): AdShowStatus = withContext(Dispatchers.Main.immediate) {
 		LogUtil.log(
 			LogAdEvent.ad_occur,
 			mapOf(
@@ -67,87 +65,69 @@ object AdmobShower {
 		if (AppStatus.isShowingAd) {
 			Log.e(TAG, "showOpen: AppStatus.isShowingAd" )
 			callback.showFailed(ShowFailResult.OTHER_AD_IS_SHOWING)
-			return
-		}
-		if (AdmobLoader.openShowCall != null) {
-			// 别的广告还在加载还没超时
-			Log.e(TAG, "showOpen: AdmobLoader.openShowCall is not null" )
-			callback.showFailed(ShowFailResult.OTHER_AD_IS_SHOWING)
-			return
+			return@withContext AdShowStatus.OTHER_AD_IS_SHOWING
 		}
 		//检查广告池广告是否过期
 		AdmobLoader.checkOpenPool()
 
 		//修改APP状态
 		AppStatus.isShowingAd = true
-		//超时处理相关变量定义
 		val startShowTime = System.currentTimeMillis()
-		var timeoutTask: Runnable? = null
-		// 定时器任务是否执行完毕，防止重复执行
-		var finished = false
-		val handler = Handler(Looper.getMainLooper())
 		var currentOpenAd: AppOpenAd? = null
+		val showFailed = AtomicBoolean(false)
+		var showCommitted = false
+
+		fun fail(failResult: ShowFailResult, showStatus: AdShowStatus = AdShowStatus.SHOW_FAIL): AdShowStatus {
+			if (showFailed.compareAndSet(false, true)) {
+				AppStatus.isShowingAd = false
+				callback.showFailed(failResult)
+			}
+			return showStatus
+		}
+
+		fun logShowEvent(eventName: String) {
+			LogUtil.log(
+				eventName,
+				mapOf(
+					LogAdParam.ad_platform to LogAdParam.ad_platform_admob,
+					LogAdParam.duration to (System.currentTimeMillis() - startShowTime),
+					LogAdParam.ad_areakey to callback.areaKey,
+					LogAdParam.ad_format to LogAdParam.ad_format_open,
+					LogAdParam.ad_source to (currentOpenAd?.responseInfo?.loadedAdapterResponseInfo?.adSourceName ?: LogAdParam.unknow),
+					LogAdParam.ad_unit_name to AdmobConfig.openID,
+					LogAdParam.ad_preload to true,
+				)
+			)
+		}
+
+		fun logShowEventSafely(eventName: String, errorMessage: String) {
+			try {
+				logShowEvent(eventName)
+			} catch (e: Exception) {
+				Log.e(TAG, errorMessage, e)
+			}
+		}
 
 		// INFO: 处理广告展示回调
 		val contentCallback = object : FullScreenContentCallback() {
 			override fun onAdFailedToShowFullScreenContent(p0: AdError) {
-				super.onAdFailedToShowFullScreenContent(p0)
-				LogUtil.log(
-					LogAdEvent.ad_show_fail,
-					mapOf(
-						LogAdParam.ad_platform to LogAdParam.ad_platform_admob,
-						LogAdParam.duration to (System.currentTimeMillis() - startShowTime),
-						LogAdParam.ad_areakey to callback.areaKey,
-						LogAdParam.ad_format to LogAdParam.ad_format_open,
-						LogAdParam.ad_source to (currentOpenAd?.responseInfo?.loadedAdapterResponseInfo?.adSourceName ?: LogAdParam.unknow),
-						LogAdParam.ad_unit_name to AdmobConfig.openID,
-						LogAdParam.ad_preload to true,
-					)
-				)
-				AppStatus.isShowingAd = false
-				callback.showFailed(ShowFailResult.FAILED_TO_SHOW_CONTENT)
+				logShowEventSafely(LogAdEvent.ad_show_fail, "Failed to log open ad show failure")
+				fail(ShowFailResult.FAILED_TO_SHOW_CONTENT)
 			}
 
 			override fun onAdDismissedFullScreenContent() {
-				super.onAdDismissedFullScreenContent()
-				LogUtil.log(
-					LogAdEvent.ad_close,
-					mapOf(
-						LogAdParam.ad_platform to LogAdParam.ad_platform_admob,
-						LogAdParam.duration to (System.currentTimeMillis() - startShowTime),
-						LogAdParam.ad_areakey to callback.areaKey,
-						LogAdParam.ad_format to LogAdParam.ad_format_open,
-						LogAdParam.ad_source to (currentOpenAd?.responseInfo?.loadedAdapterResponseInfo?.adSourceName ?: LogAdParam.unknow),
-						LogAdParam.ad_unit_name to AdmobConfig.openID,
-						LogAdParam.ad_preload to true,
-					)
-				)
-
+				logShowEventSafely(LogAdEvent.ad_close, "Failed to log open ad close")
 				AppStatus.isShowingAd = false
 				callback.onAdClosed()
 			}
 
 			override fun onAdImpression() {
-				super.onAdImpression()
 				// info: 处理展示
 				callback.showSuccess()
 			}
 
 			override fun onAdClicked() {
-				super.onAdClicked()
-				LogUtil.log(
-					LogAdEvent.ad_click,
-					mapOf(
-						LogAdParam.ad_platform to LogAdParam.ad_platform_admob,
-						LogAdParam.duration to (System.currentTimeMillis() - startShowTime),
-						LogAdParam.ad_areakey to callback.areaKey,
-						LogAdParam.ad_format to LogAdParam.ad_format_open,
-						LogAdParam.ad_source to (currentOpenAd?.responseInfo?.loadedAdapterResponseInfo?.adSourceName ?: LogAdParam.unknow),
-						LogAdParam.ad_unit_name to AdmobConfig.openID,
-						LogAdParam.ad_preload to true,
-					)
-				)
-
+				logShowEvent(LogAdEvent.ad_click)
 				callback.onClicked()
 			}
 		}
@@ -156,57 +136,39 @@ object AdmobShower {
 			Log.e(TAG, "showOpen: $adValue" )
 			// info: 处理收入打点
 			val revenue = adValue.valueMicros / 1_000_000.0
-			LogUtil.log(
-				LogAdEvent.ad_impression,
-				mapOf(
-					LogAdParam.ad_areakey to callback.areaKey,
-					FirebaseAnalytics.Param.AD_PLATFORM to LogAdParam.ad_platform_admob,
-					FirebaseAnalytics.Param.AD_UNIT_NAME to AdmobConfig.openID,
-					FirebaseAnalytics.Param.AD_FORMAT to LogAdParam.ad_format_open,
-					FirebaseAnalytics.Param.AD_SOURCE to (currentOpenAd?.responseInfo?.loadedAdapterResponseInfo?.adSourceName ?: LogAdParam.unknow),
-					FirebaseAnalytics.Param.CURRENCY to adValue.currencyCode,
-					FirebaseAnalytics.Param.VALUE to revenue,
-					LogAdParam.ad_preload to true,
-				)
+			val revenueParams = mapOf(
+				LogAdParam.ad_areakey to callback.areaKey,
+				FirebaseAnalytics.Param.AD_PLATFORM to LogAdParam.ad_platform_admob,
+				FirebaseAnalytics.Param.AD_UNIT_NAME to AdmobConfig.openID,
+				FirebaseAnalytics.Param.AD_FORMAT to LogAdParam.ad_format_open,
+				FirebaseAnalytics.Param.AD_SOURCE to (currentOpenAd?.responseInfo?.loadedAdapterResponseInfo?.adSourceName ?: LogAdParam.unknow),
+				FirebaseAnalytics.Param.CURRENCY to adValue.currencyCode,
+				FirebaseAnalytics.Param.VALUE to revenue,
+				LogAdParam.ad_preload to true,
 			)
-			LogUtil.log(
-				LogAdEvent.ad_revenue,
-				mapOf(
-					LogAdParam.ad_areakey to callback.areaKey,
-					FirebaseAnalytics.Param.AD_PLATFORM to LogAdParam.ad_platform_admob,
-					FirebaseAnalytics.Param.AD_UNIT_NAME to AdmobConfig.openID,
-					FirebaseAnalytics.Param.AD_FORMAT to LogAdParam.ad_format_open,
-					FirebaseAnalytics.Param.AD_SOURCE to (currentOpenAd?.responseInfo?.loadedAdapterResponseInfo?.adSourceName ?: LogAdParam.unknow),
-					FirebaseAnalytics.Param.CURRENCY to adValue.currencyCode,
-					FirebaseAnalytics.Param.VALUE to revenue,
-					LogAdParam.ad_preload to true,
-				)
-			)
+			LogUtil.log(LogAdEvent.ad_impression, revenueParams)
+			LogUtil.log(LogAdEvent.ad_revenue, revenueParams)
 			LogUtil.logSingularAdRevenue(LogAdParam.adMob, revenue)
 			callback.onPaid()
 		}
 
-		fun show(ad: AppOpenAd) {
+		suspend fun show(ad: AppOpenAd): AdShowStatus {
+			currentCoroutineContext().ensureActive()
 			currentOpenAd = ad
 			if (activity.isFinishing || activity.isDestroyed) {
-				AppStatus.isShowingAd = false
-				callback.showFailed(ShowFailResult.ACTIVITY_IS_FINISHING)
-				return
+				return fail(ShowFailResult.ACTIVITY_IS_FINISHING)
 			}
-			// 广告只能展示一次，展示前从池中移除
-			AdmobLoader.openPool.remove(ad)
-			ad.fullScreenContentCallback = contentCallback
-			ad.onPaidEventListener = paidCallback
-			try {
+			showCommitted = true
+			val showStatus = try {
+				// 广告只能展示一次，展示前从池中移除
+				AdmobLoader.openPool.remove(ad)
+				ad.fullScreenContentCallback = contentCallback
+				ad.onPaidEventListener = paidCallback
 				ad.show(activity)
+				if (showFailed.get()) AdShowStatus.SHOW_FAIL else AdShowStatus.SHOW_SUCCESS
 			} catch (e: Exception) {
 				Log.e(TAG, "show: ", e)
-				AppStatus.isShowingAd = false
-				// 移除超时定时器
-				timeoutTask?.let {
-					handler.removeCallbacks(it)
-				}
-				callback.showFailed(ShowFailResult.SHOW_AD_EXCEPTION)
+				fail(ShowFailResult.SHOW_AD_EXCEPTION)
 			}
 			adScope.launch {
 				try {
@@ -219,91 +181,50 @@ object AdmobShower {
 					Log.e(TAG, "Failed to preload open ad: ", e)
 				}
 			}
+			return showStatus
 		}
 
-		val cachedAd = AdmobLoader.openPool.keys.firstOrNull()
-		if (cachedAd != null) {
-			show(cachedAd)
-			return
-		}
-
-		val currentOpenCallback = object : AdmobLoader.OpenCallback {
-			override var usedBy: String? = TAG
-			override fun onLoaded(ad: AppOpenAd) {
-				// 移除超时定时器
-				timeoutTask?.let {
-					handler.removeCallbacks(it)
-				}
-				if (System.currentTimeMillis() - startShowTime > showOpenTimeout) {
-					// 展示超时
-					AppStatus.isShowingAd = false
-				} else {
-					show(ad)
-				}
-			}
-			override fun onLoadFailed(err: LoadAdError) {
-				Log.e(TAG, "Open ad load failed: ${err.message}")
-				// 移除超时定时器
-				timeoutTask?.let {
-					handler.removeCallbacks(it)
-				}
-				AppStatus.isShowingAd = false
-				callback.showFailed(ShowFailResult.LOAD_FAILED)
-			}
-		}
-		AdmobLoader.openShowCall = currentOpenCallback
-
-		// 启动定时器计算超时，广告展示超时就移除加载展示回调
-		 timeoutTask = Runnable {
-			if (finished) return@Runnable
-			finished = true
-			LogUtil.log(
-				 LogAdEvent.ad_show_timeout,
-				 mapOf(
-					 LogAdParam.ad_platform to LogAdParam.ad_platform_admob,
-					 LogAdParam.duration to (System.currentTimeMillis() - startShowTime),
-					 LogAdParam.ad_areakey to callback.areaKey,
-					 LogAdParam.ad_format to LogAdParam.ad_format_open,
-					 LogAdParam.ad_source to (currentOpenAd?.responseInfo?.loadedAdapterResponseInfo?.adSourceName ?: LogAdParam.unknow),
-					 LogAdParam.ad_unit_name to AdmobConfig.openID,
-					 LogAdParam.ad_preload to true,
-				 )
-			 )
-			if (AdmobLoader.openShowCall === currentOpenCallback) {
-				AdmobLoader.openShowCall = null
-			}
-			AppStatus.isShowingAd = false
-			callback.showFailed(ShowFailResult.LOAD_TIMEOUT)
-		}
-		handler.postDelayed(timeoutTask, showOpenTimeout)
-		adScope.launch {
-			try {
-				val loadStatus = AdmobLoader.loadOpen(areaKey = callback.areaKey)
-				if (
-					loadStatus == AdLoadStatus.LOAD_FAIL &&
-					AdmobLoader.openShowCall === currentOpenCallback
-				) {
-					AdmobLoader.openShowCall = null
-					timeoutTask.let {
-						handler.removeCallbacks(it)
+		try {
+			val openAd = AdmobLoader.openPool.keys.firstOrNull() ?: when (
+				val loadResult = try {
+					withTimeoutOrNull(showOpenTimeout) {
+						AdmobLoader.loadOpenResult(areaKey = callback.areaKey)
 					}
-					AppStatus.isShowingAd = false
-					callback.showFailed(ShowFailResult.LOAD_AD_EXCEPTION)
+				} catch (e: CancellationException) {
+					throw e
+				} catch (e: Exception) {
+					AdmobLoader.OpenLoadResult.Failed(exception = e)
 				}
-			} catch (e: CancellationException) {
-				throw e
-			} catch (e: Exception) {
-				// INFO: 处理抛出的异常
-				Log.e(TAG, "showOpen: ", e)
-				if (AdmobLoader.openShowCall === currentOpenCallback) {
-					AdmobLoader.openShowCall = null
+			) {
+				null -> {
+					logShowEventSafely(LogAdEvent.ad_show_timeout, "Failed to log open ad timeout")
+					return@withContext fail(ShowFailResult.LOAD_TIMEOUT, AdShowStatus.TIMEOUT)
 				}
-				timeoutTask.let {
-					handler.removeCallbacks(it)
+				is AdmobLoader.OpenLoadResult.Loaded -> loadResult.ad
+				is AdmobLoader.OpenLoadResult.Failed -> {
+					val failResult = if (loadResult.loadError != null) {
+						Log.e(TAG, "Open ad load failed: ${loadResult.loadError.message}")
+						ShowFailResult.LOAD_FAILED
+					} else {
+						loadResult.exception?.let {
+							Log.e(TAG, "showOpen: ", it)
+						}
+						ShowFailResult.LOAD_AD_EXCEPTION
+					}
+					return@withContext fail(failResult, AdShowStatus.LOAD_FAIL)
 				}
-				AppStatus.isShowingAd = false
-				callback.showFailed(ShowFailResult.LOAD_AD_EXCEPTION)
+				AdmobLoader.OpenLoadResult.PoolFull ->
+					AdmobLoader.openPool.keys.firstOrNull() ?: return@withContext fail(
+						ShowFailResult.LOAD_AD_EXCEPTION,
+						AdShowStatus.LOAD_FAIL,
+					)
 			}
+			show(openAd)
+		} catch (e: CancellationException) {
+			if (!showCommitted) {
+				AppStatus.isShowingAd = false
+			}
+			throw e
 		}
 	}
 

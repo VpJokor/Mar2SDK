@@ -1,9 +1,6 @@
 package com.mar2sdk.core.ad.impl
 
-import android.R
 import android.util.Log
-import com.chartboost.sdk.impl.fa
-import com.chartboost.sdk.impl.fi
 import com.google.android.gms.ads.AdRequest
 import com.google.android.gms.ads.LoadAdError
 import com.google.android.gms.ads.appopen.AppOpenAd
@@ -16,6 +13,7 @@ import com.mar2sdk.core.ad.status.AdLoadStatus
 import com.mar2sdk.core.log.LogAdEvent
 import com.mar2sdk.core.log.LogAdParam
 import com.mar2sdk.core.log.LogUtil
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
@@ -30,7 +28,17 @@ import kotlinx.coroutines.withContext
 object AdmobLoader {
 	private const val TAG = "AdmobLoader"
 
-	var openShowCall: OpenCallback? = null
+	internal sealed interface OpenLoadResult {
+		data class Loaded(val ad: AppOpenAd) : OpenLoadResult
+		data class Failed(
+			val loadError: LoadAdError? = null,
+			val exception: Exception? = null,
+		) : OpenLoadResult
+		data object PoolFull : OpenLoadResult
+	}
+
+	// 展示等待超时后不取消实际加载，加载完成的广告仍然放入广告池
+	private var openLoadDeferred: CompletableDeferred<OpenLoadResult>? = null
 
 	// 广告池，里面放已经加载成功的广告
 	val openPool = mutableMapOf<AppOpenAd, Long>()
@@ -93,8 +101,58 @@ object AdmobLoader {
 		if (isLoadingOpen) return@withContext AdLoadStatus.IS_LOADING
 		// 检查广告池是否满
 		if (openPool.size >= AdmobConfig.openPoolSize) return@withContext AdLoadStatus.POOL_FULL
+
+		when (startOpenLoad(areaKey).await()) {
+			is OpenLoadResult.Loaded -> AdLoadStatus.LOAD_SUCCESS
+			is OpenLoadResult.Failed -> AdLoadStatus.LOAD_FAIL
+			OpenLoadResult.PoolFull -> AdLoadStatus.POOL_FULL
+		}
+	}
+
+	internal suspend fun loadOpenResult(areaKey: String = "preload"): OpenLoadResult = withContext(Dispatchers.Main.immediate) {
+		// 检查过期广告
+		checkOpenPool()
+		openLoadDeferred?.let { return@withContext it.await() }
+		// 检查广告池是否满
+		if (openPool.size >= AdmobConfig.openPoolSize) return@withContext OpenLoadResult.PoolFull
+		startOpenLoad(areaKey).await()
+	}
+
+	private fun startOpenLoad(areaKey: String): CompletableDeferred<OpenLoadResult> {
+		val loadDeferred = CompletableDeferred<OpenLoadResult>()
+		openLoadDeferred = loadDeferred
+		isLoadingOpen = true
+		try {
+			logOpenLoad(LogAdEvent.ad_start_loading, areaKey)
+			val loadCallback = object : AppOpenAd.AppOpenAdLoadCallback() {
+				override fun onAdLoaded(openAd: AppOpenAd) {
+					try {
+						logOpenLoad(LogAdEvent.ad_finish_loading, areaKey)
+					} catch (error: Exception) {
+						Log.e(TAG, "Failed to log loaded open ad", error)
+					}
+					try {
+						openPool[openAd] = System.currentTimeMillis()
+					} finally {
+						completeOpenLoad(loadDeferred, OpenLoadResult.Loaded(openAd))
+					}
+				}
+
+				override fun onAdFailedToLoad(loadAdError: LoadAdError) {
+					completeOpenLoad(loadDeferred, OpenLoadResult.Failed(loadError = loadAdError))
+				}
+			}
+			AppOpenAd.load(Core.app, AdmobConfig.openID, AdRequest.Builder().build(), loadCallback)
+		} catch (error: Exception) {
+			Log.e(TAG, "Failed to start loading open ad", error)
+			completeOpenLoad(loadDeferred, OpenLoadResult.Failed(exception = error))
+		}
+		return loadDeferred
+	}
+
+	private fun logOpenLoad(eventName: String, areaKey: String) {
 		LogUtil.log(
-			LogAdEvent.ad_start_loading,
+			eventName,
 			mapOf(
 				LogAdParam.ad_platform to LogAdParam.ad_platform_admob,
 				LogAdParam.ad_areakey to areaKey,
@@ -103,58 +161,17 @@ object AdmobLoader {
 				LogAdParam.ad_preload to (areaKey == "preload"),
 			)
 		)
-		// 开始加载开屏广告
-		isLoadingOpen = true
-		suspendCancellableCoroutine { continuation ->
-			try {
-				val loadCallback = object : AppOpenAd.AppOpenAdLoadCallback() {
-					override fun onAdLoaded(openAd: AppOpenAd) {
-						isLoadingOpen = false
-						try {
-							LogUtil.log(
-								LogAdEvent.ad_finish_loading,
-								mapOf(
-									LogAdParam.ad_platform to LogAdParam.ad_platform_admob,
-									LogAdParam.ad_areakey to areaKey,
-									LogAdParam.ad_format to LogAdParam.ad_format_open,
-									LogAdParam.ad_unit_name to AdmobConfig.openID,
-									LogAdParam.ad_preload to (areaKey == "preload"),
-								)
-							)
-							openPool[openAd] = System.currentTimeMillis()
-							// 接口回调供展示用
-							val callback = openShowCall
-							openShowCall = null
-							callback?.onLoaded(openAd)
-						} finally {
-							if (continuation.isActive) {
-								continuation.resumeWith(Result.success(AdLoadStatus.LOAD_SUCCESS))
-							}
-						}
-					}
+	}
 
-					override fun onAdFailedToLoad(loadAdError: LoadAdError) {
-						isLoadingOpen = false
-						try {
-							val callback = openShowCall
-							openShowCall = null
-							callback?.onLoadFailed(loadAdError)
-						} finally {
-							if (continuation.isActive) {
-								continuation.resumeWith(Result.success(AdLoadStatus.LOAD_FAIL))
-							}
-						}
-					}
-				}
-				AppOpenAd.load(Core.app, AdmobConfig.openID, AdRequest.Builder().build(), loadCallback)
-			} catch (error: Exception) {
-				Log.e(TAG, "Failed to start loading open ad", error)
-				isLoadingOpen = false
-				if (continuation.isActive) {
-					continuation.resumeWith(Result.success(AdLoadStatus.LOAD_FAIL))
-				}
-			}
+	private fun completeOpenLoad(
+		loadDeferred: CompletableDeferred<OpenLoadResult>,
+		result: OpenLoadResult,
+	) {
+		if (openLoadDeferred === loadDeferred) {
+			openLoadDeferred = null
+			isLoadingOpen = false
 		}
+		loadDeferred.complete(result)
 	}
 
 	// 加载插屏
@@ -302,11 +319,4 @@ object AdmobLoader {
 		}
 	}
 
-	interface OpenCallback {
-		var usedBy: String?
-		//加载成功
-		fun onLoaded(ad: AppOpenAd)
-		//加载失败
-		fun onLoadFailed(err: LoadAdError)
-	}
 }

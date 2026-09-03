@@ -5,6 +5,7 @@ import com.mar2sdk.core.firebase.FirebaseConfig
 import com.mar2sdk.core.firebase.SingularConfig
 import com.mar2sdk.core.log.ThinkingConfig
 import com.mar2sdk.core.policy.PolicyConfig
+import com.mar2sdk.core.policy.RiskUtil
 import com.mar2sdk.core.policy.UserInfo
 import com.mar2sdk.core.util.PreferenceUtil
 
@@ -28,7 +29,8 @@ object Config {
 	}
 
 	fun initPolicyConfig() {
-		PolicyConfig
+		PolicyConfig.init()
+		RiskUtil.init()
 	}
 
 	fun initAdmobConfig() {

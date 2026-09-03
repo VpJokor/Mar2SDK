@@ -30,6 +30,7 @@ object UserInfo {
 		}
 		//首次广告收入
 		firstAdRevenue = PreferenceUtil.getDouble(PolicyKey.KEY_FIRST_AD_Revenue, 0.0)
+
 		network = PreferenceUtil.getString(PolicyKey.KEY_NETWORK, "unknow")
 		campaignId = PreferenceUtil.getString(PolicyKey.KEY_CAMPAIGN_Id, "unknow")
 		campaignName = PreferenceUtil.getString(PolicyKey.KEY_CAMPAIGN_NAME, "unknow")

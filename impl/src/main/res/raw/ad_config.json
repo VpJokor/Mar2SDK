@@ -1,3 +1,4 @@
 {
-
+  "defaultPlatform": "ADMOB",
+  "activePlatforms": ["TRADPLUS"]
 }

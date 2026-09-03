@@ -1,5 +1,5 @@
 package com.mar2sdk.core.policy
 
 object PolicyConfig {
-	var highUserEcpm = 1000f
+	var highEcpm = 1000f
 }

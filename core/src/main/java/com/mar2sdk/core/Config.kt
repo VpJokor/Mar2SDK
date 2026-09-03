@@ -12,6 +12,7 @@ import com.mar2sdk.core.policy.PolicyConfig
 object Config {
 
 	fun initConfig() {
+		initPolicyConfig()
 		initAdmobConfig()
 		initFirebaseConfig()
 		initSingularConfig()

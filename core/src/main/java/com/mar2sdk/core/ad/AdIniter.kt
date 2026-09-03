@@ -18,16 +18,22 @@ object AdIniter {
 	}
 
 	fun initDefault() {
-		when(AdConfig.defaultPlatform) {
+		initAd(AdConfig.defaultPlatform)
+	}
+
+	fun initActives() {
+		AdConfig.activePlatforms.forEach { adPlatform ->
+			initAd(adPlatform)
+		}
+	}
+
+	fun initAd(adPlatform: AdPlatform) {
+		when(adPlatform) {
 			AdPlatform.ADMOB -> AdmobIniter.init()
 			AdPlatform.MAX -> MaxIniter.init()
 			AdPlatform.TOPON -> ToponIniter.init()
 			AdPlatform.TRADPLUS -> TradplusIniter.init()
 			AdPlatform.UNITY -> UnityIniter.init()
 		}
-	}
-
-	fun initActives() {
-
 	}
 }

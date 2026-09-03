@@ -3,6 +3,7 @@ package com.mar2sdk.core.firebase
 import android.util.Log
 import cn.thinkingdata.analytics.TDAnalytics
 import com.mar2sdk.core.Core
+import com.mar2sdk.core.policy.RiskUtil
 import com.mar2sdk.core.policy.UserInfo
 import com.singular.sdk.Singular
 import org.json.JSONException
@@ -24,6 +25,12 @@ object SingularUtil {
 					val campaignName = attributionData["campaign_name"]?.toString()?.takeIf { it.isNotEmpty() }
 					Log.e(TAG, "init: Singular初始化成功 network = $network")
 
+					UserInfo.network = network
+					UserInfo.campaignId = campaignId ?: "unknow"
+					UserInfo.campaignName = campaignName ?: "unknow"
+					UserInfo.saveUserInfo()
+					RiskUtil.judgeUserType()
+
 					promoteParams.put("network", network)
 					campaignId?.let {
 						promoteParams.put("campaign_id", it)
@@ -31,9 +38,6 @@ object SingularUtil {
 					campaignName?.let {
 						promoteParams.put("campaign_name", it)
 					}
-					UserInfo.network = network
-					UserInfo.campaignId = campaignId ?: "unknow"
-					UserInfo.campaignName = campaignName ?: "unknow"
 					// network 为空或 organic 时按自然量处理；测试环境固定为非自然量，方便走广告分支。
 					promoteParams.put("fromNature", network.equals("organic", ignoreCase = true) || network.isEmpty())
 					TDAnalytics.userSet(promoteParams)

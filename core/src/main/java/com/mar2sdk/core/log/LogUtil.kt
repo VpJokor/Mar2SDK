@@ -34,6 +34,7 @@ object LogUtil {
 			) {
 				if (UserInfo.firstAdRevenue == 0.0) {
 					UserInfo.firstAdRevenue = (params[FirebaseAnalytics.Param.VALUE] as? Number)?.toDouble() ?: 0.0
+					ThinkingUtil.setUserOnceAttr("firstAdRevenue", UserInfo.firstAdRevenue.toString())
 					UserInfo.saveUserInfo()
 					RiskUtil.judgeRisk()
 				}

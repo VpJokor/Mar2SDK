@@ -1,6 +1,7 @@
 package com.mar2sdk.core.policy
 
 
+import com.mar2sdk.core.log.ThinkingUtil
 import com.mar2sdk.core.util.PreferenceUtil
 
 object UserInfo {
@@ -26,6 +27,7 @@ object UserInfo {
 		if (firstOpenTime == 0L) {
 			firstOpenTime = System.currentTimeMillis()
 			PreferenceUtil.commitLong(PolicyKey.KEY_FIRST_OPEN_TIME, firstOpenTime)
+			ThinkingUtil.setUserOnceAttr("firstOpenTime", firstOpenTime.toString())
 		}
 		//首次广告收入
 		firstAdRevenue = PreferenceUtil.getDouble(PolicyKey.KEY_FIRST_AD_Revenue, -1.0)

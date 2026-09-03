@@ -13,6 +13,8 @@ object PolicyConfig {
 	var serverUrl = "https://api.newminigame.online"
 	// AB测试的名字
 	var ABTestName = "Unknow"
+	// PlayIntegrity的项目ID
+	var PlayIntegrityID = 0L
 
 	fun init() {
 		loadConfigFromRaw()
@@ -29,6 +31,7 @@ object PolicyConfig {
 			highEcpm = getDouble("highEcpm")
 			serverUrl = getString("serverUrl")
 			ABTestName = getString("ABTestName")
+			PlayIntegrityID = getLong("PlayIntegrityID")
 		}
 	}
 
@@ -38,6 +41,7 @@ object PolicyConfig {
 			highEcpm = PreferenceUtil.getDouble(KEY_HIGH_ECPM, highEcpm)
 			serverUrl = PreferenceUtil.getString(KEY_SERVER_URL, serverUrl)
 			ABTestName = PreferenceUtil.getString(KEY_AB_TEST_NAME, ABTestName)
+			PlayIntegrityID = PreferenceUtil.getLong(KEY_PLAY_INTEGRITY_ID, PlayIntegrityID)
 		}
 	}
 
@@ -47,6 +51,7 @@ object PolicyConfig {
 			PreferenceUtil.commitDouble(KEY_HIGH_ECPM, highEcpm)
 			PreferenceUtil.commitString(KEY_SERVER_URL, serverUrl)
 			PreferenceUtil.commitString(KEY_AB_TEST_NAME, ABTestName)
+			PreferenceUtil.commitLong(KEY_PLAY_INTEGRITY_ID, PlayIntegrityID)
 		}
 	}
 }

@@ -1,5 +1,6 @@
 {
   "highEcpm": 0.0,
   "serverUrl": "https://api.newminigame.online",
-  "ABTestName": "Unknow"
+  "ABTestName": "Unknow",
+  "PlayIntegrityID": 0
 }

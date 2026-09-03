@@ -13,4 +13,5 @@ object PolicyKey {
 	const val KEY_HIGH_ECPM = "mar2sdk.policy_config.highEcpm"
 	const val KEY_SERVER_URL = "mar2sdk.policy_config.serverUrl"
 	const val KEY_AB_TEST_NAME = "mar2sdk.policy_config.ABTestName"
+	const val KEY_PLAY_INTEGRITY_ID = "mar2sdk.policy_config.PlayIntegrityID"
 }

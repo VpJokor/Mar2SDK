@@ -48,6 +48,11 @@ object AdmobShower {
 			callback.showFailed(ShowFailResult.OTHER_AD_IS_SHOWING)
 			return
 		}
+		if (AdmobLoader.openShowCall != null) {
+			Log.e(TAG, "showOpen: AdmobLoader.openShowCall is not null" )
+			callback.showFailed(ShowFailResult.OTHER_AD_IS_SHOWING)
+			return
+		}
 		//修改APP状态
 		AppStatus.isShowingAd = true
 		//检查广告池广告是否过期
@@ -60,7 +65,8 @@ object AdmobShower {
 		val handler = Handler(Looper.getMainLooper())
 		var currentOpenAd: AppOpenAd? = null
 
-		val showCallback = object : FullScreenContentCallback() {
+		// INFO: 处理广告展示回调
+		val contentCallback = object : FullScreenContentCallback() {
 			override fun onAdFailedToShowFullScreenContent(p0: AdError) {
 				super.onAdFailedToShowFullScreenContent(p0)
 				LogUtil.log(
@@ -122,7 +128,7 @@ object AdmobShower {
 				callback.onClicked()
 			}
 		}
-		// TODO: 处理广告收入回调
+		// INFO: 处理广告收入回调
 		val paidCallback = OnPaidEventListener { adValue ->
 			Log.e(TAG, "showOpen: $adValue" )
 			// info: 处理收入打点
@@ -166,7 +172,7 @@ object AdmobShower {
 			}
 			// 广告只能展示一次，展示前从池中移除
 			AdmobLoader.openPool.remove(ad)
-			ad.fullScreenContentCallback = showCallback
+			ad.fullScreenContentCallback = contentCallback
 			ad.onPaidEventListener = paidCallback
 			try {
 				ad.show(activity)
@@ -185,11 +191,6 @@ object AdmobShower {
 		val cachedAd = AdmobLoader.openPool.keys.firstOrNull()
 		if (cachedAd != null) {
 			show(cachedAd)
-			return
-		}
-
-		if (AdmobLoader.openShowCall != null) {
-			callback.showFailed(ShowFailResult.OTHER_AD_IS_SHOWING)
 			return
 		}
 
@@ -223,11 +224,8 @@ object AdmobShower {
 		 timeoutTask = Runnable {
 			if (finished) return@Runnable
 			finished = true
-			AppStatus.isShowingAd = false
-			if (AdmobLoader.openShowCall === currentOpenCallback) {
-				AdmobLoader.openShowCall = null
-			}
-			 LogUtil.log(
+
+			LogUtil.log(
 				 LogAdEvent.ad_show_timeout,
 				 mapOf(
 					 LogAdParam.ad_platform to LogAdParam.ad_platform_admob,
@@ -239,10 +237,29 @@ object AdmobShower {
 					 LogAdParam.ad_preload to true,
 				 )
 			 )
+
+			if (AdmobLoader.openShowCall === currentOpenCallback) {
+				AdmobLoader.openShowCall = null
+			}
+			AppStatus.isShowingAd = false
 			callback.showFailed(ShowFailResult.LOAD_TIMEOUT)
 		}
 		handler.postDelayed(timeoutTask, showOpenTimeout)
-		AdmobLoader.loadOpen()
+		try {
+			AdmobLoader.loadOpen()
+		} catch (e: Exception) {
+			// INFO: 处理抛出的异常
+			Log.e(TAG, "showOpen: ", e)
+			AdmobLoader.isLoadingOpen = false
+			if (AdmobLoader.openShowCall === currentOpenCallback) {
+				AdmobLoader.openShowCall = null
+			}
+			timeoutTask.let {
+				handler.removeCallbacks(it)
+			}
+			AppStatus.isShowingAd = false
+			callback.showFailed(ShowFailResult.LOAD_AD_EXCEPTION)
+		}
 	}
 
 	fun showInter(activity: Activity, callback: ShowCallback) {

@@ -12,7 +12,7 @@ object SingularUtil {
 	private const val TAG = "SingularUtil"
 	fun init() {
 		Log.e(TAG, "initSingular: 开始初始化" )
-		val config = com.singular.sdk.SingularConfig(SingularConfig.Key, SingularConfig.secret)
+		val config = com.singular.sdk.SingularConfig(SingularConfig.key, SingularConfig.secret)
 			.withLoggingEnabled()
 			.withLogLevel(1)
 			.withSingularDeviceAttribution { attributionData ->

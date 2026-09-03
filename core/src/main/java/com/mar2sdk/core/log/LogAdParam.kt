@@ -21,9 +21,10 @@ object LogAdParam {
 	const val ad_format = "format"
 	const val ad_format_open = "open"
 	const val ad_format_inter = "inter"
+	const val ad_format_video = "video"
+
 	const val ad_format_banner = "merc"
 	const val ad_format_native = "native"
-	const val ad_format_rewarded = "rewarded"
 	const val ad_source = "ad_source"
 	const val ad_unit_name = "ad_unit_name"
 	const val ad_reward_type = "reward_type"

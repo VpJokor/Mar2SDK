@@ -8,6 +8,7 @@ import com.google.firebase.analytics.FirebaseAnalytics
 import com.mar2sdk.core.AppMod
 import com.mar2sdk.core.Core
 import com.mar2sdk.core.firebase.SingularConfig
+import com.mar2sdk.core.policy.RiskUtil
 import com.singular.sdk.Singular
 import com.singular.sdk.SingularAdData
 import org.json.JSONObject
@@ -25,7 +26,13 @@ object LogUtil {
 		logThinking(eventName, params)
 		
 		if (eventName == LogAdEvent.ad_revenue) {
-			// TODO: 判断ecpmType
+			if (
+				(params[FirebaseAnalytics.Param.AD_FORMAT] as? String).equals(LogAdParam.ad_format_open) ||
+				(params[FirebaseAnalytics.Param.AD_FORMAT] as? String).equals(LogAdParam.ad_format_inter) ||
+				(params[FirebaseAnalytics.Param.AD_FORMAT] as? String).equals(LogAdParam.ad_format_video)
+			) {
+				RiskUtil.judgeEcpm((params[FirebaseAnalytics.Param.VALUE] as? Number)?.toDouble() ?: 0.0)
+			}
 		}
 	}
 

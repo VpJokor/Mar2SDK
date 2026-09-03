@@ -10,15 +10,17 @@ import com.mar2sdk.core.ad.status.AdPlatform
 object AdShower {
 	fun showOpen(activity: Activity, callback: ShowCallback) {
 		callback.adPlatform = AdPlatform.ADMOB
-		AdmobShower.showOpen(activity, callback)
+//		AdmobShower.showOpen(activity, callback)
 	}
 
 	fun showInter(activity: Activity, callback: ShowCallback) {
-		AdmobShower.showInter(activity, callback)
+		callback.adPlatform = AdPlatform.ADMOB
+//		AdmobShower.showInter(activity, callback)
 	}
 
 	fun showVideo(activity: Activity, callback: ShowCallback) {
-		AdmobShower.showVideo(activity, callback)
+		callback.adPlatform = AdPlatform.ADMOB
+//		AdmobShower.showVideo(activity, callback)
 	}
 
 }

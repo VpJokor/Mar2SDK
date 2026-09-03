@@ -36,6 +36,7 @@ class DebugActivity : AppCompatActivity() {
 		findViewById<TextView>(R.id.user_type).text = Core.userType.name
 		findViewById<TextView>(R.id.risk_ip).text = UserInfo.riskIP.name
 		findViewById<TextView>(R.id.risk_package).text = UserInfo.riskPackage.name
+		findViewById<TextView>(R.id.ecpm_type).text = UserInfo.ecpmType.name
 		Toast.makeText(this,"刷新成功", Toast.LENGTH_LONG).show()
 	}
 }

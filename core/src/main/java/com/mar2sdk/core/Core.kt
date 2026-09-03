@@ -39,6 +39,8 @@ object Core {
 		ThinkingUtil.init()
 		// 风控辅助初始化
 		RiskUtil.init()
+		// 设置用户属性
+		setUserParams()
 	}
 
 	// 展示开屏
@@ -55,6 +57,11 @@ object Core {
 	// 展示视频
 	suspend fun showVideo(activity: Activity, callback: ShowCallback) {
 		AdShower.showVideo(activity, callback)
+	}
+
+	private fun setUserParams() {
+		ThinkingUtil.setUserOnceAttr("appMod", appMod.name)
+		ThinkingUtil.setUserAttr("userType", userType.name)
 	}
 
 }

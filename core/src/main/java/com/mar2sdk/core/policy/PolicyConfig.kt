@@ -7,7 +7,10 @@ import org.json.JSONObject
 
 //Policy的配置
 object PolicyConfig {
+	// 高ecpm阈值
 	var highEcpm = 10.0
+	// 服务端的Url
+	var serverUrl = "https://api.newminigame.online"
 
 	fun init() {
 		loadConfigFromRaw()
@@ -22,6 +25,7 @@ object PolicyConfig {
 
 		with(config) {
 			highEcpm = getDouble("highEcpm")
+			serverUrl = getString("serverUrl")
 		}
 	}
 
@@ -29,6 +33,7 @@ object PolicyConfig {
 	fun loadConfigFromPreference() {
 		with(PolicyKey) {
 			highEcpm = PreferenceUtil.getDouble(KEY_HIGH_ECPM, highEcpm)
+			serverUrl = PreferenceUtil.getString(KEY_SERVER_URL, serverUrl)
 		}
 	}
 
@@ -36,6 +41,7 @@ object PolicyConfig {
 	fun savePolicyConfig() {
 		with(PolicyKey) {
 			PreferenceUtil.commitDouble(KEY_HIGH_ECPM, highEcpm)
+			PreferenceUtil.commitString(KEY_SERVER_URL, serverUrl)
 		}
 	}
 }

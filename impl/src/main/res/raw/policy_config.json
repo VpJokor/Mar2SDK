@@ -1,3 +1,4 @@
 {
-  "highEcpm": 0.0
+  "highEcpm": 0.0,
+  "serverUrl": "https://api.newminigame.online"
 }

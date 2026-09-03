@@ -10,4 +10,5 @@ object PolicyKey {
 	const val KEY_RISK_IP = "mar2sdk.user_info.riskIP"
 
 	const val KEY_HIGH_ECPM = "mar2sdk.policy_config.highEcpm"
+	const val KEY_SERVER_URL = "mar2sdk.policy_config.serverUrl"
 }

@@ -10,6 +10,9 @@ object ThinkingConfig {
 	var key = ""
 	var url = ""
 
+	// 用户首次打开APP后多久不再上报日志，单位小时(默认48小时)
+	var logEndTime = 48
+
 	fun init() {
 		loadConfigFromRaw()
 		loadConfigFromPreference()
@@ -24,6 +27,7 @@ object ThinkingConfig {
 		with(config) {
 			key = getString("key")
 			url = getString("url")
+			logEndTime = getInt("logEndTime")
 		}
 	}
 
@@ -32,6 +36,7 @@ object ThinkingConfig {
 		with(ThinkingKey) {
 			key = PreferenceUtil.getString(KEY_KEY, key)
 			url = PreferenceUtil.getString(KEY_URL, url)
+			logEndTime = PreferenceUtil.getInt(KEY_LOG_END_TIME, logEndTime)
 		}
 	}
 
@@ -40,6 +45,7 @@ object ThinkingConfig {
 		with(ThinkingKey) {
 			PreferenceUtil.commitString(KEY_KEY, key)
 			PreferenceUtil.commitString(KEY_URL, url)
+			PreferenceUtil.commitInt(KEY_LOG_END_TIME, logEndTime)
 		}
 	}
 }

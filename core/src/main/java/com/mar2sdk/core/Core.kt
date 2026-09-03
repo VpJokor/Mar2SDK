@@ -6,6 +6,7 @@ import com.mar2sdk.core.ad.AdIniter
 import com.mar2sdk.core.ad.AdShower
 import com.mar2sdk.core.ad.callback.ShowCallback
 import com.mar2sdk.core.ad.status.AdFormat
+import com.mar2sdk.core.ad.status.AdShowStatus
 import com.mar2sdk.core.firebase.FirebaseUtil
 import com.mar2sdk.core.firebase.SingularUtil
 import com.mar2sdk.core.log.ThinkingUtil
@@ -40,18 +41,18 @@ object Core {
 	}
 
 	// 展示开屏
-	suspend fun showOpen(activity: Activity, callback: ShowCallback) {
+	suspend fun showOpen(activity: Activity, callback: ShowCallback): AdShowStatus {
 		callback.adFormat = AdFormat.OPEN
-		AdShower.showOpen(activity, callback)
+		return AdShower.showOpen(activity, callback)
 	}
 
 	// 展示插屏
-	fun showInter(activity: Activity, callback: ShowCallback) {
+	suspend fun showInter(activity: Activity, callback: ShowCallback) {
 		AdShower.showInter(activity, callback)
 	}
 
 	// 展示视频
-	fun showVideo(activity: Activity, callback: ShowCallback) {
+	suspend fun showVideo(activity: Activity, callback: ShowCallback) {
 		AdShower.showVideo(activity, callback)
 	}
 

@@ -53,10 +53,11 @@ object AdmobShower {
 			callback.showFailed(ShowFailResult.OTHER_AD_IS_SHOWING)
 			return
 		}
-		//修改APP状态
-		AppStatus.isShowingAd = true
 		//检查广告池广告是否过期
 		AdmobLoader.checkOpenPool()
+
+		//修改APP状态
+		AppStatus.isShowingAd = true
 		//超时处理相关变量定义
 		val startShowTime = System.currentTimeMillis()
 		var timeoutTask: Runnable? = null
@@ -224,7 +225,6 @@ object AdmobShower {
 		 timeoutTask = Runnable {
 			if (finished) return@Runnable
 			finished = true
-
 			LogUtil.log(
 				 LogAdEvent.ad_show_timeout,
 				 mapOf(
@@ -237,7 +237,6 @@ object AdmobShower {
 					 LogAdParam.ad_preload to true,
 				 )
 			 )
-
 			if (AdmobLoader.openShowCall === currentOpenCallback) {
 				AdmobLoader.openShowCall = null
 			}

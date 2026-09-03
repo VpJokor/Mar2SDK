@@ -40,7 +40,7 @@ object Core {
 	}
 
 	// 展示开屏
-	fun showOpen(activity: Activity, callback: ShowCallback) {
+	suspend fun showOpen(activity: Activity, callback: ShowCallback) {
 		callback.adFormat = AdFormat.OPEN
 		AdShower.showOpen(activity, callback)
 	}

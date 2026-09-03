@@ -5,10 +5,11 @@ import com.mar2sdk.core.ad.callback.ShowCallback
 import com.mar2sdk.core.ad.impl.AdmobShower
 import com.mar2sdk.core.ad.status.AdFormat
 import com.mar2sdk.core.ad.status.AdPlatform
+import com.mar2sdk.core.ad.status.AdShowStatus
 
 // 广告展示器
 object AdShower {
-	fun showOpen(activity: Activity, callback: ShowCallback) {
+	suspend fun showOpen(activity: Activity, callback: ShowCallback): AdShowStatus {
 		callback.adPlatform = AdPlatform.ADMOB
 //		AdmobShower.showOpen(activity, callback)
 	}

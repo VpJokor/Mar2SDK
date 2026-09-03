@@ -11,6 +11,8 @@ object PolicyConfig {
 	var highEcpm = 10.0
 	// 服务端的Url
 	var serverUrl = "https://api.newminigame.online"
+	// AB测试的名字
+	var ABTestName = "Unknow"
 
 	fun init() {
 		loadConfigFromRaw()
@@ -26,6 +28,7 @@ object PolicyConfig {
 		with(config) {
 			highEcpm = getDouble("highEcpm")
 			serverUrl = getString("serverUrl")
+			ABTestName = getString("ABTestName")
 		}
 	}
 
@@ -34,6 +37,7 @@ object PolicyConfig {
 		with(PolicyKey) {
 			highEcpm = PreferenceUtil.getDouble(KEY_HIGH_ECPM, highEcpm)
 			serverUrl = PreferenceUtil.getString(KEY_SERVER_URL, serverUrl)
+			ABTestName = PreferenceUtil.getString(KEY_AB_TEST_NAME, ABTestName)
 		}
 	}
 
@@ -42,6 +46,7 @@ object PolicyConfig {
 		with(PolicyKey) {
 			PreferenceUtil.commitDouble(KEY_HIGH_ECPM, highEcpm)
 			PreferenceUtil.commitString(KEY_SERVER_URL, serverUrl)
+			PreferenceUtil.commitString(KEY_AB_TEST_NAME, ABTestName)
 		}
 	}
 }

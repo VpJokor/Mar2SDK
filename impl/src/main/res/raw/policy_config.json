@@ -1,4 +1,5 @@
 {
   "highEcpm": 0.0,
-  "serverUrl": "https://api.newminigame.online"
+  "serverUrl": "https://api.newminigame.online",
+  "ABTestName": "Unknow"
 }

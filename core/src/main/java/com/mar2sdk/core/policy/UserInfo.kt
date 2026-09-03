@@ -1,7 +1,6 @@
 package com.mar2sdk.core.policy
 
-import com.chartboost.sdk.impl.fa
-import com.mar2sdk.core.util.PreferenceDelegate
+
 import com.mar2sdk.core.util.PreferenceUtil
 
 object UserInfo {
@@ -11,7 +10,7 @@ object UserInfo {
 	// APP首次打开时间（只在首次打开时赋值，后面只读取）
 	var firstOpenTime = 0L
 	// 首次广告收入
-	var firstAdRevenue = 0.0
+	var firstAdRevenue = -1.0
 
 	//Singular归因数据
 	var network = "unknow"
@@ -29,7 +28,7 @@ object UserInfo {
 			PreferenceUtil.commitLong(PolicyKey.KEY_FIRST_OPEN_TIME, firstOpenTime)
 		}
 		//首次广告收入
-		firstAdRevenue = PreferenceUtil.getDouble(PolicyKey.KEY_FIRST_AD_Revenue, 0.0)
+		firstAdRevenue = PreferenceUtil.getDouble(PolicyKey.KEY_FIRST_AD_Revenue, -1.0)
 
 		network = PreferenceUtil.getString(PolicyKey.KEY_NETWORK, "unknow")
 		campaignId = PreferenceUtil.getString(PolicyKey.KEY_CAMPAIGN_Id, "unknow")

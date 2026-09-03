@@ -9,4 +9,5 @@ object PolicyKey {
 	const val KEY_CAMPAIGN_NAME = "mar2sdk.user_info.campaignName"
 	const val KEY_RISK_IP = "mar2sdk.user_info.riskIP"
 
+	const val KEY_HIGH_ECPM = "mar2sdk.policy_config.highEcpm"
 }

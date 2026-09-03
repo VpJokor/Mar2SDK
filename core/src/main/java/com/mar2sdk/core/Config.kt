@@ -46,6 +46,6 @@ object Config {
 	}
 
 	fun initThinkingConfig() {
-		ThinkingConfig
+		ThinkingConfig.init()
 	}
 }

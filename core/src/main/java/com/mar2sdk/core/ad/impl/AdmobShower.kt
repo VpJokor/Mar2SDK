@@ -187,7 +187,7 @@ object AdmobShower {
 				}
 				callback.showFailed(ShowFailResult.SHOW_AD_EXCEPTION)
 			}
-			AdmobLoader.loadOpen()
+			AdmobLoader.loadOpen(areaKey = callback.areaKey)
 		}
 
 		val cachedAd = AdmobLoader.openPool.keys.firstOrNull()

@@ -34,15 +34,15 @@ object AdmobLoader {
 	var isLoadingInter = false
 	var isLoadingVideo = false
 
-	// 填充所有广告池
-	fun fillPool() {
-		loadOpen(true)
-		loadInter(true)
-		loadVideo(true)
-	}
+//	// 填充所有广告池
+//	fun fillPool() {
+//		loadOpen(true)
+//		loadInter(true)
+//		loadVideo(true)
+//	}
 
 	// 加载开屏
-	fun loadOpen(fillPool : Boolean = false, areaKey : String = "preload"): AdLoadStatus {
+	suspend fun loadOpen(areaKey : String = "preload"): AdLoadStatus {
 		// 检查过期广告
 		checkOpenPool()
 		// 有广告正在加载
@@ -79,9 +79,6 @@ object AdmobLoader {
 					)
 					openPool[openAd] = System.currentTimeMillis()
 					isLoadingOpen = false
-					if (fillPool) {
-						loadOpen(true)
-					}
 					// 接口回调供展示用
 					val callback = openShowCall
 					openShowCall = null
@@ -99,78 +96,10 @@ object AdmobLoader {
 		return AdLoadStatus.LOAD_STARTED
 	}
 
-	// 加载插屏
-	fun loadInter(fillPool : Boolean = false): AdLoadStatus {
-		checkInterPool()
-		if (isLoadingInter) return AdLoadStatus.IS_LOADING
-		if (interPool.size >= AdmobConfig.interPoolSize) return AdLoadStatus.POOL_FULL
-		isLoadingInter = true
-		InterstitialAd.load(
-			Core.app,
-			AdmobConfig.interID,
-			AdRequest.Builder().build(),
-			object : InterstitialAdLoadCallback() {
-				override fun onAdLoaded(adInter: InterstitialAd) {
-					interPool[adInter] = System.currentTimeMillis()
-					isLoadingInter = false
-					if (fillPool) {
-						loadInter(true)
-					}
-				}
-
-				override fun onAdFailedToLoad(adError: LoadAdError) {
-					isLoadingInter = false
-				}
-			},
-		)
-		return AdLoadStatus.LOAD_STARTED
-	}
-
-	// 加载视频
-	fun loadVideo(fillPool : Boolean = false): AdLoadStatus {
-		checkVideoPool()
-		if (isLoadingVideo) return AdLoadStatus.IS_LOADING
-		if (videoPool.size >= AdmobConfig.videoPoolSize) return AdLoadStatus.POOL_FULL
-		isLoadingVideo = true
-		RewardedAd.load(
-			Core.app,
-			AdmobConfig.VideoID,
-			AdRequest.Builder().build(),
-			object : RewardedAdLoadCallback() {
-				override fun onAdLoaded(ad: RewardedAd) {
-					videoPool[ad] = System.currentTimeMillis()
-					isLoadingVideo = false
-					if (fillPool) {
-						loadVideo(true)
-					}
-				}
-
-				override fun onAdFailedToLoad(adError: LoadAdError) {
-					isLoadingVideo = false
-				}
-			},
-		)
-		return AdLoadStatus.LOAD_STARTED
-	}
-
 	// 检查并移除开屏广告池过期广告
 	fun checkOpenPool() {
 		openPool.entries.removeIf { (_, time) ->
 			System.currentTimeMillis() - time > AdmobConfig.openTimeout
-		}
-	}
-
-	// 检查并移除插屏广告池过期广告
-	fun checkInterPool() {
-		interPool.entries.removeIf { (_, time) ->
-			System.currentTimeMillis() - time > AdmobConfig.interTimeout
-		}
-	}
-
-	// 检查并移除视频广告池过期广告
-	fun checkVideoPool() {
-		videoPool.entries.removeIf { (_, time) ->
-			System.currentTimeMillis() - time > AdmobConfig.videoTimeout
 		}
 	}
 

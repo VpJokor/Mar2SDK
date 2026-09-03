@@ -1,5 +1,6 @@
 package com.mar2sdk.core
 
+import com.mar2sdk.core.ad.AdConfig
 import com.mar2sdk.core.ad.impl.AdmobConfig
 import com.mar2sdk.core.firebase.FirebaseConfig
 import com.mar2sdk.core.firebase.SingularConfig
@@ -18,7 +19,7 @@ object Config {
 		PreferenceUtil.init(Core.app)
 		initUserInfo()
 		initPolicyConfig()
-		initAdmobConfig()
+		initAdConfig()
 		initFirebaseConfig()
 		initSingularConfig()
 		initThinkingConfig()
@@ -33,7 +34,8 @@ object Config {
 		RiskUtil.init()
 	}
 
-	fun initAdmobConfig() {
+	fun initAdConfig() {
+		AdConfig.init()
 		AdmobConfig.init()
 	}
 

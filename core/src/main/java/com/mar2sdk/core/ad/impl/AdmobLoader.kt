@@ -93,7 +93,7 @@ object AdmobLoader {
 				}
 			},
 		)
-		return AdLoadStatus.LOAD_STARTED
+		return AdLoadStatus.LOAD_SUCCESS
 	}
 
 	// 检查并移除开屏广告池过期广告

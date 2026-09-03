@@ -4,5 +4,6 @@ package com.mar2sdk.core.ad.status
 enum class AdLoadStatus {
 	IS_LOADING,
 	POOL_FULL,
-	LOAD_STARTED
+	LOAD_SUCCESS,
+	LOAD_FAIL
 }

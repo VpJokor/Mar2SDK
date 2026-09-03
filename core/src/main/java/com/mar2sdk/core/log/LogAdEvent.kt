@@ -9,12 +9,12 @@ object LogAdEvent {
 	const val ad_occur = "ad_occur"
 	const val ad_start_loading = "ad_start_loading"
 	const val ad_finish_loading = "ad_finish_loading"
-	const val ad_impression = "ad_impression"
 	const val ad_click = "ad_click"
 	const val ad_close = "ad_close"
 	const val ad_show_fail = "ad_show_fail"
 	const val ad_show_timeout = "ad_show_timeout"
 
+	const val ad_impression = "ad_impression"
 	const val ad_revenue: String = "ad_revenue"
 
 }

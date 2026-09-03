@@ -9,4 +9,6 @@ object UserInfo {
 	var ecpmType = EcpmType.ECOM_COMMON
 	//高风险IP
 	var riskIP = false
+	// APP首次打开时间，只在首次打开时赋值，后面只读取
+	var firstTime = 0L
 }

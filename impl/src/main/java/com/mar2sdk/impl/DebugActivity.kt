@@ -3,6 +3,7 @@ package com.mar2sdk.impl
 import android.os.Bundle
 import android.widget.Button
 import android.widget.TextView
+import android.widget.Toast
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
@@ -32,5 +33,6 @@ class DebugActivity : AppCompatActivity() {
 	fun refreshData() {
 		findViewById<TextView>(R.id.app_mod).text = Core.appMod.name
 		findViewById<TextView>(R.id.user_type).text = Core.userType.name
+		Toast.makeText(this,"刷新成功", Toast.LENGTH_LONG).show()
 	}
 }

@@ -22,6 +22,8 @@ object SingularUtil {
 					val network = attributionData["network"]?.toString().orEmpty()
 					val campaignId = attributionData["campaign_id"]?.toString()?.takeIf { it.isNotEmpty() }
 					val campaignName = attributionData["campaign_name"]?.toString()?.takeIf { it.isNotEmpty() }
+					Log.e(TAG, "init: Singular初始化成功 network = $network")
+
 					promoteParams.put("network", network)
 					campaignId?.let {
 						promoteParams.put("campaign_id", it)

@@ -7,7 +7,7 @@ import com.mar2sdk.core.AppMod
 /**
  * 供业务层代码引用
  */
-class Mar2Application : Application() {
+open class Mar2Application : Application() {
 
 	override fun onCreate() {
 		super.onCreate()

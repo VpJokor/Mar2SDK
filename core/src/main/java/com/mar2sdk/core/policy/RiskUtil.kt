@@ -1,6 +1,8 @@
 package com.mar2sdk.core.policy
 
 import com.mar2sdk.core.Core
+import com.mar2sdk.core.Core.userType
+import com.mar2sdk.core.log.ThinkingUtil
 
 /**
  * 风控类
@@ -14,6 +16,7 @@ object RiskUtil {
 		judgeRiskIP()
 		judgeEcpm()
 		judgeUserType()
+		ThinkingUtil.setUserAttr("userType", userType.name)
 	}
 
 	// 请求IP信息

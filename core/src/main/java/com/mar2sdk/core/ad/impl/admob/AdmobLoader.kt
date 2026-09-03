@@ -85,26 +85,24 @@ object AdmobLoader {
 		}
 	}
 
-	// 调用 loadInter() 填满广告池，加载完一个再加载下一个，直到广告池填满
+	// 等待正在加载的广告，加载完一个再加载下一个，直到广告池填满
 	suspend fun fillInter() {
 		while (true) {
-			when (loadInter()) {
-				AdLoadStatus.LOAD_SUCCESS -> continue
-				AdLoadStatus.IS_LOADING,
-				AdLoadStatus.POOL_FULL,
-				AdLoadStatus.LOAD_FAIL -> return
+			when (loadInterResult()) {
+				is InterLoadResult.Loaded -> continue
+				is InterLoadResult.Failed,
+				InterLoadResult.PoolFull -> return
 			}
 		}
 	}
 
-	// 调用 loadVideo() 填满广告池，加载完一个再加载下一个，直到广告池填满
+	// 等待正在加载的广告，加载完一个再加载下一个，直到广告池填满
 	suspend fun fillVideo() {
 		while (true) {
-			when (loadVideo()) {
-				AdLoadStatus.LOAD_SUCCESS -> continue
-				AdLoadStatus.IS_LOADING,
-				AdLoadStatus.POOL_FULL,
-				AdLoadStatus.LOAD_FAIL -> return
+			when (loadVideoResult()) {
+				is VideoLoadResult.Loaded -> continue
+				is VideoLoadResult.Failed,
+				VideoLoadResult.PoolFull -> return
 			}
 		}
 	}

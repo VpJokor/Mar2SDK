@@ -11,7 +11,6 @@ import com.google.android.gms.ads.rewarded.RewardedAd
 import com.google.firebase.analytics.FirebaseAnalytics
 import com.mar2sdk.core.AppStatus
 import com.mar2sdk.core.ad.callback.ShowCallback
-import com.mar2sdk.core.ad.status.AdLoadStatus
 import com.mar2sdk.core.ad.status.AdShowStatus
 import com.mar2sdk.core.ad.status.ShowFailResult
 import com.mar2sdk.core.log.LogAdEvent
@@ -261,6 +260,7 @@ object AdmobShower {
 		val startShowTime = System.currentTimeMillis()
 		var currentInterAd: InterstitialAd? = null
 		val showFailed = AtomicBoolean(false)
+		val fillInterPoolStarted = AtomicBoolean(false)
 		var showCommitted = false
 
 		fun fail(failResult: ShowFailResult, showStatus: AdShowStatus = AdShowStatus.SHOW_FAIL): AdShowStatus {
@@ -294,9 +294,24 @@ object AdmobShower {
 			}
 		}
 
+		fun fillInterPoolInBackground() {
+			if (!fillInterPoolStarted.compareAndSet(false, true)) return
+			adScope.launch {
+				try {
+					AdmobLoader.fillInter()
+				} catch (e: CancellationException) {
+					throw e
+				} catch (e: Exception) {
+					Log.e(TAG, "Failed to fill interstitial ad pool: ", e)
+				}
+			}
+		}
+
 		// INFO: 处理广告展示回调
 		val contentCallback = object : FullScreenContentCallback() {
 			override fun onAdFailedToShowFullScreenContent(p0: AdError) {
+				// 后台填满插屏广告池
+				fillInterPoolInBackground()
 				logShowEventSafely(LogAdEvent.ad_show_fail, "Failed to log interstitial ad show failure")
 				fail(ShowFailResult.FAILED_TO_SHOW_CONTENT)
 			}
@@ -308,6 +323,8 @@ object AdmobShower {
 			}
 
 			override fun onAdImpression() {
+				// 后台填满插屏广告池
+				fillInterPoolInBackground()
 				// info: 处理展示
 				callback.showSuccess()
 			}
@@ -356,17 +373,7 @@ object AdmobShower {
 				Log.e(TAG, "show: ", e)
 				fail(ShowFailResult.SHOW_AD_EXCEPTION)
 			}
-			adScope.launch {
-				try {
-					if (AdmobLoader.loadInter(areaKey = callback.areaKey) == AdLoadStatus.LOAD_FAIL) {
-						Log.e(TAG, "Interstitial ad preload failed")
-					}
-				} catch (e: CancellationException) {
-					throw e
-				} catch (e: Exception) {
-					Log.e(TAG, "Failed to preload interstitial ad: ", e)
-				}
-			}
+			fillInterPoolInBackground()
 			return showStatus
 		}
 
@@ -437,6 +444,7 @@ object AdmobShower {
 		val startShowTime = System.currentTimeMillis()
 		var currentVideoAd: RewardedAd? = null
 		val showFailed = AtomicBoolean(false)
+		val fillVideoPoolStarted = AtomicBoolean(false)
 		var showCommitted = false
 
 		fun fail(failResult: ShowFailResult, showStatus: AdShowStatus = AdShowStatus.SHOW_FAIL): AdShowStatus {
@@ -470,9 +478,24 @@ object AdmobShower {
 			}
 		}
 
+		fun fillVideoPoolInBackground() {
+			if (!fillVideoPoolStarted.compareAndSet(false, true)) return
+			adScope.launch {
+				try {
+					AdmobLoader.fillVideo()
+				} catch (e: CancellationException) {
+					throw e
+				} catch (e: Exception) {
+					Log.e(TAG, "Failed to fill rewarded ad pool: ", e)
+				}
+			}
+		}
+
 		// INFO: 处理广告展示回调
 		val contentCallback = object : FullScreenContentCallback() {
 			override fun onAdFailedToShowFullScreenContent(p0: AdError) {
+				// 后台填满视频广告池
+				fillVideoPoolInBackground()
 				logShowEventSafely(LogAdEvent.ad_show_fail, "Failed to log rewarded ad show failure")
 				fail(ShowFailResult.FAILED_TO_SHOW_CONTENT)
 			}
@@ -484,6 +507,8 @@ object AdmobShower {
 			}
 
 			override fun onAdImpression() {
+				// 后台填满视频广告池
+				fillVideoPoolInBackground()
 				// info: 处理展示
 				callback.showSuccess()
 			}
@@ -534,17 +559,7 @@ object AdmobShower {
 				Log.e(TAG, "show: ", e)
 				fail(ShowFailResult.SHOW_AD_EXCEPTION)
 			}
-			adScope.launch {
-				try {
-					if (AdmobLoader.loadVideo(areaKey = callback.areaKey) == AdLoadStatus.LOAD_FAIL) {
-						Log.e(TAG, "Rewarded ad preload failed")
-					}
-				} catch (e: CancellationException) {
-					throw e
-				} catch (e: Exception) {
-					Log.e(TAG, "Failed to preload rewarded ad: ", e)
-				}
-			}
+			fillVideoPoolInBackground()
 			return showStatus
 		}
 

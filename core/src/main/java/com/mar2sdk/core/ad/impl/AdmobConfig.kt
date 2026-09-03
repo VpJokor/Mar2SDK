@@ -3,6 +3,7 @@ package com.mar2sdk.core.ad.impl
 import com.mar2sdk.core.Core
 import com.mar2sdk.core.AppMod
 import com.mar2sdk.core.R
+import com.mar2sdk.core.util.PreferenceUtil
 import org.json.JSONObject
 
 //admob的广告配置
@@ -45,37 +46,44 @@ object AdmobConfig {
 			.bufferedReader()
 			.use { JSONObject(it.readText()) }
 
-		// 先解析所有必填项，避免配置错误时只更新了部分字段。
-		val localReleaseOpenID = config.getString("releaseOpenID")
-		val localReleaseInterID = config.getString("releaseInterID")
-		val localReleaseVideoID = config.getString("releaseVideoID")
-		val localOpenTimeout = config.getDouble("openTimeout")
-		val localInterTimeout = config.getLong("interTimeout")
-		val localVideoTimeout = config.getLong("videoTimeout")
-		val localOpenPoolSize = config.getInt("openPoolSize")
-		val localInterPoolSize = config.getInt("interPoolSize")
-		val localVideoPoolSize = config.getInt("videoPoolSize")
-
-		releaseOpenID = localReleaseOpenID
-		releaseInterID = localReleaseInterID
-		releaseVideoID = localReleaseVideoID
-		openTimeout = localOpenTimeout
-		interTimeout = localInterTimeout
-		videoTimeout = localVideoTimeout
-		openPoolSize = localOpenPoolSize
-		interPoolSize = localInterPoolSize
-		videoPoolSize = localVideoPoolSize
-
-		openID = if (Core.appMod == AppMod.TEST) testOpenID else releaseOpenID
-		interID = if (Core.appMod == AppMod.TEST) testInterID else releaseInterID
-		VideoID = if (Core.appMod == AppMod.TEST) testVideoID else releaseVideoID
+		with(config) {
+			releaseOpenID = getString("releaseOpenID")
+			releaseInterID = getString("releaseInterID")
+			releaseVideoID = getString("releaseVideoID")
+			openTimeout = getDouble("openTimeout")
+			interTimeout = getLong("interTimeout")
+			videoTimeout = getLong("videoTimeout")
+			openPoolSize = getInt("openPoolSize")
+			interPoolSize = getInt("interPoolSize")
+			videoPoolSize = getInt("videoPoolSize")
+		}
+		updateAdUnitIds()
 	}
 
-	// TODO: 从本地读配置 (Preference)
+	// 从本地读取配置，未保存的配置项沿用打包资源中的值。
 	fun loadConfigFromPreference() {
-
+		with(AdmobKey) {
+			releaseOpenID = PreferenceUtil.getString(KEY_RELEASE_OPEN_ID, releaseOpenID)
+			releaseInterID = PreferenceUtil.getString(KEY_RELEASE_INTER_ID, releaseInterID)
+			releaseVideoID = PreferenceUtil.getString(KEY_RELEASE_VIDEO_ID, releaseVideoID)
+			openTimeout = PreferenceUtil.getDouble(KEY_OPEN_TIMEOUT, openTimeout)
+			interTimeout = PreferenceUtil.getLong(KEY_INTER_TIMEOUT, interTimeout)
+			videoTimeout = PreferenceUtil.getLong(KEY_VIDEO_TIMEOUT, videoTimeout)
+			openPoolSize = PreferenceUtil.getInt(KEY_OPEN_POOL_SIZE, openPoolSize)
+			interPoolSize = PreferenceUtil.getInt(KEY_INTER_POOL_SIZE, interPoolSize)
+			videoPoolSize = PreferenceUtil.getInt(KEY_VIDEO_POOL_SIZE, videoPoolSize)
+		}
+		updateAdUnitIds()
 	}
 
+	private fun updateAdUnitIds() {
+		val isTest = Core.appMod == AppMod.TEST
+		openID = if (isTest) testOpenID else releaseOpenID
+		interID = if (isTest) testInterID else releaseInterID
+		VideoID = if (isTest) testVideoID else releaseVideoID
+	}
+
+	// TODO: 把配置保存到地 (Preference)
 	fun save() {
 
 	}

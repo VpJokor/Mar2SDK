@@ -4,7 +4,6 @@ import android.util.Log
 import com.mar2sdk.core.Core
 import com.mar2sdk.core.R
 import com.mar2sdk.core.log.ThinkingUtil
-import com.mar2sdk.core.policy.RiskUtil.TAG
 import kotlinx.serialization.Serializable
 import okhttp3.OkHttpClient
 import okhttp3.Request
@@ -39,7 +38,7 @@ object IPUtil {
 		}.onFailure {
 			Log.e(TAG, "getIpInfoV2 error", it)
 		}.getOrNull()
-
+		Log.e(TAG, "checkIpInfo: $result" )
 	}
 
 	private fun parseIpInfoPayload(raw: String): IpGeoDetail? {

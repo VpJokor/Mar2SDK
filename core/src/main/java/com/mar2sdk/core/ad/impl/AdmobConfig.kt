@@ -83,8 +83,18 @@ object AdmobConfig {
 		VideoID = if (isTest) testVideoID else releaseVideoID
 	}
 
-	// TODO: 把配置保存到地 (Preference)
-	fun save() {
-
+	// 把配置保存到本地 (Preference)。
+	fun saveAdmobConfig() {
+		with(AdmobKey) {
+			PreferenceUtil.commitString(KEY_RELEASE_OPEN_ID, releaseOpenID)
+			PreferenceUtil.commitString(KEY_RELEASE_INTER_ID, releaseInterID)
+			PreferenceUtil.commitString(KEY_RELEASE_VIDEO_ID, releaseVideoID)
+			PreferenceUtil.commitDouble(KEY_OPEN_TIMEOUT, openTimeout)
+			PreferenceUtil.commitLong(KEY_INTER_TIMEOUT, interTimeout)
+			PreferenceUtil.commitLong(KEY_VIDEO_TIMEOUT, videoTimeout)
+			PreferenceUtil.commitInt(KEY_OPEN_POOL_SIZE, openPoolSize)
+			PreferenceUtil.commitInt(KEY_INTER_POOL_SIZE, interPoolSize)
+			PreferenceUtil.commitInt(KEY_VIDEO_POOL_SIZE, videoPoolSize)
+		}
 	}
 }

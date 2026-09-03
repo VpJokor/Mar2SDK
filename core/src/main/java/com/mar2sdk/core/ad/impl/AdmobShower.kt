@@ -14,10 +14,16 @@ import com.google.android.gms.ads.appopen.AppOpenAd
 import com.google.firebase.analytics.FirebaseAnalytics
 import com.mar2sdk.core.AppStatus
 import com.mar2sdk.core.ad.callback.ShowCallback
+import com.mar2sdk.core.ad.status.AdLoadStatus
 import com.mar2sdk.core.ad.status.ShowFailResult
 import com.mar2sdk.core.log.LogAdEvent
 import com.mar2sdk.core.log.LogAdParam
 import com.mar2sdk.core.log.LogUtil
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.launch
 import kotlin.collections.component1
 import kotlin.collections.component2
 
@@ -27,12 +33,17 @@ import kotlin.collections.component2
 object AdmobShower {
 
 	private const val TAG = "AdmobShower"
+	private val adScope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
 
 	// 开屏广告展示超时时间
 	var showOpenTimeout = 10 * 1000L
 	var showInterTimeout = 10 * 1000L
 	var showVideoTimeout = 10 * 1000L
 
+	/**
+	 *  广告展示
+	 *  1. 如果广告池里有广告则直接展示广告
+	 */
 	fun showOpen(activity: Activity, callback: ShowCallback) {
 		LogUtil.log(
 			LogAdEvent.ad_occur,
@@ -187,7 +198,17 @@ object AdmobShower {
 				}
 				callback.showFailed(ShowFailResult.SHOW_AD_EXCEPTION)
 			}
-			AdmobLoader.loadOpen(areaKey = callback.areaKey)
+			adScope.launch {
+				try {
+					if (AdmobLoader.loadOpen(areaKey = callback.areaKey) == AdLoadStatus.LOAD_FAIL) {
+						Log.e(TAG, "Open ad preload failed")
+					}
+				} catch (e: CancellationException) {
+					throw e
+				} catch (e: Exception) {
+					Log.e(TAG, "Failed to preload open ad: ", e)
+				}
+			}
 		}
 
 		val cachedAd = AdmobLoader.openPool.keys.firstOrNull()
@@ -245,20 +266,34 @@ object AdmobShower {
 			callback.showFailed(ShowFailResult.LOAD_TIMEOUT)
 		}
 		handler.postDelayed(timeoutTask, showOpenTimeout)
-		try {
-			AdmobLoader.loadOpen()
-		} catch (e: Exception) {
-			// INFO: 处理抛出的异常
-			Log.e(TAG, "showOpen: ", e)
-			AdmobLoader.isLoadingOpen = false
-			if (AdmobLoader.openShowCall === currentOpenCallback) {
-				AdmobLoader.openShowCall = null
+		adScope.launch {
+			try {
+				val loadStatus = AdmobLoader.loadOpen(areaKey = callback.areaKey)
+				if (
+					loadStatus == AdLoadStatus.LOAD_FAIL &&
+					AdmobLoader.openShowCall === currentOpenCallback
+				) {
+					AdmobLoader.openShowCall = null
+					timeoutTask.let {
+						handler.removeCallbacks(it)
+					}
+					AppStatus.isShowingAd = false
+					callback.showFailed(ShowFailResult.LOAD_AD_EXCEPTION)
+				}
+			} catch (e: CancellationException) {
+				throw e
+			} catch (e: Exception) {
+				// INFO: 处理抛出的异常
+				Log.e(TAG, "showOpen: ", e)
+				if (AdmobLoader.openShowCall === currentOpenCallback) {
+					AdmobLoader.openShowCall = null
+				}
+				timeoutTask.let {
+					handler.removeCallbacks(it)
+				}
+				AppStatus.isShowingAd = false
+				callback.showFailed(ShowFailResult.LOAD_AD_EXCEPTION)
 			}
-			timeoutTask.let {
-				handler.removeCallbacks(it)
-			}
-			AppStatus.isShowingAd = false
-			callback.showFailed(ShowFailResult.LOAD_AD_EXCEPTION)
 		}
 	}
 

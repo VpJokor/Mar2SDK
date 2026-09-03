@@ -19,16 +19,16 @@ object AdmobConfig {
 
 
 	//开屏广告过期时间(4小时)
-	var openTimeout = 4 * 60 * 60 * 1000L
+	var openTimeout = 3.5 * 60 * 60 * 1000L
 	//开屏广告池大小
 	var openPoolSize = 1
 
 	//插屏广告过期时间(1小时)
-	var interTimeout = 60 * 60 * 1000L
+	var interTimeout = 50 * 60 * 1000L
 	// 插屏广告过期时间
 	var interPoolSize = 1
 
 	//视频广告过期时间(1小时)
-	var videoTimeout = 60 * 60 * 1000L
+	var videoTimeout = 50 * 60 * 1000L
 	var videoPoolSize = 1
 }

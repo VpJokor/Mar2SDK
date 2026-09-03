@@ -17,6 +17,8 @@ import com.mar2sdk.core.log.LogAdEvent
 import com.mar2sdk.core.log.LogAdParam
 import com.mar2sdk.core.log.LogUtil
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.withContext
 
@@ -40,9 +42,11 @@ object AdmobLoader {
 	var isLoadingInter = false
 	var isLoadingVideo = false
 
-	// 填充所有广告池
-	suspend fun fillPool() {
-
+	// 填满所有广告池 fillOpen/fillInter/fillVideo 可同时执行
+	suspend fun fillPool() = coroutineScope {
+		launch { fillOpen() }
+		launch { fillInter() }
+		launch { fillVideo() }
 	}
 
 	// 调用 loadOpen() 填满广告池，加载完一个再加载下一个，直到广告池填满

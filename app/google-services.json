@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "374528784197",
+    "project_id": "mar2sdk",
+    "storage_bucket": "mar2sdk.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:374528784197:android:9d8e230a602481512db02c",
+        "android_client_info": {
+          "package_name": "com.mar2sdk"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyD84b2u3bWXqeqyp1RdVjS5IoYupsB0a8M"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

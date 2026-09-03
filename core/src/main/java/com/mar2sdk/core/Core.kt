@@ -51,11 +51,13 @@ object Core {
 
 	// 展示插屏
 	suspend fun showInter(activity: Activity, callback: ShowCallback) {
+		callback.adFormat = AdFormat.INTER
 		AdShower.showInter(activity, callback)
 	}
 
 	// 展示视频
 	suspend fun showVideo(activity: Activity, callback: ShowCallback) {
+		callback.adFormat = AdFormat.VIDEO
 		AdShower.showVideo(activity, callback)
 	}
 

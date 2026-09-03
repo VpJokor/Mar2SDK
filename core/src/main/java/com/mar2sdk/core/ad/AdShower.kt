@@ -10,7 +10,7 @@ import com.mar2sdk.core.ad.status.AdShowStatus
 object AdShower {
 
 	// 一直等待到 AdmobShower.showOpen 返回结果再返回
-	suspend fun showOpen(adPlatform: AdPlatform = AdPlatform.ADMOB, activity: Activity, callback: ShowCallback): AdShowStatus {
+	suspend fun showOpen(activity: Activity, callback: ShowCallback, adPlatform: AdPlatform = AdConfig.defaultPlatform): AdShowStatus {
 		callback.adPlatform = adPlatform
 		return when(adPlatform) {
 			AdPlatform.ADMOB -> AdmobShower.showOpen(activity, callback)
@@ -19,16 +19,16 @@ object AdShower {
 		}
 	}
 
-	suspend fun showInter(adPlatform: AdPlatform = AdPlatform.ADMOB, activity: Activity, callback: ShowCallback): AdShowStatus {
+	suspend fun showInter(activity: Activity, callback: ShowCallback, adPlatform: AdPlatform = AdConfig.defaultPlatform): AdShowStatus {
 		callback.adPlatform = adPlatform
 		return when(adPlatform) {
 			AdPlatform.ADMOB -> AdmobShower.showInter(activity, callback)
-			// Max/UNITY/TRADPLUS/TOPON
+			// TODO implement Max/UNITY/TRADPLUS/TOPON
 			else -> AdmobShower.showInter(activity, callback)
 		}
 	}
 
-	suspend fun showVideo(adPlatform: AdPlatform = AdPlatform.ADMOB, activity: Activity, callback: ShowCallback): AdShowStatus {
+	suspend fun showVideo(activity: Activity, callback: ShowCallback, adPlatform: AdPlatform = AdConfig.defaultPlatform): AdShowStatus {
 		callback.adPlatform = adPlatform
 		return when(adPlatform) {
 			AdPlatform.ADMOB -> AdmobShower.showVideo(activity, callback)

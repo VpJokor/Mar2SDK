@@ -9,6 +9,9 @@ import org.json.JSONObject
 //广告配置
 object AdConfig {
 
+	var defaultPlatform = AdPlatform.ADMOB
+	var activePlatforms = mutableSetOf<AdPlatform>()
+
 	fun init() {
 		loadConfigFromRaw()
 		loadConfigFromPreference()

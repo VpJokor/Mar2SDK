@@ -49,6 +49,7 @@ object AdmobShower {
 			return
 		}
 		if (AdmobLoader.openShowCall != null) {
+			// 别的广告还在加载还没超时
 			Log.e(TAG, "showOpen: AdmobLoader.openShowCall is not null" )
 			callback.showFailed(ShowFailResult.OTHER_AD_IS_SHOWING)
 			return
@@ -221,7 +222,7 @@ object AdmobShower {
 		}
 		AdmobLoader.openShowCall = currentOpenCallback
 
-		// 启动定时器计算超时
+		// 启动定时器计算超时，广告展示超时就移除加载展示回调
 		 timeoutTask = Runnable {
 			if (finished) return@Runnable
 			finished = true

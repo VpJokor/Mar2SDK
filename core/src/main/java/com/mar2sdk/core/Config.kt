@@ -34,7 +34,7 @@ object Config {
 	}
 
 	fun initAdmobConfig() {
-		AdmobConfig
+		AdmobConfig.init()
 	}
 
 	fun initFirebaseConfig() {

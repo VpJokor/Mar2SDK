@@ -1,6 +1,7 @@
 package com.mar2sdk.impl
 
 import android.os.Bundle
+import android.view.View
 import android.widget.Button
 import android.widget.TextView
 import android.widget.Toast
@@ -37,6 +38,9 @@ class DebugActivity : AppCompatActivity() {
 		findViewById<TextView>(R.id.risk_ip).text = UserInfo.riskIP.name
 		findViewById<TextView>(R.id.risk_package).text = UserInfo.riskPackage.name
 		findViewById<TextView>(R.id.ecpm_type).text = UserInfo.ecpmType.name
+		findViewById<View>(R.id.user_info_card).setOnClickListener {
+			Toast.makeText(this@DebugActivity, "显示用户信息面板", Toast.LENGTH_LONG).show()
+		}
 		Toast.makeText(this,"刷新成功", Toast.LENGTH_LONG).show()
 	}
 }

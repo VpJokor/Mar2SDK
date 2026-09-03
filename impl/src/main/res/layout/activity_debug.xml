@@ -212,6 +212,7 @@
             android:layout_height="0dp"/>
 
         <androidx.cardview.widget.CardView
+            android:id="@+id/user_info_card"
             app:cardCornerRadius="10dp"
             app:cardElevation="0dp"
             app:cardBackgroundColor="@android:color/system_accent1_100"
@@ -228,13 +229,13 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:gravity="center"
-                    android:text="策略"
+                    android:text="用户信息"
                     android:textColor="@android:color/black"
                     android:textSize="10sp" />
 
                 <TextView
                     android:layout_marginTop="4dp"
-                    android:text="通知策略"
+                    android:text="用户基本信息"
                     android:textStyle="bold"
                     android:textColor="@android:color/black"
                     android:textSize="15sp"

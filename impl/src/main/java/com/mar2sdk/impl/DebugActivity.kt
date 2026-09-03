@@ -1,28 +1,36 @@
-package com.mar2sdk
+package com.mar2sdk.impl
 
-import android.content.Intent
 import android.os.Bundle
 import android.widget.Button
+import android.widget.TextView
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
-import com.mar2sdk.impl.DebugActivity
-import com.mar2sdk.impl.Mar2Activity
+import com.mar2sdk.core.Core
 
-class MainActivity : Mar2Activity() {
+class DebugActivity : AppCompatActivity() {
 	override fun onCreate(savedInstanceState: Bundle?) {
 		super.onCreate(savedInstanceState)
 		enableEdgeToEdge()
-		setContentView(R.layout.activity_main)
+		setContentView(R.layout.activity_debug)
 		ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main)) { v, insets ->
 			val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
 			v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom)
 			insets
 		}
-
-		findViewById<Button>(R.id.debug).setOnClickListener {
-			startActivity(Intent(this@MainActivity, DebugActivity::class.java))
+		findViewById<Button>(R.id.refresh_btn).setOnClickListener {
+			refreshData()
 		}
+	}
+
+	override fun onResume() {
+		super.onResume()
+		refreshData()
+	}
+
+	fun refreshData() {
+		findViewById<TextView>(R.id.app_mod).text = Core.appMod.name
+		findViewById<TextView>(R.id.user_type).text = Core.userType.name
 	}
 }

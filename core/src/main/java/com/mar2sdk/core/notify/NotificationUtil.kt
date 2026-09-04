@@ -6,6 +6,7 @@ import android.content.pm.PackageManager
 import android.os.Build
 import androidx.activity.result.ActivityResultLauncher
 import androidx.core.app.NotificationManagerCompat
+import com.mar2sdk.core.Core
 
 object NotificationUtil {
 
@@ -29,10 +30,17 @@ object NotificationUtil {
 		}
 	}
 
-
-	// TODO: 判断是否有通知权限
+	// 判断是否有通知权限
 	fun hasNotiAccess() : Boolean {
-
-		return false
+		val context = Core.app
+		if (
+			Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
+			context.checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS) !=
+			PackageManager.PERMISSION_GRANTED
+		) {
+			return false
+		}
+		return NotificationManagerCompat.from(context).areNotificationsEnabled()
 	}
+
 }

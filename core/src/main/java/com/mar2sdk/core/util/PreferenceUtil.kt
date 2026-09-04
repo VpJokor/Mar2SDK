@@ -2,6 +2,7 @@ package com.mar2sdk.core.util
 
 import android.content.Context
 import android.content.SharedPreferences
+import com.mar2sdk.core.Core
 import kotlin.properties.ReadWriteProperty
 import kotlin.reflect.KProperty
 
@@ -18,10 +19,9 @@ object PreferenceUtil {
 
 	/** 初始化偏好存储，必须在读写前调用。 */
 	@Synchronized
-	fun init(context: Context) {
+	fun init() {
 		if (sharedPreferences == null) {
-			sharedPreferences = context.applicationContext
-				.getSharedPreferences(PREFERENCES_NAME, Context.MODE_PRIVATE)
+			sharedPreferences =Core.app.getSharedPreferences(PREFERENCES_NAME, Context.MODE_PRIVATE)
 		}
 	}
 

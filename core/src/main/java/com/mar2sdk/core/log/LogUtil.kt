@@ -5,6 +5,7 @@ import android.os.Bundle
 import android.util.Log
 import cn.thinkingdata.analytics.TDAnalytics
 import com.google.firebase.analytics.FirebaseAnalytics
+import com.inmobi.media.pa
 import com.mar2sdk.core.AppMod
 import com.mar2sdk.core.Core
 import com.mar2sdk.core.firebase.SingularConfig
@@ -25,7 +26,7 @@ object LogUtil {
 		}
 		logFirebase(eventName, params)
 		logThinking(eventName, params)
-		
+		logLocal(eventName, params)
 		if (eventName == LogAdEvent.ad_revenue) {
 			if (
 				(params[FirebaseAnalytics.Param.AD_FORMAT] as? String).equals(LogAdParam.ad_format_open) ||
@@ -74,6 +75,11 @@ object LogUtil {
 		} catch (e: Exception) {
 			Log.e(TAG, "logThinking error: ${e.message}")
 		}
+	}
+
+	fun logLocal(eventName: String, params: Map<String, Any>) {
+		// TODO: 把日志保存在本地sqlite中
+
 	}
 
 	fun logSingularAdRevenue(adPlatform: String, revenue: Double) {

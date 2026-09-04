@@ -9,8 +9,8 @@ import com.mar2sdk.core.ad.impl.unity.UnityConfig
 import com.mar2sdk.core.firebase.SingularConfig
 import com.mar2sdk.core.log.ThinkingConfig
 import com.mar2sdk.core.policy.PolicyConfig
-import com.mar2sdk.core.policy.RiskUtil
 import com.mar2sdk.core.policy.UserInfo
+import com.mar2sdk.core.util.DBUtil
 import com.mar2sdk.core.util.PreferenceUtil
 
 /**
@@ -19,7 +19,8 @@ import com.mar2sdk.core.util.PreferenceUtil
 object Config {
 
 	fun initConfig() {
-		PreferenceUtil.init(Core.app)
+		PreferenceUtil.init()
+		DBUtil.init()
 		initUserInfo()
 		initPolicyConfig()
 		initAdConfig()

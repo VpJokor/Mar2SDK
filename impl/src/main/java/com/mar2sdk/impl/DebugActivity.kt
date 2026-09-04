@@ -11,6 +11,7 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
+import androidx.lifecycle.lifecycleScope
 import com.mar2sdk.core.AppMod
 import com.mar2sdk.core.Core
 import com.mar2sdk.core.ad.callback.ShowCallback
@@ -24,6 +25,7 @@ import com.mar2sdk.core.notify.app.AppNotificationUtil
 import com.mar2sdk.core.policy.TestMod
 import com.mar2sdk.core.policy.UserInfo
 import com.mar2sdk.core.policy.UserType
+import kotlinx.coroutines.launch
 
 class DebugActivity : AppCompatActivity() {
 	private val notificationPermissionLauncher =
@@ -100,44 +102,43 @@ class DebugActivity : AppCompatActivity() {
 			}
 		}
 
-		val adCallback = object : ShowCallback{
-			override var areaKey: String
-				get() = TODO("Not yet implemented")
-				set(value) {}
-			override var adFormat: AdFormat
-				get() = TODO("Not yet implemented")
-				set(value) {}
-			override var adPlatform: AdPlatform
-				get() = TODO("Not yet implemented")
-				set(value) {}
+		val adCallback = object : ShowCallback {
+			override var areaKey = "test_open"
+			override var adFormat = AdFormat.OPEN
+			override var adPlatform = AdPlatform.ADMOB
 
 			override fun showFailed(reason: ShowFailResult) {
-				TODO("Not yet implemented")
+				Toast.makeText(
+					this@DebugActivity,
+					"Open ad failed: ${reason.name}",
+					Toast.LENGTH_SHORT,
+				).show()
 			}
 
 			override fun showSuccess() {
-				TODO("Not yet implemented")
+				Toast.makeText(this@DebugActivity, "Open ad shown", Toast.LENGTH_SHORT).show()
 			}
 
 			override fun onClicked() {
-				TODO("Not yet implemented")
+				Toast.makeText(this@DebugActivity, "Open ad clicked", Toast.LENGTH_SHORT).show()
 			}
 
 			override fun onAdClosed() {
-				TODO("Not yet implemented")
+				Toast.makeText(this@DebugActivity, "Open ad closed", Toast.LENGTH_SHORT).show()
 			}
 
 			override fun onPaid() {
-				TODO("Not yet implemented")
+				Toast.makeText(this@DebugActivity, "Open ad paid", Toast.LENGTH_SHORT).show()
 			}
 
 			override fun onReward() {
-				TODO("Not yet implemented")
+				Toast.makeText(this@DebugActivity, "Open ad rewarded", Toast.LENGTH_SHORT).show()
 			}
-
 		}
 		findViewById<View>(R.id.test_open).setOnClickListener {
-			Core.showOpen(this, adCallback)
+			lifecycleScope.launch {
+				Core.showOpen(this@DebugActivity, adCallback)
+			}
 		}
 
 	}

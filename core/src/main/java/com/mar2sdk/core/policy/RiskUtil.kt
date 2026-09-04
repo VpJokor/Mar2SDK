@@ -51,7 +51,6 @@ object RiskUtil {
 		if (Core.appMod == AppMod.TEST && Core.testMod == TestMod.FORCE) {
 			return
 		}
-
 		//正式版本逻辑
 		if (
 			UserInfo.riskIP == RiskType.RISK ||

@@ -2,6 +2,7 @@ package com.mar2sdk.core
 
 import android.app.Activity
 import android.app.Application
+import com.inmobi.media.re
 import com.mar2sdk.core.ad.AdIniter
 import com.mar2sdk.core.ad.AdShower
 import com.mar2sdk.core.ad.callback.ShowCallback
@@ -52,21 +53,30 @@ object Core {
 		AppObs.init()
 	}
 
+	suspend fun showAd(activity: Activity, callback: ShowCallback, adFormat: AdFormat): AdShowStatus {
+		callback.adFormat = adFormat
+		return when(adFormat) {
+			AdFormat.OPEN -> AdShower.showOpen(activity, callback)
+			AdFormat.INTER -> AdShower.showInter(activity, callback)
+			AdFormat.VIDEO -> AdShower.showVideo(activity, callback)
+		}
+	}
+
 	// 展示开屏
-	suspend fun showOpen(activity: Activity, callback: ShowCallback): AdShowStatus {
+	suspend fun showOpen(activity: Activity, callback: ShowCallback) : AdShowStatus {
 		return AdShower.showOpen(activity, callback)
 	}
 
 	// 展示插屏
-	suspend fun showInter(activity: Activity, callback: ShowCallback) {
+	suspend fun showInter(activity: Activity, callback: ShowCallback) : AdShowStatus {
 		callback.adFormat = AdFormat.INTER
-		AdShower.showInter(activity, callback)
+		return AdShower.showInter(activity, callback)
 	}
 
 	// 展示视频
-	suspend fun showVideo(activity: Activity, callback: ShowCallback) {
+	suspend fun showVideo(activity: Activity, callback: ShowCallback) : AdShowStatus {
 		callback.adFormat = AdFormat.VIDEO
-		AdShower.showVideo(activity, callback)
+		return AdShower.showVideo(activity, callback)
 	}
 
 	// 日志上报

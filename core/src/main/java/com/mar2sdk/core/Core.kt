@@ -50,7 +50,6 @@ object Core {
 
 	// 展示开屏
 	suspend fun showOpen(activity: Activity, callback: ShowCallback): AdShowStatus {
-		callback.adFormat = AdFormat.OPEN
 		return AdShower.showOpen(activity, callback)
 	}
 

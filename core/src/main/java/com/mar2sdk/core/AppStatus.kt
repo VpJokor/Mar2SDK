@@ -3,6 +3,8 @@ package com.mar2sdk.core
 import android.app.Activity
 import android.app.Application
 import android.os.Bundle
+import com.mar2sdk.core.log.LogAppEvent
+import com.mar2sdk.core.log.LogUtil
 
 /**
  * APP状态管理类
@@ -47,6 +49,7 @@ object AppStatus {
 
 		override fun onActivityStarted(activity: Activity) {
 			if (startedActivityCount == 0) {
+				LogUtil.log(LogAppEvent.app_foreground, mapOf())
 				isForeground = true
 			}
 			startedActivityCount++
@@ -61,6 +64,7 @@ object AppStatus {
 				startedActivityCount--
 			}
 			if (startedActivityCount == 0 && !activity.isChangingConfigurations) {
+				LogUtil.log(LogAppEvent.app_background, mapOf())
 				isForeground = false
 			}
 		}

@@ -44,6 +44,8 @@ object Core {
 		RiskUtil.init()
 		// 上报appMod
 		ThinkingUtil.setUserOnceAttr("appMod", Core.appMod.name)
+		// 开始监听手机状态
+		AppStatus.init()
 	}
 
 	// 展示开屏

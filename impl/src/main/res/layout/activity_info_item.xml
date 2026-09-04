@@ -6,7 +6,9 @@
     android:id="@+id/main"
     android:gravity="center_vertical"
     android:layout_width="match_parent"
-    android:layout_height="32dp"
+    android:layout_height="wrap_content"
+    android:minHeight="32dp"
+    android:paddingVertical="4dp"
     android:orientation="horizontal"
     tools:context=".InfoActivity">
     <TextView
@@ -42,7 +44,8 @@
         android:lines="1"
         android:maxEms="10"
         android:ellipsize="end"
-        android:gravity="center"
+        android:gravity="center_vertical"
+        android:textIsSelectable="true"
         android:layout_width="0dp"
         android:layout_weight="1"
         android:layout_height="wrap_content"/>

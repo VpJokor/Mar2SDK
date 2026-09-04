@@ -1,6 +1,7 @@
 package com.mar2sdk.impl
 
 import android.os.Bundle
+import android.text.TextUtils
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -128,58 +129,48 @@ class InfoActivity : AppCompatActivity() {
 			.sorted()
 			.joinToString()
 			.ifEmpty { "无" }
-		val singularCredentials = if (
-			SingularConfig.key.isNotBlank() && SingularConfig.secret.isNotBlank()
-		) {
-			"已配置"
-		} else {
-			"未配置"
-		}
+		val configValues: List<Pair<String, Any>> = listOf(
+			"高 ECPM 阈值" to PolicyConfig.highEcpm,
+			"策略服务地址" to PolicyConfig.serverUrl,
+			"A/B 测试名称" to PolicyConfig.ABTestName,
+			"Play Integrity ID" to PolicyConfig.PlayIntegrityID,
+			"Token 解析路径" to PolicyConfig.parseTokenPath,
+			"IP 信息路径" to PolicyConfig.ipInfoPath,
+			"默认广告平台" to AdConfig.defaultPlatform.name,
+			"启用广告平台" to activePlatforms,
+			"正式admob开屏" to AdmobConfig.releaseOpenID,
+			"正式admob插屏" to AdmobConfig.releaseInterID,
+			"正式admob视频" to AdmobConfig.releaseVideoID,
+			"开屏超时 (分钟)" to AdmobConfig.openTimeout,
+			"开屏池大小" to AdmobConfig.openPoolSize,
+			"插屏超时 (分钟)" to AdmobConfig.interTimeout,
+			"插屏池大小" to AdmobConfig.interPoolSize,
+			"视频超时 (分钟)" to AdmobConfig.videoTimeout,
+			"视频池大小" to AdmobConfig.videoPoolSize,
+			"Thinking Key" to ThinkingConfig.key,
+			"Thinking URL" to ThinkingConfig.url,
+			"日志截止时间 (小时)" to ThinkingConfig.logEndTime,
+			"Singular Key" to SingularConfig.key,
+			"Singular Secret" to SingularConfig.secret,
+			"Singular 收入上报" to SingularConfig.trackRevenue,
+		)
 
 		infoAdapter.submitItems(
-			listOf(
-				InfoItem(title = "高 ECPM 阈值", content = PolicyConfig.highEcpm.toString()),
-				InfoItem(title = "策略服务地址", content = PolicyConfig.serverUrl),
-				InfoItem(title = "A/B 测试名称", content = PolicyConfig.ABTestName),
-				InfoItem(title = "Play Integrity ID", content = PolicyConfig.PlayIntegrityID.toString()),
-				InfoItem(title = "Token 解析路径", content = PolicyConfig.parseTokenPath),
-				InfoItem(title = "IP 信息路径", content = PolicyConfig.ipInfoPath),
-				InfoItem(title = "默认广告平台", content = AdConfig.defaultPlatform.name),
-				InfoItem(title = "启用广告平台", content = activePlatforms),
+			configValues.map { (title, value) ->
 				InfoItem(
-					title = "AdMob 开屏缓存",
-					content = "${durationInMinutes(AdmobConfig.openTimeout)} / 池大小 ${AdmobConfig.openPoolSize}",
-				),
-				InfoItem(
-					title = "AdMob 插屏缓存",
-					content = "${durationInMinutes(AdmobConfig.interTimeout)} / 池大小 ${AdmobConfig.interPoolSize}",
-				),
-				InfoItem(
-					title = "AdMob 视频缓存",
-					content = "${durationInMinutes(AdmobConfig.videoTimeout)} / 池大小 ${AdmobConfig.videoPoolSize}",
-				),
-				InfoItem(title = "Thinking 地址", content = ThinkingConfig.url),
-				InfoItem(
-					title = "Thinking 凭据",
-					content = if (ThinkingConfig.key.isBlank()) "未配置" else "已配置",
-				),
-				InfoItem(title = "日志上报时长", content = "${ThinkingConfig.logEndTime} 小时"),
-				InfoItem(title = "Singular 凭据", content = singularCredentials),
-				InfoItem(
-					title = "Singular 收入上报",
-					content = if (SingularConfig.trackRevenue) "开启" else "关闭",
-				),
-			),
+					title = title,
+					content = value.toString(),
+					showFullContent = true,
+				)
+			},
 		)
 	}
-
-	private fun durationInMinutes(milliseconds: Number): String =
-		"${milliseconds.toLong() / MILLIS_PER_MINUTE} 分钟"
 
 	private data class InfoItem(
 		val time: String = "",
 		val title: String,
 		val content: String,
+		val showFullContent: Boolean = false,
 	)
 
 	private class InfoAdapter : RecyclerView.Adapter<InfoAdapter.InfoViewHolder>() {
@@ -218,6 +209,8 @@ class InfoActivity : AppCompatActivity() {
 				time.text = item.time
 				title.text = item.title
 				content.text = item.content
+				content.maxLines = if (item.showFullContent) Int.MAX_VALUE else 1
+				content.ellipsize = if (item.showFullContent) null else TextUtils.TruncateAt.END
 			}
 		}
 	}
@@ -225,7 +218,6 @@ class InfoActivity : AppCompatActivity() {
 	companion object {
 		private const val EXTRA_LABEL = "label"
 		private const val LOG_DISPLAY_LIMIT = 100
-		private const val MILLIS_PER_MINUTE = 60_000L
 		private val LOG_TIME_FORMATTER = DateTimeFormatter
 			.ofPattern("HH:mm:ss")
 			.withZone(ZoneId.systemDefault())

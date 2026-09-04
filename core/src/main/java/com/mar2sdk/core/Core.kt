@@ -45,7 +45,7 @@ object Core {
 		// 上报appMod
 		ThinkingUtil.setUserOnceAttr("appMod", Core.appMod.name)
 		// 开始监听手机状态
-		AppStatus.init()
+		AppObs.init()
 	}
 
 	// 展示开屏

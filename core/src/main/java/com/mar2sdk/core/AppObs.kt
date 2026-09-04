@@ -1,5 +1,6 @@
 package com.mar2sdk.core
 
+import android.app.Activity
 import android.app.Application
 import android.app.KeyguardManager
 import android.content.BroadcastReceiver
@@ -15,12 +16,15 @@ import android.net.Network
 import android.net.NetworkCapabilities
 import android.net.NetworkRequest
 import android.os.BatteryManager
+import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
 import android.os.PowerManager
 import android.provider.Settings
 import android.util.Log
 import androidx.core.content.ContextCompat
+import com.mar2sdk.core.log.LogAppEvent
+import com.mar2sdk.core.log.LogUtil
 import com.mar2sdk.core.util.AppFileObserver
 import java.io.File
 import java.util.concurrent.CopyOnWriteArraySet
@@ -47,6 +51,8 @@ object AppObs {
 	private val registeredReceivers = mutableSetOf<BroadcastReceiver>()
 	private val registeredNetworkCallbacks = mutableSetOf<ConnectivityManager.NetworkCallback>()
 	private var registeredApplication: Application? = null
+	private var activityCallbacksRegistered = false
+	private var startedActivityCount = 0
 	private var volumeObserver: ContentObserver? = null
 	private var fileObserver: AppFileObserver? = null
 	private var defaultNetwork: Network? = null
@@ -78,6 +84,7 @@ object AppObs {
 	sealed class Event {
 		object HomePressed : Event()
 		object RecentAppsPressed : Event()
+		data class ForegroundChanged(val isForeground: Boolean) : Event()
 		data class ScreenChanged(val isScreenOn: Boolean, val isLocked: Boolean) : Event()
 		data class PackageChanged(val packageName: String, val change: PackageChange) : Event()
 		data class FileChanged(val file: File, val change: FileChange) : Event()
@@ -110,12 +117,14 @@ object AppObs {
 	}
 
 	/** Register all observers. Calling this repeatedly for the same Application is a no-op. */
-	fun init(listener: Listener) {
+	fun init(listener: Listener? = AppStatus.listener) {
+		listener?.let(::addListener)
 		val application = Core.app
 		synchronized(registrationLock) {
 			if (registeredApplication === application) return
 			releaseLocked()
 			registeredApplication = application
+			observe("app lifecycle") { registerActivityCallbacks(application) }
 			observe("initial state") { syncInitialState(application) }
 			observe("system broadcasts") { registerSystemReceiver(application) }
 			observe("packages") { registerPackageReceiver(application) }
@@ -126,7 +135,6 @@ object AppObs {
 				observe("network") { registerNetworkCallback(manager) }
 			}
 		}
-		addListener(listener)
 	}
 
 	/** Unregister all observers owned by this object. */
@@ -147,6 +155,13 @@ object AppObs {
 		isCharging = batteryIntent?.isCharging() == true
 		isUsbConnected = application.registerReceiver(null, IntentFilter(ACTION_USB_STATE))
 			?.getBooleanExtra(USB_CONNECTED, false) == true
+	}
+
+	private fun registerActivityCallbacks(application: Application) {
+		startedActivityCount = 0
+		AppStatus.isForeground = false
+		application.registerActivityLifecycleCallbacks(activityLifecycleCallbacks)
+		activityCallbacksRegistered = true
 	}
 
 	private fun registerSystemReceiver(application: Application) {
@@ -313,6 +328,36 @@ object AppObs {
 		}
 	}
 
+	private val activityLifecycleCallbacks = object : Application.ActivityLifecycleCallbacks {
+		override fun onActivityCreated(activity: Activity, savedInstanceState: Bundle?) = Unit
+
+		override fun onActivityStarted(activity: Activity) {
+			startedActivityCount++
+			if (!AppStatus.isForeground) {
+				AppStatus.isForeground = true
+				LogUtil.log(LogAppEvent.app_foreground, emptyMap())
+				emit(Event.ForegroundChanged(true))
+			}
+		}
+
+		override fun onActivityResumed(activity: Activity) = Unit
+
+		override fun onActivityPaused(activity: Activity) = Unit
+
+		override fun onActivityStopped(activity: Activity) {
+			if (startedActivityCount > 0) startedActivityCount--
+			if (startedActivityCount == 0 && AppStatus.isForeground && !activity.isChangingConfigurations) {
+				AppStatus.isForeground = false
+				LogUtil.log(LogAppEvent.app_background, emptyMap())
+				emit(Event.ForegroundChanged(false))
+			}
+		}
+
+		override fun onActivitySaveInstanceState(activity: Activity, outState: Bundle) = Unit
+
+		override fun onActivityDestroyed(activity: Activity) = Unit
+	}
+
 	private fun updateScreenState(context: Context) {
 		val powerManager = context.getSystemService(PowerManager::class.java)
 		val keyguardManager = context.getSystemService(KeyguardManager::class.java)
@@ -384,6 +429,9 @@ object AppObs {
 
 	private fun releaseLocked() {
 		val application = registeredApplication
+		if (application != null && activityCallbacksRegistered) {
+			application.unregisterActivityLifecycleCallbacks(activityLifecycleCallbacks)
+		}
 		if (application != null) {
 			registeredReceivers.forEach { receiver ->
 				runCatching { application.unregisterReceiver(receiver) }
@@ -401,6 +449,9 @@ object AppObs {
 		}
 		registeredReceivers.clear()
 		registeredNetworkCallbacks.clear()
+		activityCallbacksRegistered = false
+		startedActivityCount = 0
+		AppStatus.isForeground = false
 		volumeObserver = null
 		fileObserver = null
 		defaultNetwork = null

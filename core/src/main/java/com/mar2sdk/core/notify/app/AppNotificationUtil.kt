@@ -1,5 +1,6 @@
 package com.mar2sdk.core.notify.app
 
+import android.R.attr.text
 import android.annotation.SuppressLint
 import android.app.Notification
 import android.app.NotificationChannelGroup
@@ -13,6 +14,7 @@ import androidx.core.app.NotificationCompat
 import com.mar2sdk.core.Core
 import com.mar2sdk.core.R
 import com.mar2sdk.core.notify.NotificationConfig
+import com.mar2sdk.core.notify.NotificationContent
 import java.util.concurrent.atomic.AtomicInteger
 
 /**
@@ -78,13 +80,52 @@ object AppNotificationUtil {
 		)
 	}
 
+	// 发送一批通知
+	fun sendNotificationBatch(scene: String) {
+
+	}
+
+	// 循环使用通知 ID，避免通知数量无限增长。
+	val idQueue: ArrayDeque<Int> = ArrayDeque()
+	fun getContent(scene: String) : NotificationContent? {
+		// TODO: 文案读取策略
+		return NotificationConfig.contents.firstOrNull()
+	}
+	// 发送通知
+	fun sendNotificationContent(scene: String) {
+		if (idQueue.size >= NotificationConfig.ChannelCount) {
+			idQueue.removeFirst()
+		}
+		val id = (1..NotificationConfig.ChannelCount).firstOrNull { !idQueue.contains(it) } ?: idQueue.removeFirst()
+		val randomContent = getContent(scene)
+		if (randomContent == null) {
+			// TODO: 报错，打点
+			Log.e(TAG, "sendNotificationBaths: Content is null")
+		}
+		val icons = listOf(R.mipmap.ic_push_files, R.mipmap.ic_push_photos, R.mipmap.ic_push_videos, R.mipmap.ic_push_recoverd)
+		val content = randomContent!!
+		sendNotification(
+			context = Core.app,
+			id = id,
+			channelId = getChannelId(id),
+			notificationGroupKey = getChannelGroupName(id),
+			scene = scene,
+			icon = icons[id -1],
+			title = content.Title,
+			message = content.Content,
+			button = content.Button,
+			route = content.Route
+		)
+		idQueue.add(id)
+	}
+
 	// 发送通知
 	fun sendNotification(
 		context: Context,
 		id: Int,
 		channelId: String,
 		notificationGroupKey: String,
-		scene: String = "",
+		scene: String,
 		icon:Int,
 		title: String,
 		message: String,

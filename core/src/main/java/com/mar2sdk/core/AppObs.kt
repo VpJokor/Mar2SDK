@@ -25,14 +25,11 @@ import android.util.Log
 import androidx.core.content.ContextCompat
 import com.mar2sdk.core.log.LogAppEvent
 import com.mar2sdk.core.log.LogUtil
-import com.mar2sdk.core.util.AppFileObserver
-import java.io.File
 import java.util.concurrent.CopyOnWriteArraySet
 
 /**
  * 监听进程存活期间的手机状态变化。
  *
- * 文件监听受 Android 分区存储限制，只覆盖当前应用可访问的内部和外部 files 目录。
  * Home/最近任务依赖系统的关闭系统窗口广播，部分厂商系统可能不会发送该广播。
  */
 object AppObs {
@@ -54,7 +51,6 @@ object AppObs {
 	private var activityCallbacksRegistered = false
 	private var startedActivityCount = 0
 	private var volumeObserver: ContentObserver? = null
-	private var fileObserver: AppFileObserver? = null
 	private var defaultNetwork: Network? = null
 	private val wifiNetworks = mutableSetOf<Network>()
 	private var volumeSnapshot = emptyMap<Int, Int>()
@@ -87,7 +83,6 @@ object AppObs {
 		data class ForegroundChanged(val isForeground: Boolean) : Event()
 		data class ScreenChanged(val isScreenOn: Boolean, val isLocked: Boolean) : Event()
 		data class PackageChanged(val packageName: String, val change: PackageChange) : Event()
-		data class FileChanged(val file: File, val change: FileChange) : Event()
 		data class PowerChanged(val isCharging: Boolean) : Event()
 		data class VolumeChanged(val streamType: Int, val volume: Int, val maxVolume: Int) : Event()
 		data class UsbChanged(val isConnected: Boolean, val device: UsbDevice?) : Event()
@@ -96,7 +91,6 @@ object AppObs {
 	}
 
 	enum class PackageChange { INSTALLED, REMOVED, REPLACED }
-	enum class FileChange { CREATED, MODIFIED, DELETED, MOVED_FROM, MOVED_TO }
 	enum class Transport { WIFI, CELLULAR, ETHERNET, VPN, BLUETOOTH, OTHER }
 
 	data class WifiState(val connected: Boolean, val validated: Boolean)
@@ -128,7 +122,6 @@ object AppObs {
 			observe("initial state") { syncInitialState(application) }
 			observe("system broadcasts") { registerSystemReceiver(application) }
 			observe("packages") { registerPackageReceiver(application) }
-			observe("files") { startFileObserver(application) }
 			observe("volume") { registerVolumeObserver(application) }
 			application.getSystemService(ConnectivityManager::class.java)?.let { manager ->
 				observe("Wi-Fi") { registerWifiCallback(manager) }
@@ -200,16 +193,6 @@ object AppObs {
 			ContextCompat.RECEIVER_NOT_EXPORTED,
 		)
 		registeredReceivers.add(packageReceiver)
-	}
-
-	private fun startFileObserver(application: Application) {
-		val roots = buildList {
-			add(application.filesDir)
-			application.getExternalFilesDirs(null).filterNotNull().forEach(::add)
-		}.distinctBy { it.absolutePath }
-		fileObserver = AppFileObserver(roots) { file, change ->
-			emit(Event.FileChanged(file, change))
-		}.also { it.startWatching() }
 	}
 
 	private fun registerVolumeObserver(application: Application) {
@@ -441,7 +424,6 @@ object AppObs {
 		volumeObserver?.let { observer ->
 			application?.contentResolver?.unregisterContentObserver(observer)
 		}
-		fileObserver?.stopWatching()
 		application?.getSystemService(ConnectivityManager::class.java)?.let { manager ->
 			registeredNetworkCallbacks.forEach { callback ->
 				runCatching { manager.unregisterNetworkCallback(callback) }
@@ -453,7 +435,6 @@ object AppObs {
 		startedActivityCount = 0
 		AppStatus.isForeground = false
 		volumeObserver = null
-		fileObserver = null
 		defaultNetwork = null
 		volumeSnapshot = emptyMap()
 		lastWifiState = null

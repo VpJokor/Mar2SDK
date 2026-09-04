@@ -11,6 +11,7 @@ import com.mar2sdk.core.firebase.FirebaseUtil
 import com.mar2sdk.core.firebase.SingularUtil
 import com.mar2sdk.core.log.LogUtil
 import com.mar2sdk.core.log.ThinkingUtil
+import com.mar2sdk.core.notify.NotificationUtil
 import com.mar2sdk.core.notify.app.AppNotificationUtil
 import com.mar2sdk.core.policy.RiskUtil
 import com.mar2sdk.core.policy.TestMod
@@ -83,4 +84,8 @@ object Core {
 		ThinkingUtil.setUserAttr(key, value)
 	}
 
+	//启动常驻通知栏
+	fun startFGS() {
+		NotificationUtil.startFGS()
+	}
 }

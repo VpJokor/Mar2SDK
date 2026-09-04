@@ -1,3 +1,16 @@
 {
-
+  "ChannelCount": 3,
+  "isForgroundSend": false,
+  "isScreenOffSend": false,
+  "isScreenLockSend": false,
+  "contents": [
+    {
+      "Scenes": [],
+      "Title": "Title",
+      "Content": "Content",
+      "Button": "Button",
+      "Languages": "",
+      "Route": "Route"
+    }
+  ]
 }

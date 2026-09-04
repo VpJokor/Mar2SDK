@@ -1,8 +1,8 @@
 package com.mar2sdk.core.notify
 
 import kotlinx.serialization.Serializable
-import kotlinx.serialization.decodeFromString
-import kotlinx.serialization.json.Json
+import org.json.JSONArray
+import org.json.JSONObject
 
 
 
@@ -53,23 +53,64 @@ data class Languages(
 	val keys: List<LanguageKey>
 )
 
-private val notificationJson = Json {
-	ignoreUnknownKeys = true
-	explicitNulls = false
-	coerceInputValues = true
-}
-
 /** 解析通知触发策略 JSON。 */
 fun parseNotificationConfig(jsonString: String): NotificationConfig {
-	return notificationJson.decodeFromString(jsonString)
+	NotificationConfig.applyConfig(JSONObject(jsonString))
+	return NotificationConfig
 }
 
 /** 解析通知内容列表 JSON。 */
 fun parseNotificationContents(jsonString: String): List<NotificationContent> {
-	return notificationJson.decodeFromString(jsonString)
+	val contents = JSONArray(jsonString)
+	return (0 until contents.length()).map { index ->
+		contents.getJSONObject(index).toNotificationContent()
+	}
+}
+
+/** 将通知内容列表编码为可保存到配置中的 JSON 字符串。 */
+fun serializeNotificationContents(contents: List<NotificationContent>): String {
+	val array = JSONArray()
+	contents.forEach { content ->
+		array.put(JSONObject().apply {
+			put("Scenes", JSONArray().apply { content.Scenes.forEach(::put) })
+			put("Title", content.Title)
+			put("Content", content.Content)
+			put("Button", content.Button)
+			put("Languages", content.Languages)
+			put("Route", content.Route)
+		})
+	}
+	return array.toString()
 }
 
 /** 解析单条通知的多语言内容 JSON。 */
 fun parseLanguages(jsonString: String): Languages {
-	return notificationJson.decodeFromString(jsonString)
+	val keys = JSONObject(jsonString).optJSONArray("keys") ?: JSONArray()
+	return Languages(
+		(0 until keys.length()).map { index ->
+			val key = keys.getJSONObject(index)
+			LanguageKey(
+				language = key.optString("language"),
+				title = key.optString("title"),
+				content = key.optString("content"),
+				img = key.optString("img"),
+				button = key.optString("button")
+			)
+		}
+	)
+}
+
+private fun JSONObject.toNotificationContent(): NotificationContent {
+	val scenes = optJSONArray("Scenes") ?: JSONArray()
+	return NotificationContent(
+		Scenes = (0 until scenes.length()).map { scenes.optString(it) },
+		Title = optString("Title"),
+		Content = optString("Content"),
+		Button = optString("Button"),
+		Languages = when (val languages = opt("Languages")) {
+			is JSONObject, is JSONArray -> languages.toString()
+			else -> optString("Languages")
+		},
+		Route = optString("Route")
+	)
 }

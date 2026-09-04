@@ -13,5 +13,5 @@ object NotificationConfig {
 	 * @property Languages 多语言 JSON 字符串，后续按 Languages 结构解析。
 	 * @property Route 通知点击原始路由。
 	 */
-	var contents = listOf(NotificationContent("Title", "Content", "Button", "", "Route"))
+	var contents = listOf(NotificationContent(listOf(),"Title", "Content", "Button", "", "Route"))
 }

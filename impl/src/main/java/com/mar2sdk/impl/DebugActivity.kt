@@ -12,6 +12,7 @@ import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import com.mar2sdk.core.AppMod
 import com.mar2sdk.core.Core
+import com.mar2sdk.core.notify.app.AppNotificationUtil
 import com.mar2sdk.core.policy.TestMod
 import com.mar2sdk.core.policy.UserInfo
 import com.mar2sdk.core.policy.UserType
@@ -44,6 +45,10 @@ class DebugActivity : AppCompatActivity() {
 		findViewById<View>(R.id.send_test_fcm).setOnClickListener {
 			Toast.makeText(this@DebugActivity, "发送FCM测试信息", Toast.LENGTH_LONG).show()
 		}
+		findViewById<View>(R.id.send_notification).setOnClickListener {
+			AppNotificationUtil.sendNotificationContent("TEST")
+		}
+
 
 		findViewById<View>(R.id.change_test_mod).setOnClickListener {
 			if (Core.testMod == TestMod.FORCE) {

@@ -13,6 +13,10 @@ import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import com.mar2sdk.core.AppMod
 import com.mar2sdk.core.Core
+import com.mar2sdk.core.ad.callback.ShowCallback
+import com.mar2sdk.core.ad.status.AdFormat
+import com.mar2sdk.core.ad.status.AdPlatform
+import com.mar2sdk.core.ad.status.ShowFailResult
 import com.mar2sdk.core.log.LogAppParam
 import com.mar2sdk.core.log.ThinkingUtil
 import com.mar2sdk.core.notify.NotificationUtil
@@ -55,6 +59,13 @@ class DebugActivity : AppCompatActivity() {
 			Toast.makeText(this@DebugActivity, "发送FCM测试信息", Toast.LENGTH_LONG).show()
 		}
 		findViewById<View>(R.id.send_notification).setOnClickListener {
+			if (NotificationUtil.hasNotiAccess()) {
+				AppNotificationUtil.sendNotificationBatch("TEST")
+			} else {
+				Toast.makeText(Core.app, "没有通知权限", Toast.LENGTH_LONG).show()
+			}
+		}
+		findViewById<View>(R.id.req_notification).setOnClickListener {
 			NotificationUtil.reqNotiAccess(
 				activity = this@DebugActivity,
 				launcher = notificationPermissionLauncher,
@@ -62,7 +73,11 @@ class DebugActivity : AppCompatActivity() {
 			)
 		}
 		findViewById<View>(R.id.per_notification).setOnClickListener {
-			Core.startFGS()
+			if (NotificationUtil.hasNotiAccess()) {
+				Core.startFGS()
+			} else {
+				Toast.makeText(Core.app, "没有通知权限", Toast.LENGTH_LONG).show()
+			}
 		}
 
 		findViewById<View>(R.id.change_test_mod).setOnClickListener {
@@ -83,8 +98,48 @@ class DebugActivity : AppCompatActivity() {
 			} else {
 				Toast.makeText(this@DebugActivity, "仅 FORCE 测试模式下可用", Toast.LENGTH_LONG).show()
 			}
+		}
+
+		val adCallback = object : ShowCallback{
+			override var areaKey: String
+				get() = TODO("Not yet implemented")
+				set(value) {}
+			override var adFormat: AdFormat
+				get() = TODO("Not yet implemented")
+				set(value) {}
+			override var adPlatform: AdPlatform
+				get() = TODO("Not yet implemented")
+				set(value) {}
+
+			override fun showFailed(reason: ShowFailResult) {
+				TODO("Not yet implemented")
+			}
+
+			override fun showSuccess() {
+				TODO("Not yet implemented")
+			}
+
+			override fun onClicked() {
+				TODO("Not yet implemented")
+			}
+
+			override fun onAdClosed() {
+				TODO("Not yet implemented")
+			}
+
+			override fun onPaid() {
+				TODO("Not yet implemented")
+			}
+
+			override fun onReward() {
+				TODO("Not yet implemented")
+			}
 
 		}
+		findViewById<View>(R.id.test_open).setOnClickListener {
+			Core.showOpen(this, adCallback)
+		}
+
 	}
 
 	private fun handleNotificationPermissionResult(granted: Boolean) {
@@ -92,7 +147,7 @@ class DebugActivity : AppCompatActivity() {
 		ThinkingUtil.setUserAttr(LogAppParam.has_notification_permission, granted)
 
 		if (granted) {
-			AppNotificationUtil.sendNotificationBatch("TEST")
+			Toast.makeText(this, "通知权限请求成功", Toast.LENGTH_SHORT).show()
 		} else {
 			Toast.makeText(this, "通知权限未授权", Toast.LENGTH_SHORT).show()
 		}

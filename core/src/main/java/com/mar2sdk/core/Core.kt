@@ -11,6 +11,7 @@ import com.mar2sdk.core.firebase.FirebaseUtil
 import com.mar2sdk.core.firebase.SingularUtil
 import com.mar2sdk.core.log.LogUtil
 import com.mar2sdk.core.log.ThinkingUtil
+import com.mar2sdk.core.notify.app.AppNotificationUtil
 import com.mar2sdk.core.policy.RiskUtil
 import com.mar2sdk.core.policy.TestMod
 import com.mar2sdk.core.policy.UserType
@@ -44,6 +45,8 @@ object Core {
 		RiskUtil.init()
 		// 上报appMod
 		ThinkingUtil.setUserOnceAttr("appMod", Core.appMod.name)
+		// APP通知初始化
+		AppNotificationUtil.init()
 		// 开始监听手机状态
 		AppObs.init()
 	}

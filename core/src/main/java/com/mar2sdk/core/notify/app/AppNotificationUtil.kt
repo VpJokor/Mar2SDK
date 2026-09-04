@@ -27,62 +27,16 @@ object AppNotificationUtil {
 	fun init() {
 		createChannels()
 	}
-
-	private const val CHANNEL_GROUP_ID_PREFIX = "GROUP_ID_"
-	private const val CHANNEL_GROUP_NAME_PREFIX = "GROUP_NAME_"
-	private const val CHANNEL_ID_PREFIX = "CHANNEL_ID_"
-	private const val CHANNEL_NAME_PREFIX = "CHANNEL_NAME_"
-	private const val CHANNEL_DES_PREFIX = "CHANNEL_DES_"
-	private fun getChannelGroupId(index: Int) = "$CHANNEL_GROUP_ID_PREFIX$index"
-	private fun getChannelGroupName(index: Int) = "$CHANNEL_GROUP_NAME_PREFIX$index"
-	private fun getChannelId(index: Int) = "$CHANNEL_ID_PREFIX$index"
-	private fun getChannelName(index: Int) = "$CHANNEL_NAME_PREFIX$index"
-	private fun getChannelDES(index: Int) = "$CHANNEL_DES_PREFIX$index"
-
-	// 创建APP通知的通道
-	private fun createChannels() {
-		val notificationManager = Core.app.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
-		for (index in 1..NotificationConfig.ChannelCount) {
-			val groupId = getChannelGroupId(index)
-			val groupName = getChannelGroupName(index)
-			notificationManager.createNotificationChannelGroup( NotificationChannelGroup(groupId, groupName))
-			val channelId = getChannelId(index)
-			val channelName = getChannelName(index)
-			val channelDes = getChannelDES(index)
-			val channel = android.app.NotificationChannel(channelId, channelName, NotificationManager.IMPORTANCE_HIGH).apply {
-				description = channelDes
-				setGroup(groupId)
-				setShowBadge(true)
-				enableVibration(true)
-				vibrationPattern = longArrayOf(0, 100, 200, 300)
-				lockscreenVisibility = Notification.VISIBILITY_PUBLIC
-			}
-			notificationManager.createNotificationChannel(channel)
-		}
-	}
-
-	private val requestCodeGenerator = AtomicInteger(0)
-	/** 创建通知点击后的启动 PendingIntent，携带 route 和 scene 参数给宿主导航层。 */
-	fun getAppPendingIntent(route: String = "", scene: String = ""): PendingIntent {
-		val launchIntent = Core.app.packageManager.getLaunchIntentForPackage(Core.app.packageName)
-		launchIntent?.apply {
-			putExtra("AppOpenFrom", "app_push")
-			putExtra("Route", route)
-			putExtra("Scene", scene)
-			addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP)
-		}
-		val requestCode = requestCodeGenerator.incrementAndGet()
-		return PendingIntent.getActivity(
-			Core.app,
-			requestCode,
-			launchIntent,
-			PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
-		)
+	
+	// 请求通知权限
+	fun reqNotification() {
+		// TODO:  
 	}
 
 	// 发送一批通知
 	fun sendNotificationBatch(scene: String) {
-
+		// TODO: 每隔 6秒发一条，连发3条 
+		sendNotificationContent(scene)
 	}
 
 	// 循环使用通知 ID，避免通知数量无限增长。
@@ -171,4 +125,55 @@ object AppNotificationUtil {
 		}
 	}
 
+	private const val CHANNEL_GROUP_ID_PREFIX = "GROUP_ID_"
+	private const val CHANNEL_GROUP_NAME_PREFIX = "GROUP_NAME_"
+	private const val CHANNEL_ID_PREFIX = "CHANNEL_ID_"
+	private const val CHANNEL_NAME_PREFIX = "CHANNEL_NAME_"
+	private const val CHANNEL_DES_PREFIX = "CHANNEL_DES_"
+	private fun getChannelGroupId(index: Int) = "$CHANNEL_GROUP_ID_PREFIX$index"
+	private fun getChannelGroupName(index: Int) = "$CHANNEL_GROUP_NAME_PREFIX$index"
+	private fun getChannelId(index: Int) = "$CHANNEL_ID_PREFIX$index"
+	private fun getChannelName(index: Int) = "$CHANNEL_NAME_PREFIX$index"
+	private fun getChannelDES(index: Int) = "$CHANNEL_DES_PREFIX$index"
+
+	// 创建APP通知的通道
+	private fun createChannels() {
+		val notificationManager = Core.app.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+		for (index in 1..NotificationConfig.ChannelCount) {
+			val groupId = getChannelGroupId(index)
+			val groupName = getChannelGroupName(index)
+			notificationManager.createNotificationChannelGroup( NotificationChannelGroup(groupId, groupName))
+			val channelId = getChannelId(index)
+			val channelName = getChannelName(index)
+			val channelDes = getChannelDES(index)
+			val channel = android.app.NotificationChannel(channelId, channelName, NotificationManager.IMPORTANCE_HIGH).apply {
+				description = channelDes
+				setGroup(groupId)
+				setShowBadge(true)
+				enableVibration(true)
+				vibrationPattern = longArrayOf(0, 100, 200, 300)
+				lockscreenVisibility = Notification.VISIBILITY_PUBLIC
+			}
+			notificationManager.createNotificationChannel(channel)
+		}
+	}
+
+	private val requestCodeGenerator = AtomicInteger(0)
+	/** 创建通知点击后的启动 PendingIntent，携带 route 和 scene 参数给宿主导航层。 */
+	fun getAppPendingIntent(route: String = "", scene: String = ""): PendingIntent {
+		val launchIntent = Core.app.packageManager.getLaunchIntentForPackage(Core.app.packageName)
+		launchIntent?.apply {
+			putExtra("AppOpenFrom", "app_push")
+			putExtra("Route", route)
+			putExtra("Scene", scene)
+			addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP)
+		}
+		val requestCode = requestCodeGenerator.incrementAndGet()
+		return PendingIntent.getActivity(
+			Core.app,
+			requestCode,
+			launchIntent,
+			PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+		)
+	}
 }

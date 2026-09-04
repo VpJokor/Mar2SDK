@@ -1,0 +1,6 @@
+<animated-vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:drawable="@drawable/pulse_button_background">
+    <target
+        android:name="pulse_path"
+        android:animation="@animator/pulse_animator" />
+</animated-vector>

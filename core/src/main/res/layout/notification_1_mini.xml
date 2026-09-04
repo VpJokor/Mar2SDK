@@ -26,7 +26,8 @@
         android:layout_toStartOf="@id/notification_action"
         android:lines="2"
         android:ellipsize="end"
-        android:textColor="@color/notification_text_color"
+        android:text="Content"
+        android:textColor="@color/notification_content"
         android:gravity="center_vertical"
         android:layout_width="wrap_content"
         android:layout_height="60dp">
@@ -46,8 +47,8 @@
         <TextView
             android:id="@+id/button"
             android:textSize="12sp"
-            android:text="@string/check"
-            android:textColor="@color/white"
+            android:text="Check"
+            android:textColor="@android:color/white"
             android:textStyle="bold"
             android:layout_centerInParent="true"
             android:layout_width="wrap_content"

@@ -15,11 +15,13 @@ import android.net.ConnectivityManager
 import android.net.Network
 import android.net.NetworkCapabilities
 import android.net.NetworkRequest
+import android.net.Uri
 import android.os.BatteryManager
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
 import android.os.PowerManager
+import android.provider.MediaStore
 import android.provider.Settings
 import android.util.Log
 import androidx.core.content.ContextCompat
@@ -51,6 +53,7 @@ object AppObs {
 	private var activityCallbacksRegistered = false
 	private var startedActivityCount = 0
 	private var volumeObserver: ContentObserver? = null
+	private val mediaObservers = mutableListOf<ContentObserver>()
 	private var defaultNetwork: Network? = null
 	private val wifiNetworks = mutableSetOf<Network>()
 	private var volumeSnapshot = emptyMap<Int, Int>()
@@ -83,6 +86,7 @@ object AppObs {
 		data class ForegroundChanged(val isForeground: Boolean) : Event()
 		data class ScreenChanged(val isScreenOn: Boolean, val isLocked: Boolean) : Event()
 		data class PackageChanged(val packageName: String, val change: PackageChange) : Event()
+		data class MediaChanged(val collection: MediaCollection, val uri: Uri?) : Event()
 		data class PowerChanged(val isCharging: Boolean) : Event()
 		data class VolumeChanged(val streamType: Int, val volume: Int, val maxVolume: Int) : Event()
 		data class UsbChanged(val isConnected: Boolean, val device: UsbDevice?) : Event()
@@ -91,6 +95,7 @@ object AppObs {
 	}
 
 	enum class PackageChange { INSTALLED, REMOVED, REPLACED }
+	enum class MediaCollection { IMAGES, VIDEOS, AUDIO, DOWNLOADS }
 	enum class Transport { WIFI, CELLULAR, ETHERNET, VPN, BLUETOOTH, OTHER }
 
 	data class WifiState(val connected: Boolean, val validated: Boolean)
@@ -122,6 +127,7 @@ object AppObs {
 			observe("initial state") { syncInitialState(application) }
 			observe("system broadcasts") { registerSystemReceiver(application) }
 			observe("packages") { registerPackageReceiver(application) }
+			registerMediaObservers(application)
 			observe("volume") { registerVolumeObserver(application) }
 			application.getSystemService(ConnectivityManager::class.java)?.let { manager ->
 				observe("Wi-Fi") { registerWifiCallback(manager) }
@@ -193,6 +199,24 @@ object AppObs {
 			ContextCompat.RECEIVER_NOT_EXPORTED,
 		)
 		registeredReceivers.add(packageReceiver)
+	}
+
+	private fun registerMediaObservers(application: Application) {
+		MEDIA_COLLECTIONS.forEach { (collection, uri) ->
+			observe("media collection $collection") {
+				val observer = object : ContentObserver(mainHandler) {
+					override fun onChange(selfChange: Boolean) {
+						emit(Event.MediaChanged(collection, null))
+					}
+
+					override fun onChange(selfChange: Boolean, changedUri: Uri?) {
+						emit(Event.MediaChanged(collection, changedUri))
+					}
+				}
+				application.contentResolver.registerContentObserver(uri, true, observer)
+				mediaObservers.add(observer)
+			}
+		}
 	}
 
 	private fun registerVolumeObserver(application: Application) {
@@ -424,6 +448,9 @@ object AppObs {
 		volumeObserver?.let { observer ->
 			application?.contentResolver?.unregisterContentObserver(observer)
 		}
+		if (application != null) {
+			mediaObservers.forEach(application.contentResolver::unregisterContentObserver)
+		}
 		application?.getSystemService(ConnectivityManager::class.java)?.let { manager ->
 			registeredNetworkCallbacks.forEach { callback ->
 				runCatching { manager.unregisterNetworkCallback(callback) }
@@ -435,6 +462,7 @@ object AppObs {
 		startedActivityCount = 0
 		AppStatus.isForeground = false
 		volumeObserver = null
+		mediaObservers.clear()
 		defaultNetwork = null
 		volumeSnapshot = emptyMap()
 		lastWifiState = null
@@ -472,5 +500,12 @@ object AppObs {
 		AudioManager.STREAM_RING,
 		AudioManager.STREAM_SYSTEM,
 		AudioManager.STREAM_VOICE_CALL,
+	)
+
+	private val MEDIA_COLLECTIONS = mapOf(
+		MediaCollection.IMAGES to MediaStore.Images.Media.EXTERNAL_CONTENT_URI,
+		MediaCollection.VIDEOS to MediaStore.Video.Media.EXTERNAL_CONTENT_URI,
+		MediaCollection.AUDIO to MediaStore.Audio.Media.EXTERNAL_CONTENT_URI,
+		MediaCollection.DOWNLOADS to MediaStore.Downloads.EXTERNAL_CONTENT_URI,
 	)
 }

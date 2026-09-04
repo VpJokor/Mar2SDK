@@ -141,12 +141,9 @@ class InfoActivity : AppCompatActivity() {
 			"正式admob开屏" to AdmobConfig.releaseOpenID,
 			"正式admob插屏" to AdmobConfig.releaseInterID,
 			"正式admob视频" to AdmobConfig.releaseVideoID,
-			"开屏超时 (分钟)" to AdmobConfig.openTimeout,
-			"开屏池大小" to AdmobConfig.openPoolSize,
-			"插屏超时 (分钟)" to AdmobConfig.interTimeout,
-			"插屏池大小" to AdmobConfig.interPoolSize,
-			"视频超时 (分钟)" to AdmobConfig.videoTimeout,
-			"视频池大小" to AdmobConfig.videoPoolSize,
+			"开屏超时(分钟)/池大小" to formatMinutes(AdmobConfig.openTimeout) + " / " + AdmobConfig.openPoolSize,
+			"插屏超时(分钟)/池大小" to formatMinutes(AdmobConfig.interTimeout) + " / " + AdmobConfig.interPoolSize,
+			"视频超时(分钟)/池大小" to formatMinutes(AdmobConfig.videoTimeout) + " / " + AdmobConfig.videoPoolSize,
 			"Thinking Key" to ThinkingConfig.key,
 			"Thinking URL" to ThinkingConfig.url,
 			"日志截止时间 (小时)" to ThinkingConfig.logEndTime,
@@ -165,6 +162,11 @@ class InfoActivity : AppCompatActivity() {
 			},
 		)
 	}
+
+	private fun formatMinutes(milliseconds: Number): String =
+		String.format(Locale.ROOT, "%.2f", milliseconds.toDouble() / MILLIS_PER_MINUTE)
+			.trimEnd('0')
+			.trimEnd('.')
 
 	private data class InfoItem(
 		val time: String = "",
@@ -218,6 +220,7 @@ class InfoActivity : AppCompatActivity() {
 	companion object {
 		private const val EXTRA_LABEL = "label"
 		private const val LOG_DISPLAY_LIMIT = 100
+		private const val MILLIS_PER_MINUTE = 60_000.0
 		private val LOG_TIME_FORMATTER = DateTimeFormatter
 			.ofPattern("HH:mm:ss")
 			.withZone(ZoneId.systemDefault())

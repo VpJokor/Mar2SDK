@@ -7,6 +7,7 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.TextView
 import androidx.activity.enableEdgeToEdge
+import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
@@ -46,17 +47,37 @@ class InfoActivity : AppCompatActivity() {
 
 		label = intent.getStringExtra(EXTRA_LABEL).orEmpty()
 		findViewById<TextView>(R.id.title).text = label
+		findViewById<View>(R.id.clear_logs).apply {
+			visibility = if (label.equals(LOG_LABEL, ignoreCase = true)) View.VISIBLE else View.GONE
+			setOnClickListener { confirmClearLogs() }
+		}
 		setRecycleView()
 		getData()
 	}
 
 	private fun setRecycleView() {
-		infoAdapter = InfoAdapter()
+		infoAdapter = InfoAdapter(::showInfoDetails)
 		findViewById<RecyclerView>(R.id.infos).apply {
 			layoutManager = LinearLayoutManager(this@InfoActivity)
 			adapter = infoAdapter
 			setHasFixedSize(true)
 		}
+	}
+
+	private fun showInfoDetails(item: InfoItem) {
+		val details = buildList {
+			add(getString(R.string.info_detail_name, item.title))
+			if (item.time.isNotBlank()) {
+				add(getString(R.string.info_detail_time, item.time))
+			}
+			add(getString(R.string.info_detail_content, item.content))
+		}.joinToString(separator = "\n\n")
+		val dialog = AlertDialog.Builder(this)
+			.setTitle(R.string.info_details)
+			.setMessage(details)
+			.setPositiveButton(android.R.string.ok, null)
+			.show()
+		dialog.findViewById<TextView>(android.R.id.message)?.setTextIsSelectable(true)
 	}
 
 	private fun getData() {
@@ -96,6 +117,22 @@ class InfoActivity : AppCompatActivity() {
 				else -> items
 			}
 			infoAdapter.submitItems(displayedItems)
+		}
+	}
+
+	private fun confirmClearLogs() {
+		AlertDialog.Builder(this)
+			.setTitle(R.string.clear_local_logs)
+			.setMessage(R.string.clear_local_logs_confirmation)
+			.setNegativeButton(android.R.string.cancel, null)
+			.setPositiveButton(R.string.clear) { _, _ -> clearLogs() }
+			.show()
+	}
+
+	private fun clearLogs() {
+		lifecycleScope.launch {
+			DBUtil.clearLogs()
+			loadLogs()
 		}
 	}
 
@@ -175,13 +212,15 @@ class InfoActivity : AppCompatActivity() {
 		val showFullContent: Boolean = false,
 	)
 
-	private class InfoAdapter : RecyclerView.Adapter<InfoAdapter.InfoViewHolder>() {
+	private class InfoAdapter(
+		private val onItemClick: (InfoItem) -> Unit,
+	) : RecyclerView.Adapter<InfoAdapter.InfoViewHolder>() {
 		private val items = mutableListOf<InfoItem>()
 
 		override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): InfoViewHolder {
 			val itemView = LayoutInflater.from(parent.context)
 				.inflate(R.layout.activity_info_item, parent, false)
-			return InfoViewHolder(itemView)
+			return InfoViewHolder(itemView, onItemClick)
 		}
 
 		override fun onBindViewHolder(holder: InfoViewHolder, position: Int) {
@@ -202,12 +241,16 @@ class InfoActivity : AppCompatActivity() {
 			}
 		}
 
-		class InfoViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
+		class InfoViewHolder(
+			itemView: View,
+			private val onItemClick: (InfoItem) -> Unit,
+		) : RecyclerView.ViewHolder(itemView) {
 			private val time: TextView = itemView.findViewById(R.id.time)
 			private val title: TextView = itemView.findViewById(R.id.title)
 			private val content: TextView = itemView.findViewById(R.id.content)
 
 			fun bind(item: InfoItem) {
+				itemView.setOnClickListener { onItemClick(item) }
 				time.text = item.time
 				title.text = item.title
 				content.text = item.content
@@ -219,6 +262,7 @@ class InfoActivity : AppCompatActivity() {
 
 	companion object {
 		private const val EXTRA_LABEL = "label"
+		private const val LOG_LABEL = "log"
 		private const val LOG_DISPLAY_LIMIT = 100
 		private const val MILLIS_PER_MINUTE = 60_000.0
 		private val LOG_TIME_FORMATTER = DateTimeFormatter

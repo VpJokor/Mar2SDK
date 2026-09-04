@@ -26,6 +26,19 @@
             android:padding="10dp"
             android:layout_width="48dp"
             android:layout_height="48dp"/>
+        <ImageButton
+            android:id="@+id/clear_logs"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:layout_gravity="end"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:contentDescription="@string/clear_local_logs"
+            android:padding="12dp"
+            android:src="@drawable/delete"
+            android:tooltipText="@string/clear_local_logs"
+            android:visibility="gone"
+            app:tint="@android:color/black"
+            tools:visibility="visible" />
     </FrameLayout>
 
     <androidx.recyclerview.widget.RecyclerView

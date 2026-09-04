@@ -32,6 +32,7 @@ object LogUtil {
 		}
 		logThinking(eventName, params)
 		logLocal(eventName, params)
+		logNet(eventName, params)
 		if (eventName == LogAdEvent.ad_revenue) {
 			if (
 				(params[FirebaseAnalytics.Param.AD_FORMAT] as? String).equals(LogAdParam.ad_format_open) ||
@@ -94,6 +95,11 @@ object LogUtil {
 		} catch (exception: Exception) {
 			Log.e(TAG, "logLocal error", exception)
 		}
+	}
+
+	// 打点到自己的服务端
+	fun logNet(eventName: String, params: Map<String, Any>) {
+
 	}
 
 	fun logSingularAdRevenue(adPlatform: String, revenue: Double) {

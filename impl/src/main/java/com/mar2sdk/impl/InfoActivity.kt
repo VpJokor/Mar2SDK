@@ -9,6 +9,7 @@ import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 
 class InfoActivity : AppCompatActivity() {
+	var label = ""
 	override fun onCreate(savedInstanceState: Bundle?) {
 		super.onCreate(savedInstanceState)
 		enableEdgeToEdge()
@@ -21,7 +22,33 @@ class InfoActivity : AppCompatActivity() {
 		findViewById<View>(R.id.back).setOnClickListener {
 			finish()
 		}
-		val title = intent.getStringExtra("title")
-		findViewById< TextView>(R.id.title).text = title
+		label = intent.getStringExtra("label") ?: ""
+		findViewById< TextView>(R.id.title).text = label
+		getData()
+		setRecycleView()
+	}
+
+	private fun setRecycleView() {
+
+	}
+
+	private fun getData() {
+		clearData()
+		when(label) {
+			"log" -> loadLogs()
+			"User" -> loadUserInfo()
+		}
+	}
+
+	private fun clearData() {
+
+	}
+
+	private fun loadLogs() {
+
+	}
+
+	private fun loadUserInfo() {
+
 	}
 }

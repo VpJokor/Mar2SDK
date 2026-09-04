@@ -33,16 +33,15 @@ class DebugActivity : AppCompatActivity() {
 			refreshData()
 		}
 		findViewById<View>(R.id.user_info_card).setOnClickListener {
-			Toast.makeText(this@DebugActivity, "显示用户信息面板", Toast.LENGTH_LONG).show()
+			openInfo("User")
+		}
+		findViewById<View>(R.id.log_btn).setOnClickListener {
+			openInfo("Log")
 		}
 		findViewById<View>(R.id.send_test_fcm).setOnClickListener {
 			Toast.makeText(this@DebugActivity, "发送FCM测试信息", Toast.LENGTH_LONG).show()
 		}
-		findViewById<View>(R.id.log_btn).setOnClickListener {
-			val intent = Intent(this@DebugActivity, InfoActivity::class.java)
-			intent.putExtra("title", "日志面板")
-			startActivity(intent)
-		}
+
 		findViewById<View>(R.id.change_test_mod).setOnClickListener {
 			if (Core.testMod == TestMod.FORCE) {
 				Core.testMod = TestMod.POLICY
@@ -63,6 +62,12 @@ class DebugActivity : AppCompatActivity() {
 			}
 
 		}
+	}
+
+	private fun openInfo(label: String) {
+		val intent = Intent(this@DebugActivity, InfoActivity::class.java)
+		intent.putExtra("label", label)
+		startActivity(intent)
 	}
 
 	override fun onResume() {

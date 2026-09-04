@@ -1,0 +1,16 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="240dp"
+    android:height="45dp"
+    android:viewportWidth="280"
+    android:viewportHeight="60">
+    <group
+        android:name="pulse_group"
+        android:pivotX="140"
+        android:pivotY="30">
+        <path
+            android:name="pulse_path"
+            android:fillColor="#9E7BFB"
+            android:pathData="M 30,7.5 h 220 a 10,10 0 0 1 10,10 v 25 a 10,10 0 0 1 -10,10 h -220 a 10,10 0 0 1 -10,-10 v -25 a 10,10 0 0 1 10,-10 Z" />
+    </group>
+
+</vector>

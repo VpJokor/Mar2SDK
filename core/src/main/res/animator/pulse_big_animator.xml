@@ -1,0 +1,11 @@
+<set xmlns:android="http://schemas.android.com/apk/res/android">
+    <objectAnimator
+        android:propertyName="pathData"
+        android:duration="800"
+        android:valueFrom="M 30,7.5 h 220 a 10,10 0 0 1 10,10 v 25 a 10,10 0 0 1 -10,10 h -220 a 10,10 0 0 1 -10,-10 v -25 a 10,10 0 0 1 10,-10 Z"
+        android:valueTo="M 10,0 h 260 a 10,10 0 0 1 10,10 v 40 a 10,10 0 0 1 -10,10 h -260 a 10,10 0 0 1 -10,-10 v -40 a 10,10 0 0 1 10,-10 Z"
+        android:repeatCount="infinite"
+        android:repeatMode="reverse"
+        android:valueType="pathType"
+        android:interpolator="@android:anim/accelerate_decelerate_interpolator"/>
+</set>

@@ -1,0 +1,70 @@
+package com.mar2sdk.impl
+
+import android.app.Activity
+import android.content.Intent
+import android.os.Bundle
+import androidx.activity.enableEdgeToEdge
+import androidx.appcompat.app.AppCompatActivity
+import androidx.core.view.ViewCompat
+import androidx.core.view.WindowInsetsCompat
+import com.mar2sdk.core.Core
+import com.mar2sdk.core.ad.callback.ShowCallback
+import com.mar2sdk.core.ad.status.AdFormat
+import com.mar2sdk.core.ad.status.AdPlatform
+import com.mar2sdk.core.ad.status.ShowFailResult
+
+class AdActivity : AppCompatActivity() {
+
+	companion object {
+		private const val TAG = "AdActivity"
+
+		fun showAd(activity: Activity, adFormat: AdFormat, areaKey: String) {
+			val intent = Intent(activity, AdActivity::class.java)
+			intent.putExtra("adFormat", adFormat.name)
+			intent.putExtra("areaKey", areaKey)
+			activity.startActivity(intent)
+		}
+
+	}
+
+	override fun onCreate(savedInstanceState: Bundle?) {
+		super.onCreate(savedInstanceState)
+		enableEdgeToEdge()
+		setContentView(R.layout.activity_ad)
+
+		showAd()
+	}
+
+	private fun showAd() {
+		val adFormat = AdFormat.valueOf(intent.getStringExtra("adFormat") ?: "OPEN")
+		val areaKey = intent.getStringExtra("areaKey") ?: "unknow"
+		val callback = object : ShowCallback{
+			override var areaKey: String
+				get() = areaKey
+				set(value) {}
+			override var adFormat: AdFormat
+				get() = adFormat
+				set(value) {}
+			override var adPlatform: AdPlatform
+				get() = AdPlatform.TRADPLUS
+				set(value) {
+					adPlatform = value
+				}
+
+			override fun showFailed(reason: ShowFailResult) {
+				finish()
+			}
+			override fun onAdClosed() {
+				finish()
+			}
+			override fun showSuccess() {}
+			override fun onClicked() {}
+			override fun onPaid() {}
+			override fun onReward() {}
+		}
+//		when(adFormat) {
+//			AdFormat.OPEN -> Core.showOpen(this, callback)
+//		}
+	}
+
+}

@@ -1,6 +1,12 @@
 package com.mar2sdk.core.notify
 
 object NotificationConfig {
+
+	// 是否有通知权限
+	var hasNotificationAccess = false
+	// 是否有前台服务权限
+	var hasForegroundServiceAccess = false
+
 	// APP通知的通道数
 	var ChannelCount = 3
 

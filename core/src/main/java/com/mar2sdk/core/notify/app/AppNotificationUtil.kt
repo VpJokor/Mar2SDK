@@ -2,6 +2,7 @@ package com.mar2sdk.core.notify.app
 
 import android.R.attr.text
 import android.annotation.SuppressLint
+import android.app.Activity
 import android.app.Notification
 import android.app.NotificationChannelGroup
 import android.app.NotificationManager
@@ -28,10 +29,7 @@ object AppNotificationUtil {
 		createChannels()
 	}
 	
-	// 请求通知权限
-	fun reqNotification() {
-		// TODO:  
-	}
+
 
 	// 发送一批通知
 	fun sendNotificationBatch(scene: String) {

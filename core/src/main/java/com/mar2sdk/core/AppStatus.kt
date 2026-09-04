@@ -30,5 +30,4 @@ object AppStatus {
 	// 通知状态 上次发送通知的时间
 	var lastNotifyTime = 0L
 
-
 }

@@ -4,15 +4,16 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/main"
-    android:orientation="vertical"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context=".LogActivity">
+    android:orientation="vertical"
+    tools:context=".InfoActivity">
     <FrameLayout
         android:layout_width="match_parent"
         android:layout_height="48dp">
         <TextView
-            android:text="Mar2SDK调试页"
+            android:id="@+id/title"
+            android:text="信息面板"
             android:textSize="20sp"
             android:textStyle="bold"
             android:textColor="@android:color/black"

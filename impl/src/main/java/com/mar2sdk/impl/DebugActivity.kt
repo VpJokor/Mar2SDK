@@ -39,7 +39,9 @@ class DebugActivity : AppCompatActivity() {
 			Toast.makeText(this@DebugActivity, "发送FCM测试信息", Toast.LENGTH_LONG).show()
 		}
 		findViewById<View>(R.id.log_btn).setOnClickListener {
-			startActivity(Intent(this@DebugActivity, LogActivity::class.java))
+			val intent = Intent(this@DebugActivity, InfoActivity::class.java)
+			intent.putExtra("title", "日志面板")
+			startActivity(intent)
 		}
 		findViewById<View>(R.id.change_test_mod).setOnClickListener {
 			if (Core.testMod == TestMod.FORCE) {

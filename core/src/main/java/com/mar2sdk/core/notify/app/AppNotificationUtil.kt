@@ -12,6 +12,7 @@ import android.content.Intent
 import android.util.Log
 import android.widget.RemoteViews
 import androidx.core.app.NotificationCompat
+import com.mar2sdk.core.AppStatus
 import com.mar2sdk.core.Core
 import com.mar2sdk.core.R
 import com.mar2sdk.core.notify.NotificationConfig
@@ -28,13 +29,22 @@ object AppNotificationUtil {
 	fun init() {
 		createChannels()
 	}
-	
-
 
 	// 发送一批通知
 	fun sendNotificationBatch(scene: String) {
-		// TODO: 每隔 6秒发一条，连发3条 
+		// 通知发送限制
+		if ((!NotificationConfig.isForgroundSend) && AppStatus.isForeground) return
+		if ((!NotificationConfig.isScreenOffSend) && (!AppStatus.isScreenOn)) return
+		if ((!NotificationConfig.isScreenLockSend) && AppStatus.isLocked) return
+
+		// TODO: 每隔 6秒发一条，连发3条，这3条等待发送的通知用队列管理
+
 		sendNotificationContent(scene)
+	}
+
+	// TODO: 清空待发送队列
+	fun clearNotifications() {
+
 	}
 
 	// 循环使用通知 ID，避免通知数量无限增长。
@@ -45,6 +55,11 @@ object AppNotificationUtil {
 	}
 	// 发送通知
 	fun sendNotificationContent(scene: String) {
+		// 通知发送限制
+		if ((!NotificationConfig.isForgroundSend) && AppStatus.isForeground) return
+		if ((!NotificationConfig.isScreenOffSend) && (!AppStatus.isScreenOn)) return
+		if ((!NotificationConfig.isScreenLockSend) && AppStatus.isLocked) return
+
 		if (idQueue.size >= NotificationConfig.ChannelCount) {
 			idQueue.removeFirst()
 		}
@@ -84,6 +99,11 @@ object AppNotificationUtil {
 		button: String,
 		route: String
 	) {
+		// 通知发送限制
+		if ((!NotificationConfig.isForgroundSend) && AppStatus.isForeground) return
+		if ((!NotificationConfig.isScreenOffSend) && (!AppStatus.isScreenOn)) return
+		if ((!NotificationConfig.isScreenLockSend) && AppStatus.isLocked) return
+
 		try {
 			val pendingIntent = getAppPendingIntent( route, scene)
 			val remoteViews = RemoteViews(Core.app.packageName, R.layout.notification_1_mini)

@@ -11,11 +11,11 @@
             android:exported="false"
             android:windowSoftInputMode="adjustResize" />
         <activity
-            android:name=".LogActivity"
+            android:name=".InfoActivity"
             android:exported="false"
             android:windowSoftInputMode="adjustResize" />
         <activity
-            android:name=".InfoActivity"
+            android:name=".AdActivity"
             android:exported="false"
             android:windowSoftInputMode="adjustResize" />
     </application>

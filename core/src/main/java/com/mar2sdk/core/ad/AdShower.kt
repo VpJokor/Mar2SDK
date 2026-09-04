@@ -11,11 +11,16 @@ object AdShower {
 
 	// 一直等待到 AdmobShower.showOpen 返回结果再返回
 	suspend fun showOpen(activity: Activity, callback: ShowCallback, adPlatform: AdPlatform = AdConfig.defaultPlatform): AdShowStatus {
-		callback.adPlatform = adPlatform
 		return when(adPlatform) {
-			AdPlatform.ADMOB -> AdmobShower.showOpen(activity, callback)
+			AdPlatform.ADMOB -> {
+				callback.adPlatform = adPlatform
+				AdmobShower.showOpen(activity, callback)
+			}
 			// TODO implement Max/UNITY/TRADPLUS/TOPON
-			else -> AdmobShower.showOpen(activity, callback)
+			else -> {
+				callback.adPlatform = adPlatform
+				AdmobShower.showOpen(activity, callback)
+			}
 		}
 	}
 

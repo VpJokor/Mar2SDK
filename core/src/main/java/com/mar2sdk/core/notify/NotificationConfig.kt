@@ -2,8 +2,6 @@ package com.mar2sdk.core.notify
 
 object NotificationConfig {
 
-	// 是否有通知权限
-	var hasNotificationAccess = false
 	// 是否有前台服务权限
 	var hasForegroundServiceAccess = false
 

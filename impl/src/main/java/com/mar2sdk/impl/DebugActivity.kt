@@ -13,6 +13,8 @@ import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import com.mar2sdk.core.AppMod
 import com.mar2sdk.core.Core
+import com.mar2sdk.core.log.LogAppParam
+import com.mar2sdk.core.log.ThinkingUtil
 import com.mar2sdk.core.notify.NotificationUtil
 import com.mar2sdk.core.notify.app.AppNotificationUtil
 import com.mar2sdk.core.policy.TestMod
@@ -20,6 +22,10 @@ import com.mar2sdk.core.policy.UserInfo
 import com.mar2sdk.core.policy.UserType
 
 class DebugActivity : AppCompatActivity() {
+	private val notificationPermissionLauncher =
+		registerForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
+			handleNotificationPermissionResult(granted)
+		}
 
 	override fun onCreate(savedInstanceState: Bundle?) {
 		super.onCreate(savedInstanceState)
@@ -49,15 +55,9 @@ class DebugActivity : AppCompatActivity() {
 			Toast.makeText(this@DebugActivity, "发送FCM测试信息", Toast.LENGTH_LONG).show()
 		}
 		findViewById<View>(R.id.send_notification).setOnClickListener {
-			fun handleNotificationPermissionResult(granted: Boolean) {
-				if (granted) {
-					AppNotificationUtil.sendNotificationBatch("TEST")
-				} else {
-					Toast.makeText(this@DebugActivity, "通知权限未授权", Toast.LENGTH_SHORT).show()
-				}
-			}
 			NotificationUtil.reqNotiAccess(
 				activity = this@DebugActivity,
+				launcher = notificationPermissionLauncher,
 				onResult = ::handleNotificationPermissionResult
 			)
 		}
@@ -81,6 +81,17 @@ class DebugActivity : AppCompatActivity() {
 				Toast.makeText(this@DebugActivity, "仅 FORCE 测试模式下可用", Toast.LENGTH_LONG).show()
 			}
 
+		}
+	}
+
+	private fun handleNotificationPermissionResult(granted: Boolean) {
+		// TODO: 通知权限打点
+		ThinkingUtil.setUserAttr(LogAppParam.has_notification_permission, granted)
+
+		if (granted) {
+			AppNotificationUtil.sendNotificationBatch("TEST")
+		} else {
+			Toast.makeText(this, "通知权限未授权", Toast.LENGTH_SHORT).show()
 		}
 	}
 

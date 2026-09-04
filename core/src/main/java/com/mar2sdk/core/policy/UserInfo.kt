@@ -21,6 +21,8 @@ object UserInfo {
 	var riskIP = RiskType.UNKNOW
 	//高风险包
 	var riskPackage = RiskType.UNKNOW
+	//高风险设备
+	var riskDevice = RiskType.UNKNOW
 
 	fun init() {
 		//首次打开时间
@@ -43,6 +45,9 @@ object UserInfo {
 		riskPackage = RiskType.valueOf(
 			PreferenceUtil.getString(PolicyKey.KEY_RISK_PACKAGE, riskPackage.name)
 		)
+		riskDevice = RiskType.valueOf(
+			PreferenceUtil.getString(PolicyKey.KEY_RISK_DEVICE, riskDevice.name)
+		)
 	}
 
 	fun saveUserInfo() {
@@ -52,6 +57,7 @@ object UserInfo {
 		PreferenceUtil.commitString(PolicyKey.KEY_CAMPAIGN_NAME, campaignName)
 		PreferenceUtil.commitString(PolicyKey.KEY_RISK_IP, riskIP.name)
 		PreferenceUtil.commitString(PolicyKey.KEY_RISK_PACKAGE, riskPackage.name)
+		PreferenceUtil.commitString(PolicyKey.KEY_RISK_DEVICE, riskDevice.name)
 	}
 
 }

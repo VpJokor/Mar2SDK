@@ -53,7 +53,12 @@ object RiskUtil {
 		}
 
 		//正式版本逻辑
-		if (UserInfo.riskIP == RiskType.RISK || UserInfo.riskPackage == RiskType.RISK || UserInfo.ecpmType == EcpmType.ECPM_0) {
+		if (
+			UserInfo.riskIP == RiskType.RISK ||
+			UserInfo.riskPackage == RiskType.RISK ||
+			UserInfo.riskDevice == RiskType.RISK ||
+			UserInfo.ecpmType == EcpmType.ECPM_0
+		) {
 			Core.userType = UserType.RISK
 			return
 		}

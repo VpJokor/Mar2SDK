@@ -11,7 +11,7 @@
     tools:context=".InfoActivity">
     <TextView
         android:id="@+id/time"
-        android:text="14:27"
+        tools:text="14:27"
         android:textSize="14sp"
         android:textColor="@android:color/black"
         android:lines="1"
@@ -23,7 +23,7 @@
     <TextView
         android:id="@+id/title"
         android:layout_marginStart="10dp"
-        android:text="ad_impression"
+        tools:text="ad_impression"
         android:textSize="14sp"
         android:textStyle="bold"
         android:textColor="@android:color/black"
@@ -36,14 +36,15 @@
     <TextView
         android:id="@+id/content"
         android:layout_marginStart="10dp"
-        android:text="ad_impression"
+        tools:text="{ad_format=interstitial}"
         android:textSize="14sp"
         android:textColor="@android:color/black"
         android:lines="1"
         android:maxEms="10"
         android:ellipsize="end"
         android:gravity="center"
-        android:layout_width="match_parent"
+        android:layout_width="0dp"
+        android:layout_weight="1"
         android:layout_height="wrap_content"/>
 
 </LinearLayout>

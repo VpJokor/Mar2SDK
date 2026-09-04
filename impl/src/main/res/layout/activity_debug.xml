@@ -29,616 +29,631 @@
             android:layout_height="48dp"/>
     </FrameLayout>
 
-    <LinearLayout
-        android:orientation="horizontal"
-        android:paddingHorizontal="10dp"
+    <ScrollView
+        android:scrollbars="@null"
         android:layout_width="match_parent"
         android:layout_height="wrap_content">
-        <androidx.cardview.widget.CardView
-            app:cardCornerRadius="10dp"
-            app:cardElevation="0dp"
-            app:cardBackgroundColor="@android:color/system_accent1_100"
-            android:layout_weight="1"
+        <LinearLayout
+            android:orientation="vertical"
             android:layout_width="match_parent"
             android:layout_height="wrap_content">
+
             <LinearLayout
-                android:padding="10dp"
-                android:orientation="vertical"
+                android:orientation="horizontal"
+                android:paddingHorizontal="10dp"
                 android:layout_width="match_parent"
-                android:layout_height="match_parent">
-                <TextView
-                    android:text="app模式"
-                    android:textColor="@android:color/black"
-                    android:textSize="10sp"
-                    android:gravity="center"
+                android:layout_height="wrap_content">
+                <androidx.cardview.widget.CardView
+                    app:cardCornerRadius="10dp"
+                    app:cardElevation="0dp"
+                    app:cardBackgroundColor="@android:color/system_accent1_100"
+                    android:layout_weight="1"
                     android:layout_width="match_parent"
-                    android:layout_height="wrap_content"/>
-                <TextView
-                    android:id="@+id/app_mod"
-                    android:layout_marginTop="4dp"
-                    android:text="app模式"
-                    android:textStyle="bold"
-                    android:textColor="@android:color/black"
-                    android:textSize="15sp"
-                    android:gravity="center"
+                    android:layout_height="wrap_content">
+                    <LinearLayout
+                        android:padding="10dp"
+                        android:orientation="vertical"
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent">
+                        <TextView
+                            android:text="app模式"
+                            android:textColor="@android:color/black"
+                            android:textSize="10sp"
+                            android:gravity="center"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"/>
+                        <TextView
+                            android:id="@+id/app_mod"
+                            android:layout_marginTop="4dp"
+                            android:text="app模式"
+                            android:textStyle="bold"
+                            android:textColor="@android:color/black"
+                            android:textSize="15sp"
+                            android:gravity="center"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"/>
+                    </LinearLayout>
+                </androidx.cardview.widget.CardView>
+
+                <View
+                    android:layout_width="10dp"
+                    android:layout_height="0dp"/>
+
+                <androidx.cardview.widget.CardView
+                    app:cardCornerRadius="10dp"
+                    app:cardElevation="0dp"
+                    app:cardBackgroundColor="@android:color/system_accent1_100"
+                    android:layout_weight="1"
                     android:layout_width="match_parent"
-                    android:layout_height="wrap_content"/>
+                    android:layout_height="wrap_content">
+                    <LinearLayout
+                        android:padding="10dp"
+                        android:orientation="vertical"
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent">
+                        <TextView
+                            android:text="用户类型"
+                            android:textColor="@android:color/black"
+                            android:textSize="10sp"
+                            android:gravity="center"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"/>
+                        <TextView
+                            android:id="@+id/user_type"
+                            android:layout_marginTop="4dp"
+                            android:text="COMMON"
+                            android:textStyle="bold"
+                            android:textColor="@android:color/black"
+                            android:textSize="15sp"
+                            android:gravity="center"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"/>
+                    </LinearLayout>
+                </androidx.cardview.widget.CardView>
             </LinearLayout>
-        </androidx.cardview.widget.CardView>
 
-        <View
-            android:layout_width="10dp"
-            android:layout_height="0dp"/>
-
-        <androidx.cardview.widget.CardView
-            app:cardCornerRadius="10dp"
-            app:cardElevation="0dp"
-            app:cardBackgroundColor="@android:color/system_accent1_100"
-            android:layout_weight="1"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content">
             <LinearLayout
-                android:padding="10dp"
-                android:orientation="vertical"
+                android:orientation="horizontal"
+                android:layout_marginTop="10dp"
+                android:paddingHorizontal="10dp"
                 android:layout_width="match_parent"
-                android:layout_height="match_parent">
-                <TextView
-                    android:text="用户类型"
-                    android:textColor="@android:color/black"
-                    android:textSize="10sp"
-                    android:gravity="center"
+                android:layout_height="wrap_content">
+                <androidx.cardview.widget.CardView
+                    app:cardCornerRadius="10dp"
+                    app:cardElevation="0dp"
+                    app:cardBackgroundColor="@android:color/system_accent1_100"
+                    android:layout_weight="1"
                     android:layout_width="match_parent"
-                    android:layout_height="wrap_content"/>
-                <TextView
-                    android:id="@+id/user_type"
-                    android:layout_marginTop="4dp"
-                    android:text="COMMON"
-                    android:textStyle="bold"
-                    android:textColor="@android:color/black"
-                    android:textSize="15sp"
-                    android:gravity="center"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"/>
-            </LinearLayout>
-        </androidx.cardview.widget.CardView>
-    </LinearLayout>
+                    android:layout_height="wrap_content">
+                    <LinearLayout
+                        android:padding="10dp"
+                        android:orientation="vertical"
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent">
+                        <TextView
+                            android:text="IP校验"
+                            android:textColor="@android:color/black"
+                            android:textSize="10sp"
+                            android:gravity="center"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"/>
+                        <TextView
+                            android:id="@+id/risk_ip"
+                            android:layout_marginTop="4dp"
+                            android:text="UNKNOW"
+                            android:textStyle="bold"
+                            android:textColor="@android:color/black"
+                            android:textSize="15sp"
+                            android:gravity="center"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"/>
+                    </LinearLayout>
+                </androidx.cardview.widget.CardView>
 
-    <LinearLayout
-        android:orientation="horizontal"
-        android:layout_marginTop="10dp"
-        android:paddingHorizontal="10dp"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content">
-        <androidx.cardview.widget.CardView
-            app:cardCornerRadius="10dp"
-            app:cardElevation="0dp"
-            app:cardBackgroundColor="@android:color/system_accent1_100"
-            android:layout_weight="1"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content">
+                <View
+                    android:layout_width="10dp"
+                    android:layout_height="0dp"/>
+
+                <androidx.cardview.widget.CardView
+                    app:cardCornerRadius="10dp"
+                    app:cardElevation="0dp"
+                    app:cardBackgroundColor="@android:color/system_accent1_100"
+                    android:layout_weight="1"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content">
+                    <LinearLayout
+                        android:padding="10dp"
+                        android:orientation="vertical"
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent">
+                        <TextView
+                            android:text="包名校验"
+                            android:textColor="@android:color/black"
+                            android:textSize="10sp"
+                            android:gravity="center"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"/>
+                        <TextView
+                            android:id="@+id/risk_package"
+                            android:layout_marginTop="4dp"
+                            android:text="UNKNOW"
+                            android:textStyle="bold"
+                            android:textColor="@android:color/black"
+                            android:textSize="15sp"
+                            android:gravity="center"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"/>
+                    </LinearLayout>
+                </androidx.cardview.widget.CardView>
+            </LinearLayout>
+
             <LinearLayout
-                android:padding="10dp"
-                android:orientation="vertical"
+                android:orientation="horizontal"
+                android:layout_marginTop="10dp"
+                android:paddingHorizontal="10dp"
                 android:layout_width="match_parent"
-                android:layout_height="match_parent">
-                <TextView
-                    android:text="IP校验"
-                    android:textColor="@android:color/black"
-                    android:textSize="10sp"
-                    android:gravity="center"
+                android:layout_height="wrap_content">
+                <androidx.cardview.widget.CardView
+                    app:cardCornerRadius="10dp"
+                    app:cardElevation="0dp"
+                    app:cardBackgroundColor="@android:color/system_accent1_100"
+                    android:layout_weight="1"
                     android:layout_width="match_parent"
-                    android:layout_height="wrap_content"/>
-                <TextView
-                    android:id="@+id/risk_ip"
-                    android:layout_marginTop="4dp"
-                    android:text="UNKNOW"
-                    android:textStyle="bold"
-                    android:textColor="@android:color/black"
-                    android:textSize="15sp"
-                    android:gravity="center"
+                    android:layout_height="wrap_content">
+                    <LinearLayout
+                        android:padding="10dp"
+                        android:orientation="vertical"
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent">
+                        <TextView
+                            android:text="ecpm校验"
+                            android:textColor="@android:color/black"
+                            android:textSize="10sp"
+                            android:gravity="center"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"/>
+                        <TextView
+                            android:id="@+id/ecpm_type"
+                            android:layout_marginTop="4dp"
+                            android:text="UNKNOW"
+                            android:textStyle="bold"
+                            android:textColor="@android:color/black"
+                            android:textSize="15sp"
+                            android:gravity="center"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"/>
+                    </LinearLayout>
+                </androidx.cardview.widget.CardView>
+
+                <View
+                    android:layout_width="10dp"
+                    android:layout_height="0dp"/>
+
+                <androidx.cardview.widget.CardView
+                    app:cardCornerRadius="10dp"
+                    app:cardElevation="0dp"
+                    app:cardBackgroundColor="@android:color/system_accent1_100"
+                    android:layout_weight="1"
                     android:layout_width="match_parent"
-                    android:layout_height="wrap_content"/>
+                    android:layout_height="wrap_content">
+                    <LinearLayout
+                        android:padding="10dp"
+                        android:orientation="vertical"
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent">
+                        <TextView
+                            android:text="设备校验"
+                            android:textColor="@android:color/black"
+                            android:textSize="10sp"
+                            android:gravity="center"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"/>
+                        <TextView
+                            android:id="@+id/risk_device"
+                            android:layout_marginTop="4dp"
+                            android:text="UNKNOW"
+                            android:textStyle="bold"
+                            android:textColor="@android:color/black"
+                            android:textSize="15sp"
+                            android:gravity="center"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"/>
+                    </LinearLayout>
+                </androidx.cardview.widget.CardView>
+
             </LinearLayout>
-        </androidx.cardview.widget.CardView>
 
-        <View
-            android:layout_width="10dp"
-            android:layout_height="0dp"/>
-
-        <androidx.cardview.widget.CardView
-            app:cardCornerRadius="10dp"
-            app:cardElevation="0dp"
-            app:cardBackgroundColor="@android:color/system_accent1_100"
-            android:layout_weight="1"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content">
             <LinearLayout
-                android:padding="10dp"
-                android:orientation="vertical"
+                android:orientation="horizontal"
+                android:layout_marginTop="10dp"
+                android:paddingHorizontal="10dp"
                 android:layout_width="match_parent"
-                android:layout_height="match_parent">
-                <TextView
-                    android:text="包名校验"
-                    android:textColor="@android:color/black"
-                    android:textSize="10sp"
-                    android:gravity="center"
+                android:layout_height="wrap_content">
+                <androidx.cardview.widget.CardView
+                    android:visibility="invisible"
+                    app:cardCornerRadius="10dp"
+                    app:cardElevation="0dp"
+                    app:cardBackgroundColor="@android:color/system_accent1_100"
+                    android:layout_weight="1"
                     android:layout_width="match_parent"
-                    android:layout_height="wrap_content"/>
-                <TextView
-                    android:id="@+id/risk_package"
-                    android:layout_marginTop="4dp"
-                    android:text="UNKNOW"
-                    android:textStyle="bold"
-                    android:textColor="@android:color/black"
-                    android:textSize="15sp"
-                    android:gravity="center"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"/>
-            </LinearLayout>
-        </androidx.cardview.widget.CardView>
-    </LinearLayout>
+                    android:layout_height="wrap_content">
+                    <LinearLayout
+                        android:padding="10dp"
+                        android:orientation="vertical"
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent">
+                        <TextView
+                            android:text="ecpm校验"
+                            android:textColor="@android:color/black"
+                            android:textSize="10sp"
+                            android:gravity="center"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"/>
+                        <TextView
+                            android:layout_marginTop="4dp"
+                            android:text="广告策略"
+                            android:textStyle="bold"
+                            android:textColor="@android:color/black"
+                            android:textSize="15sp"
+                            android:gravity="center"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"/>
+                    </LinearLayout>
+                </androidx.cardview.widget.CardView>
 
-    <LinearLayout
-        android:orientation="horizontal"
-        android:layout_marginTop="10dp"
-        android:paddingHorizontal="10dp"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content">
-        <androidx.cardview.widget.CardView
-            app:cardCornerRadius="10dp"
-            app:cardElevation="0dp"
-            app:cardBackgroundColor="@android:color/system_accent1_100"
-            android:layout_weight="1"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content">
+                <View
+                    android:layout_width="10dp"
+                    android:layout_height="0dp"/>
+
+                <androidx.cardview.widget.CardView
+                    android:id="@+id/refresh_btn"
+                    app:cardCornerRadius="10dp"
+                    app:cardElevation="0dp"
+                    app:cardBackgroundColor="@android:color/system_accent3_100"
+                    android:layout_weight="1"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content">
+                    <LinearLayout
+                        android:padding="10dp"
+                        android:orientation="vertical"
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent">
+                        <TextView
+                            android:text="刷新面板"
+                            android:textColor="@android:color/black"
+                            android:textSize="10sp"
+                            android:gravity="center"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"/>
+                        <TextView
+                            android:layout_marginTop="4dp"
+                            android:text="刷新数据"
+                            android:textStyle="bold"
+                            android:textColor="@android:color/black"
+                            android:textSize="15sp"
+                            android:gravity="center"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"/>
+                    </LinearLayout>
+                </androidx.cardview.widget.CardView>
+
+            </LinearLayout>
+
             <LinearLayout
-                android:padding="10dp"
-                android:orientation="vertical"
+                android:orientation="horizontal"
+                android:layout_marginTop="10dp"
+                android:paddingHorizontal="10dp"
                 android:layout_width="match_parent"
-                android:layout_height="match_parent">
-                <TextView
-                    android:text="ecpm校验"
-                    android:textColor="@android:color/black"
-                    android:textSize="10sp"
-                    android:gravity="center"
+                android:layout_height="wrap_content">
+                <androidx.cardview.widget.CardView
+                    android:id="@+id/log_btn"
+                    app:cardCornerRadius="10dp"
+                    app:cardElevation="0dp"
+                    app:cardBackgroundColor="@android:color/system_error_100"
+                    android:layout_weight="1"
                     android:layout_width="match_parent"
-                    android:layout_height="wrap_content"/>
-                <TextView
-                    android:id="@+id/ecpm_type"
-                    android:layout_marginTop="4dp"
-                    android:text="UNKNOW"
-                    android:textStyle="bold"
-                    android:textColor="@android:color/black"
-                    android:textSize="15sp"
-                    android:gravity="center"
+                    android:layout_height="wrap_content">
+                    <LinearLayout
+                        android:padding="10dp"
+                        android:orientation="vertical"
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent">
+
+                        <TextView
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:gravity="center"
+                            android:text="测试打点"
+                            android:textColor="@android:color/black"
+                            android:textSize="10sp" />
+
+                        <TextView
+                            android:layout_marginTop="4dp"
+                            android:text="日志面板"
+                            android:textStyle="bold"
+                            android:textColor="@android:color/black"
+                            android:textSize="15sp"
+                            android:gravity="center"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"/>
+                    </LinearLayout>
+                </androidx.cardview.widget.CardView>
+
+                <View
+                    android:layout_width="10dp"
+                    android:layout_height="0dp"/>
+
+                <androidx.cardview.widget.CardView
+                    android:id="@+id/user_info_card"
+                    app:cardCornerRadius="10dp"
+                    app:cardElevation="0dp"
+                    app:cardBackgroundColor="@android:color/system_error_100"
+                    android:layout_weight="1"
                     android:layout_width="match_parent"
-                    android:layout_height="wrap_content"/>
+                    android:layout_height="wrap_content">
+                    <LinearLayout
+                        android:padding="10dp"
+                        android:orientation="vertical"
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent">
+
+                        <TextView
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:gravity="center"
+                            android:text="用户信息"
+                            android:textColor="@android:color/black"
+                            android:textSize="10sp" />
+
+                        <TextView
+                            android:layout_marginTop="4dp"
+                            android:text="信息面板"
+                            android:textStyle="bold"
+                            android:textColor="@android:color/black"
+                            android:textSize="15sp"
+                            android:gravity="center"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"/>
+                    </LinearLayout>
+                </androidx.cardview.widget.CardView>
             </LinearLayout>
-        </androidx.cardview.widget.CardView>
 
-        <View
-            android:layout_width="10dp"
-            android:layout_height="0dp"/>
-
-        <androidx.cardview.widget.CardView
-            app:cardCornerRadius="10dp"
-            app:cardElevation="0dp"
-            app:cardBackgroundColor="@android:color/system_accent1_100"
-            android:layout_weight="1"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content">
             <LinearLayout
-                android:padding="10dp"
-                android:orientation="vertical"
+                android:orientation="horizontal"
+                android:layout_marginTop="10dp"
+                android:paddingHorizontal="10dp"
                 android:layout_width="match_parent"
-                android:layout_height="match_parent">
-                <TextView
-                    android:text="设备校验"
-                    android:textColor="@android:color/black"
-                    android:textSize="10sp"
-                    android:gravity="center"
+                android:layout_height="wrap_content">
+                <androidx.cardview.widget.CardView
+                    android:id="@+id/config_btn"
+                    app:cardCornerRadius="10dp"
+                    app:cardElevation="0dp"
+                    app:cardBackgroundColor="@android:color/system_error_100"
+                    android:layout_weight="1"
                     android:layout_width="match_parent"
-                    android:layout_height="wrap_content"/>
-                <TextView
-                    android:id="@+id/risk_device"
-                    android:layout_marginTop="4dp"
-                    android:text="UNKNOW"
-                    android:textStyle="bold"
-                    android:textColor="@android:color/black"
-                    android:textSize="15sp"
-                    android:gravity="center"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"/>
-            </LinearLayout>
-        </androidx.cardview.widget.CardView>
+                    android:layout_height="wrap_content">
+                    <LinearLayout
+                        android:padding="10dp"
+                        android:orientation="vertical"
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent">
 
-    </LinearLayout>
-    <LinearLayout
-        android:orientation="horizontal"
-        android:layout_marginTop="10dp"
-        android:paddingHorizontal="10dp"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content">
-        <androidx.cardview.widget.CardView
-            android:visibility="invisible"
-            app:cardCornerRadius="10dp"
-            app:cardElevation="0dp"
-            app:cardBackgroundColor="@android:color/system_accent1_100"
-            android:layout_weight="1"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content">
+                        <TextView
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:gravity="center"
+                            android:text="查看配置"
+                            android:textColor="@android:color/black"
+                            android:textSize="10sp" />
+
+                        <TextView
+                            android:layout_marginTop="4dp"
+                            android:text="配置面板"
+                            android:textStyle="bold"
+                            android:textColor="@android:color/black"
+                            android:textSize="15sp"
+                            android:gravity="center"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"/>
+                    </LinearLayout>
+                </androidx.cardview.widget.CardView>
+
+                <View
+                    android:layout_width="10dp"
+                    android:layout_height="0dp"/>
+
+                <androidx.cardview.widget.CardView
+                    android:visibility="invisible"
+                    app:cardCornerRadius="10dp"
+                    app:cardElevation="0dp"
+                    app:cardBackgroundColor="@android:color/system_error_100"
+                    android:layout_weight="1"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content">
+                    <LinearLayout
+                        android:padding="10dp"
+                        android:orientation="vertical"
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent">
+
+                        <TextView
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:gravity="center"
+                            android:text="用户信息"
+                            android:textColor="@android:color/black"
+                            android:textSize="10sp" />
+
+                        <TextView
+                            android:layout_marginTop="4dp"
+                            android:text="信息面板"
+                            android:textStyle="bold"
+                            android:textColor="@android:color/black"
+                            android:textSize="15sp"
+                            android:gravity="center"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"/>
+                    </LinearLayout>
+                </androidx.cardview.widget.CardView>
+            </LinearLayout>
+
             <LinearLayout
-                android:padding="10dp"
-                android:orientation="vertical"
+                android:orientation="horizontal"
+                android:layout_marginTop="10dp"
+                android:paddingHorizontal="10dp"
                 android:layout_width="match_parent"
-                android:layout_height="match_parent">
-                <TextView
-                    android:text="ecpm校验"
-                    android:textColor="@android:color/black"
-                    android:textSize="10sp"
-                    android:gravity="center"
+                android:layout_height="wrap_content">
+                <androidx.cardview.widget.CardView
+                    android:id="@+id/send_notification"
+                    app:cardCornerRadius="10dp"
+                    app:cardElevation="0dp"
+                    app:cardBackgroundColor="@android:color/system_accent3_100"
+                    android:layout_weight="1"
                     android:layout_width="match_parent"
-                    android:layout_height="wrap_content"/>
-                <TextView
-                    android:layout_marginTop="4dp"
-                    android:text="广告策略"
-                    android:textStyle="bold"
-                    android:textColor="@android:color/black"
-                    android:textSize="15sp"
-                    android:gravity="center"
+                    android:layout_height="wrap_content">
+                    <LinearLayout
+                        android:padding="10dp"
+                        android:orientation="vertical"
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent">
+                        <TextView
+                            android:text="测试通知"
+                            android:textColor="@android:color/black"
+                            android:textSize="10sp"
+                            android:gravity="center"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"/>
+                        <TextView
+                            android:layout_marginTop="4dp"
+                            android:text="发送通知"
+                            android:textStyle="bold"
+                            android:textColor="@android:color/black"
+                            android:textSize="15sp"
+                            android:gravity="center"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"/>
+                    </LinearLayout>
+                </androidx.cardview.widget.CardView>
+
+                <View
+                    android:layout_width="10dp"
+                    android:layout_height="0dp"/>
+
+                <androidx.cardview.widget.CardView
+                    android:id="@+id/send_test_fcm"
+                    app:cardCornerRadius="10dp"
+                    app:cardElevation="0dp"
+                    app:cardBackgroundColor="@android:color/system_accent3_100"
+                    android:layout_weight="1"
                     android:layout_width="match_parent"
-                    android:layout_height="wrap_content"/>
+                    android:layout_height="wrap_content">
+                    <LinearLayout
+                        android:padding="10dp"
+                        android:orientation="vertical"
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent">
+
+                        <TextView
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:gravity="center"
+                            android:text="测试FCM"
+                            android:textColor="@android:color/black"
+                            android:textSize="10sp" />
+
+                        <TextView
+                            android:layout_marginTop="4dp"
+                            android:text="发送FCM"
+                            android:textStyle="bold"
+                            android:textColor="@android:color/black"
+                            android:textSize="15sp"
+                            android:gravity="center"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"/>
+                    </LinearLayout>
+                </androidx.cardview.widget.CardView>
             </LinearLayout>
-        </androidx.cardview.widget.CardView>
 
-        <View
-            android:layout_width="10dp"
-            android:layout_height="0dp"/>
-
-        <androidx.cardview.widget.CardView
-            android:id="@+id/refresh_btn"
-            app:cardCornerRadius="10dp"
-            app:cardElevation="0dp"
-            app:cardBackgroundColor="@android:color/system_accent3_100"
-            android:layout_weight="1"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content">
             <LinearLayout
-                android:padding="10dp"
-                android:orientation="vertical"
+                android:orientation="horizontal"
+                android:layout_marginTop="10dp"
+                android:paddingHorizontal="10dp"
                 android:layout_width="match_parent"
-                android:layout_height="match_parent">
-                <TextView
-                    android:text="刷新面板"
-                    android:textColor="@android:color/black"
-                    android:textSize="10sp"
-                    android:gravity="center"
+                android:layout_height="wrap_content">
+                <androidx.cardview.widget.CardView
+                    android:id="@+id/change_test_mod"
+                    app:cardCornerRadius="10dp"
+                    app:cardElevation="0dp"
+                    app:cardBackgroundColor="@android:color/system_accent3_100"
+                    android:layout_weight="1"
                     android:layout_width="match_parent"
-                    android:layout_height="wrap_content"/>
-                <TextView
-                    android:layout_marginTop="4dp"
-                    android:text="刷新面板"
-                    android:textStyle="bold"
-                    android:textColor="@android:color/black"
-                    android:textSize="15sp"
-                    android:gravity="center"
+                    android:layout_height="wrap_content">
+                    <LinearLayout
+                        android:padding="10dp"
+                        android:orientation="vertical"
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent">
+                        <TextView
+                            android:text="测试模式"
+                            android:textColor="@android:color/black"
+                            android:textSize="10sp"
+                            android:gravity="center"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"/>
+                        <TextView
+                            android:id="@+id/test_mod_name"
+                            android:layout_marginTop="4dp"
+                            android:text="策略模式"
+                            android:textStyle="bold"
+                            android:textColor="@android:color/black"
+                            android:textSize="15sp"
+                            android:gravity="center"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"/>
+                    </LinearLayout>
+                </androidx.cardview.widget.CardView>
+
+                <View
+                    android:layout_width="10dp"
+                    android:layout_height="0dp"/>
+
+                <androidx.cardview.widget.CardView
+                    android:id="@+id/test_user"
+                    app:cardCornerRadius="10dp"
+                    app:cardElevation="0dp"
+                    app:cardBackgroundColor="@android:color/system_accent3_100"
+                    android:layout_weight="1"
                     android:layout_width="match_parent"
-                    android:layout_height="wrap_content"/>
+                    android:layout_height="wrap_content">
+                    <LinearLayout
+                        android:padding="10dp"
+                        android:orientation="vertical"
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent">
+
+                        <TextView
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:gravity="center"
+                            android:text="测试用户"
+                            android:textColor="@android:color/black"
+                            android:textSize="10sp" />
+
+                        <TextView
+                            android:id="@+id/test_user_name"
+                            android:layout_marginTop="4dp"
+                            android:text="切换用户"
+                            android:textStyle="bold"
+                            android:textColor="@android:color/black"
+                            android:textSize="15sp"
+                            android:gravity="center"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"/>
+                    </LinearLayout>
+                </androidx.cardview.widget.CardView>
             </LinearLayout>
-        </androidx.cardview.widget.CardView>
 
-    </LinearLayout>
-    <LinearLayout
-        android:orientation="horizontal"
-        android:layout_marginTop="10dp"
-        android:paddingHorizontal="10dp"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content">
-        <androidx.cardview.widget.CardView
-            android:id="@+id/log_btn"
-            app:cardCornerRadius="10dp"
-            app:cardElevation="0dp"
-            app:cardBackgroundColor="@android:color/system_error_100"
-            android:layout_weight="1"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content">
-            <LinearLayout
-                android:padding="10dp"
-                android:orientation="vertical"
-                android:layout_width="match_parent"
-                android:layout_height="match_parent">
-
-                <TextView
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:gravity="center"
-                    android:text="测试打点"
-                    android:textColor="@android:color/black"
-                    android:textSize="10sp" />
-
-                <TextView
-                    android:layout_marginTop="4dp"
-                    android:text="日志面板"
-                    android:textStyle="bold"
-                    android:textColor="@android:color/black"
-                    android:textSize="15sp"
-                    android:gravity="center"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"/>
-            </LinearLayout>
-        </androidx.cardview.widget.CardView>
-
-        <View
-            android:layout_width="10dp"
-            android:layout_height="0dp"/>
-
-        <androidx.cardview.widget.CardView
-            android:id="@+id/user_info_card"
-            app:cardCornerRadius="10dp"
-            app:cardElevation="0dp"
-            app:cardBackgroundColor="@android:color/system_error_100"
-            android:layout_weight="1"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content">
-            <LinearLayout
-                android:padding="10dp"
-                android:orientation="vertical"
-                android:layout_width="match_parent"
-                android:layout_height="match_parent">
-
-                <TextView
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:gravity="center"
-                    android:text="用户信息"
-                    android:textColor="@android:color/black"
-                    android:textSize="10sp" />
-
-                <TextView
-                    android:layout_marginTop="4dp"
-                    android:text="信息面板"
-                    android:textStyle="bold"
-                    android:textColor="@android:color/black"
-                    android:textSize="15sp"
-                    android:gravity="center"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"/>
-            </LinearLayout>
-        </androidx.cardview.widget.CardView>
-    </LinearLayout>
-    <LinearLayout
-        android:orientation="horizontal"
-        android:layout_marginTop="10dp"
-        android:paddingHorizontal="10dp"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content">
-        <androidx.cardview.widget.CardView
-            android:id="@+id/config_btn"
-            app:cardCornerRadius="10dp"
-            app:cardElevation="0dp"
-            app:cardBackgroundColor="@android:color/system_error_100"
-            android:layout_weight="1"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content">
-            <LinearLayout
-                android:padding="10dp"
-                android:orientation="vertical"
-                android:layout_width="match_parent"
-                android:layout_height="match_parent">
-
-                <TextView
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:gravity="center"
-                    android:text="查看配置"
-                    android:textColor="@android:color/black"
-                    android:textSize="10sp" />
-
-                <TextView
-                    android:layout_marginTop="4dp"
-                    android:text="配置面板"
-                    android:textStyle="bold"
-                    android:textColor="@android:color/black"
-                    android:textSize="15sp"
-                    android:gravity="center"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"/>
-            </LinearLayout>
-        </androidx.cardview.widget.CardView>
-
-        <View
-            android:layout_width="10dp"
-            android:layout_height="0dp"/>
-
-        <androidx.cardview.widget.CardView
-            android:visibility="invisible"
-            app:cardCornerRadius="10dp"
-            app:cardElevation="0dp"
-            app:cardBackgroundColor="@android:color/system_error_100"
-            android:layout_weight="1"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content">
-            <LinearLayout
-                android:padding="10dp"
-                android:orientation="vertical"
-                android:layout_width="match_parent"
-                android:layout_height="match_parent">
-
-                <TextView
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:gravity="center"
-                    android:text="用户信息"
-                    android:textColor="@android:color/black"
-                    android:textSize="10sp" />
-
-                <TextView
-                    android:layout_marginTop="4dp"
-                    android:text="信息面板"
-                    android:textStyle="bold"
-                    android:textColor="@android:color/black"
-                    android:textSize="15sp"
-                    android:gravity="center"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"/>
-            </LinearLayout>
-        </androidx.cardview.widget.CardView>
-    </LinearLayout>
-
-    <LinearLayout
-        android:orientation="horizontal"
-        android:layout_marginTop="10dp"
-        android:paddingHorizontal="10dp"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content">
-        <androidx.cardview.widget.CardView
-            android:id="@+id/send_notification"
-            app:cardCornerRadius="10dp"
-            app:cardElevation="0dp"
-            app:cardBackgroundColor="@android:color/system_accent3_100"
-            android:layout_weight="1"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content">
-            <LinearLayout
-                android:padding="10dp"
-                android:orientation="vertical"
-                android:layout_width="match_parent"
-                android:layout_height="match_parent">
-                <TextView
-                    android:text="测试通知"
-                    android:textColor="@android:color/black"
-                    android:textSize="10sp"
-                    android:gravity="center"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"/>
-                <TextView
-                    android:layout_marginTop="4dp"
-                    android:text="发送通知"
-                    android:textStyle="bold"
-                    android:textColor="@android:color/black"
-                    android:textSize="15sp"
-                    android:gravity="center"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"/>
-            </LinearLayout>
-        </androidx.cardview.widget.CardView>
-
-        <View
-            android:layout_width="10dp"
-            android:layout_height="0dp"/>
-
-        <androidx.cardview.widget.CardView
-            android:id="@+id/send_test_fcm"
-            app:cardCornerRadius="10dp"
-            app:cardElevation="0dp"
-            app:cardBackgroundColor="@android:color/system_accent3_100"
-            android:layout_weight="1"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content">
-            <LinearLayout
-                android:padding="10dp"
-                android:orientation="vertical"
-                android:layout_width="match_parent"
-                android:layout_height="match_parent">
-
-                <TextView
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:gravity="center"
-                    android:text="测试FCM"
-                    android:textColor="@android:color/black"
-                    android:textSize="10sp" />
-
-                <TextView
-                    android:layout_marginTop="4dp"
-                    android:text="发送FCM"
-                    android:textStyle="bold"
-                    android:textColor="@android:color/black"
-                    android:textSize="15sp"
-                    android:gravity="center"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"/>
-            </LinearLayout>
-        </androidx.cardview.widget.CardView>
-    </LinearLayout>
-    <LinearLayout
-        android:orientation="horizontal"
-        android:layout_marginTop="10dp"
-        android:paddingHorizontal="10dp"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content">
-        <androidx.cardview.widget.CardView
-            android:id="@+id/change_test_mod"
-            app:cardCornerRadius="10dp"
-            app:cardElevation="0dp"
-            app:cardBackgroundColor="@android:color/system_accent3_100"
-            android:layout_weight="1"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content">
-            <LinearLayout
-                android:padding="10dp"
-                android:orientation="vertical"
-                android:layout_width="match_parent"
-                android:layout_height="match_parent">
-                <TextView
-                    android:text="测试模式"
-                    android:textColor="@android:color/black"
-                    android:textSize="10sp"
-                    android:gravity="center"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"/>
-                <TextView
-                    android:id="@+id/test_mod_name"
-                    android:layout_marginTop="4dp"
-                    android:text="策略模式"
-                    android:textStyle="bold"
-                    android:textColor="@android:color/black"
-                    android:textSize="15sp"
-                    android:gravity="center"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"/>
-            </LinearLayout>
-        </androidx.cardview.widget.CardView>
-
-        <View
-            android:layout_width="10dp"
-            android:layout_height="0dp"/>
-
-        <androidx.cardview.widget.CardView
-            android:id="@+id/test_user"
-            app:cardCornerRadius="10dp"
-            app:cardElevation="0dp"
-            app:cardBackgroundColor="@android:color/system_accent3_100"
-            android:layout_weight="1"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content">
-            <LinearLayout
-                android:padding="10dp"
-                android:orientation="vertical"
-                android:layout_width="match_parent"
-                android:layout_height="match_parent">
-
-                <TextView
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:gravity="center"
-                    android:text="测试用户"
-                    android:textColor="@android:color/black"
-                    android:textSize="10sp" />
-
-                <TextView
-                    android:id="@+id/test_user_name"
-                    android:layout_marginTop="4dp"
-                    android:text="切换用户"
-                    android:textStyle="bold"
-                    android:textColor="@android:color/black"
-                    android:textSize="15sp"
-                    android:gravity="center"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"/>
-            </LinearLayout>
-        </androidx.cardview.widget.CardView>
-    </LinearLayout>
-
+        </LinearLayout>
+    </ScrollView>
 
 </LinearLayout>

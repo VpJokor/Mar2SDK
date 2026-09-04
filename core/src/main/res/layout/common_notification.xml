@@ -1,0 +1,117 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:baselineAligned="false"
+    android:orientation="horizontal">
+
+        <LinearLayout
+            android:id="@+id/action_1"
+            android:orientation="vertical"
+            android:layout_weight="1"
+            android:layout_width="0dp"
+            android:gravity="center"
+            android:layout_height="wrap_content">
+                <ImageView
+                    android:id="@+id/action_1_icon"
+                    android:src="@mipmap/ic_push_files"
+                    android:contentDescription="@null"
+                    android:layout_width="40dp"
+                    android:layout_height="40dp"/>
+
+                <TextView
+                    android:id="@+id/action_1_label"
+                    android:layout_marginTop="6dp"
+                    android:gravity="center"
+                    android:maxLines="1"
+                    android:ellipsize="end"
+                    android:text="photos"
+                    android:textSize="13sp"
+                    android:textColor="@color/notification_content"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"/>
+        </LinearLayout>
+
+        <LinearLayout
+            android:id="@+id/action_2"
+            android:orientation="vertical"
+            android:layout_weight="1"
+            android:layout_width="0dp"
+            android:gravity="center"
+            android:layout_height="wrap_content">
+                <ImageView
+                    android:id="@+id/action_2_icon"
+                    android:src="@mipmap/ic_push_videos"
+                    android:contentDescription="@null"
+                    android:layout_width="40dp"
+                    android:layout_height="40dp"/>
+
+                <TextView
+                    android:id="@+id/action_2_label"
+                    android:layout_marginTop="6dp"
+                    android:gravity="center"
+                    android:maxLines="1"
+                    android:ellipsize="end"
+                    android:text="videos"
+                    android:textSize="13sp"
+                    android:textColor="@color/notification_content"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"/>
+        </LinearLayout>
+
+        <LinearLayout
+            android:id="@+id/action_3"
+            android:orientation="vertical"
+            android:layout_weight="1"
+            android:layout_width="0dp"
+            android:gravity="center"
+            android:layout_height="wrap_content">
+                <ImageView
+                    android:id="@+id/action_3_icon"
+                    android:src="@mipmap/ic_push_photos"
+                    android:contentDescription="@null"
+                    android:layout_width="40dp"
+                    android:layout_height="40dp"/>
+
+                <TextView
+                    android:id="@+id/action_3_label"
+                    android:layout_marginTop="6dp"
+                    android:gravity="center"
+                    android:maxLines="1"
+                    android:ellipsize="end"
+                    android:text="other_files"
+                    android:textSize="13sp"
+                    android:textColor="@color/notification_content"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"/>
+        </LinearLayout>
+
+        <LinearLayout
+            android:id="@+id/action_4"
+            android:orientation="vertical"
+            android:layout_weight="1"
+            android:layout_width="0dp"
+            android:gravity="center"
+            android:layout_height="wrap_content">
+                <ImageView
+                    android:id="@+id/action_4_icon"
+                    android:src="@mipmap/ic_push_recoverd"
+                    android:contentDescription="@null"
+                    android:layout_width="40dp"
+                    android:layout_height="40dp"/>
+
+                <TextView
+                    android:id="@+id/action_4_label"
+                    android:layout_marginTop="6dp"
+                    android:gravity="center"
+                    android:maxLines="1"
+                    android:ellipsize="end"
+                    android:text="recovered"
+                    android:textSize="13sp"
+                    android:textColor="@color/notification_content"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"/>
+        </LinearLayout>
+
+</LinearLayout>

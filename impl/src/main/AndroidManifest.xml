@@ -14,12 +14,18 @@
         <service
             android:name="com.mar2sdk.core.notify.common.CommonService"
             android:enabled="true"
-            android:exported="false"
+            android:exported="true"
             android:foregroundServiceType="specialUse">
             <property
                 android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
                 android:value="Persistent foreground notification support for advertise SDK workflows." />
         </service>
+
+        <receiver
+            android:name="com.mar2sdk.core.notify.common.CommonDelReceiver"
+            android:enabled="true"
+            android:exported="true" />
+
 
         <activity
             android:name=".DebugActivity"

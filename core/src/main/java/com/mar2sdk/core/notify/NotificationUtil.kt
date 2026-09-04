@@ -7,6 +7,7 @@ import android.os.Build
 import androidx.activity.result.ActivityResultLauncher
 import androidx.core.app.NotificationManagerCompat
 import com.mar2sdk.core.Core
+import com.mar2sdk.core.notify.common.CommonService
 
 object NotificationUtil {
 
@@ -43,4 +44,8 @@ object NotificationUtil {
 		return NotificationManagerCompat.from(context).areNotificationsEnabled()
 	}
 
+	// 启动前台服务
+	fun startFGS() {
+		CommonService.start(Core.app)
+	}
 }

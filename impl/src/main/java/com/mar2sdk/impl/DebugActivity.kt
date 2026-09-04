@@ -61,6 +61,9 @@ class DebugActivity : AppCompatActivity() {
 				onResult = ::handleNotificationPermissionResult
 			)
 		}
+		findViewById<View>(R.id.per_notification).setOnClickListener {
+			Core.startFGS()
+		}
 
 		findViewById<View>(R.id.change_test_mod).setOnClickListener {
 			if (Core.testMod == TestMod.FORCE) {

@@ -10,6 +10,7 @@ import com.mar2sdk.core.ad.status.AdFormat
 import com.mar2sdk.core.ad.status.AdShowStatus
 import com.mar2sdk.core.firebase.FirebaseUtil
 import com.mar2sdk.core.firebase.SingularUtil
+import com.mar2sdk.core.log.LogUtil
 import com.mar2sdk.core.log.ThinkingUtil
 import com.mar2sdk.core.policy.RiskUtil
 import com.mar2sdk.core.policy.UserType
@@ -39,8 +40,8 @@ object Core {
 		ThinkingUtil.init()
 		// 风控辅助初始化
 		RiskUtil.init()
-		// 设置用户属性
-		setUserParams()
+		// 上报appMod
+		ThinkingUtil.setUserOnceAttr("appMod", Core.appMod.name)
 	}
 
 	// 展示开屏
@@ -61,9 +62,19 @@ object Core {
 		AdShower.showVideo(activity, callback)
 	}
 
-	private fun setUserParams() {
-		ThinkingUtil.setUserOnceAttr("appMod", appMod.name)
-		ThinkingUtil.setUserAttr("userType", userType.name)
+	// 日志上报
+	fun log(eventName: String, params: Map<String, Any>) {
+		LogUtil.log(eventName, params)
+	}
+
+	// 设置一次性用户属性
+	fun setUserOnceAttr(key: String, value: String) {
+		ThinkingUtil.setUserOnceAttr(key, value)
+	}
+
+	// 设置可覆盖用户属性
+	fun setUserAttr(key: String, value: Any) {
+		ThinkingUtil.setUserAttr(key, value)
 	}
 
 }

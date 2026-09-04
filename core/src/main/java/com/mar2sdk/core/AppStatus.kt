@@ -10,6 +10,8 @@ object AppStatus {
 	var isScreenOn = false
 	// 手机状态 锁屏/解锁
 	var isLocked = false
+	// APP是否在前台
+	var isForeground = true
 
 	// 广告状态 (是/否)正在展示全屏广告
 	var isShowingAd = false

@@ -5,6 +5,7 @@ import android.app.Application
 import android.os.Bundle
 import com.mar2sdk.core.log.LogAppEvent
 import com.mar2sdk.core.log.LogUtil
+import com.mar2sdk.core.notify.app.AppNotificationUtil
 
 /**
  * APP状态管理类
@@ -31,15 +32,15 @@ object AppStatus {
 
 	@Synchronized
 	fun init() {
-		val application = Core.app
-		if (registeredApplication === application) {
+		AppObs.init()
+		if (registeredApplication === Core.app) {
 			return
 		}
 		registeredApplication?.unregisterActivityLifecycleCallbacks(activityLifecycleCallbacks)
 		startedActivityCount = 0
 		isForeground = false
-		application.registerActivityLifecycleCallbacks(activityLifecycleCallbacks)
-		registeredApplication = application
+		Core.app.registerActivityLifecycleCallbacks(activityLifecycleCallbacks)
+		registeredApplication = Core.app
 	}
 
 	// 前后台监听监控

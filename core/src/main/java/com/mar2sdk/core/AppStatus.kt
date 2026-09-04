@@ -3,20 +3,23 @@ package com.mar2sdk.core
 import android.app.Activity
 import android.app.Application
 import android.os.Bundle
+import android.util.Log
 import com.mar2sdk.core.log.LogAppEvent
 import com.mar2sdk.core.log.LogUtil
-import com.mar2sdk.core.notify.app.AppNotificationUtil
 
 /**
  * APP状态管理类
  */
 object AppStatus {
+	private const val TAG = "AppStatus"
 	private var registeredApplication: Application? = null
 	private var startedActivityCount = 0
 
 	// 屏幕状态 亮屏/熄屏
+	@Volatile
 	var isScreenOn = false
 	// 手机状态 锁屏/解锁
+	@Volatile
 	var isLocked = false
 	// APP是否在前台
 	@Volatile
@@ -30,9 +33,9 @@ object AppStatus {
 	// 通知状态 上次发送通知的时间
 	var lastNotifyTime = 0L
 
+
 	@Synchronized
 	fun init() {
-		AppObs.init()
 		if (registeredApplication === Core.app) {
 			return
 		}
@@ -41,7 +44,12 @@ object AppStatus {
 		isForeground = false
 		Core.app.registerActivityLifecycleCallbacks(activityLifecycleCallbacks)
 		registeredApplication = Core.app
+		val obsListener = AppObs.Listener{ event ->
+			Log.e(TAG, "init: $event")
+		}
+		AppObs.init(obsListener)
 	}
+
 
 	// 前后台监听监控
 	private val activityLifecycleCallbacks = object : Application.ActivityLifecycleCallbacks {

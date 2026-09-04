@@ -13,6 +13,7 @@ import com.mar2sdk.core.firebase.SingularUtil
 import com.mar2sdk.core.log.LogUtil
 import com.mar2sdk.core.log.ThinkingUtil
 import com.mar2sdk.core.policy.RiskUtil
+import com.mar2sdk.core.policy.TestMod
 import com.mar2sdk.core.policy.UserType
 
 /**
@@ -24,6 +25,7 @@ object Core {
 	lateinit var appMod: AppMod
 	// 用户分类
 	var userType = UserType.NATURE
+	var testMod = TestMod.POLICY
 
 	// 初始化SDK
 	fun init(app: Application, appMod: AppMod) {

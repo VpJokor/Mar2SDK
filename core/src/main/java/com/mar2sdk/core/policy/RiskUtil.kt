@@ -1,14 +1,8 @@
 package com.mar2sdk.core.policy
 
-import android.util.Log
+import com.mar2sdk.core.AppMod
 import com.mar2sdk.core.Core
 import com.mar2sdk.core.log.ThinkingUtil
-import kotlinx.serialization.Serializable
-import okhttp3.OkHttpClient
-import okhttp3.Request
-import org.json.JSONObject
-import java.net.InetAddress
-import java.net.UnknownHostException
 
 /**
  * 风控类
@@ -53,6 +47,12 @@ object RiskUtil {
 
 	// 用户分级
 	fun judgeUserType() {
+		//如果是测试模式，且测试模式设置为了强制模式，则强制不改变用户类型
+		if (Core.appMod == AppMod.TEST && Core.testMod == TestMod.FORCE) {
+			return
+		}
+
+		//正式版本逻辑
 		if (UserInfo.riskIP == RiskType.RISK || UserInfo.riskPackage == RiskType.RISK || UserInfo.ecpmType == EcpmType.ECPM_0) {
 			Core.userType = UserType.RISK
 			return

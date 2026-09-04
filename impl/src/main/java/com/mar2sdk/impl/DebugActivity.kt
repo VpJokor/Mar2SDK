@@ -7,6 +7,7 @@ import android.widget.Button
 import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.enableEdgeToEdge
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
@@ -19,6 +20,7 @@ import com.mar2sdk.core.policy.UserInfo
 import com.mar2sdk.core.policy.UserType
 
 class DebugActivity : AppCompatActivity() {
+
 	override fun onCreate(savedInstanceState: Bundle?) {
 		super.onCreate(savedInstanceState)
 		enableEdgeToEdge()
@@ -47,8 +49,17 @@ class DebugActivity : AppCompatActivity() {
 			Toast.makeText(this@DebugActivity, "发送FCM测试信息", Toast.LENGTH_LONG).show()
 		}
 		findViewById<View>(R.id.send_notification).setOnClickListener {
-			NotificationUtil.reqNotiAccess(this@DebugActivity)
-			AppNotificationUtil.sendNotificationBatch("TEST")
+			fun handleNotificationPermissionResult(granted: Boolean) {
+				if (granted) {
+					AppNotificationUtil.sendNotificationBatch("TEST")
+				} else {
+					Toast.makeText(this@DebugActivity, "通知权限未授权", Toast.LENGTH_SHORT).show()
+				}
+			}
+			NotificationUtil.reqNotiAccess(
+				activity = this@DebugActivity,
+				onResult = ::handleNotificationPermissionResult
+			)
 		}
 
 		findViewById<View>(R.id.change_test_mod).setOnClickListener {

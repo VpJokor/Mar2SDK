@@ -35,7 +35,6 @@ object AppStatus {
 		if (registeredApplication === application) {
 			return
 		}
-
 		registeredApplication?.unregisterActivityLifecycleCallbacks(activityLifecycleCallbacks)
 		startedActivityCount = 0
 		isForeground = false
@@ -73,4 +72,5 @@ object AppStatus {
 
 		override fun onActivityDestroyed(activity: Activity) = Unit
 	}
+
 }

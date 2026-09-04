@@ -40,8 +40,6 @@ class CommonService : Service() {
 		}
 
 		fun start(context: Context) {
-			// TODO: 检查前台服务权限 和 通知权限
-
 			runCatching {
 				ContextCompat.startForegroundService(context, intent(context))
 			}.onFailure {

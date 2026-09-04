@@ -425,6 +425,7 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"/>
                 <TextView
+                    android:id="@+id/test_mod_name"
                     android:layout_marginTop="4dp"
                     android:text="策略模式"
                     android:textStyle="bold"
@@ -463,6 +464,7 @@
                     android:textSize="10sp" />
 
                 <TextView
+                    android:id="@+id/test_user_name"
                     android:layout_marginTop="4dp"
                     android:text="切换用户"
                     android:textStyle="bold"

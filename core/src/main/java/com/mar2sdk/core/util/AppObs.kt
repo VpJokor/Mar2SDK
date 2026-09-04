@@ -1,4 +1,4 @@
-package com.mar2sdk.core
+package com.mar2sdk.core.util
 
 import android.app.Activity
 import android.app.Application
@@ -25,6 +25,8 @@ import android.provider.MediaStore
 import android.provider.Settings
 import android.util.Log
 import androidx.core.content.ContextCompat
+import com.mar2sdk.core.AppStatus
+import com.mar2sdk.core.Core
 import com.mar2sdk.core.log.LogAppEvent
 import com.mar2sdk.core.log.LogUtil
 import java.util.concurrent.CopyOnWriteArraySet
@@ -150,7 +152,9 @@ object AppObs {
 		AppStatus.isScreenOn = powerManager?.isInteractive == true
 		AppStatus.isLocked = keyguardManager?.isKeyguardLocked == true
 
-		val batteryIntent = application.registerReceiver(null, IntentFilter(Intent.ACTION_BATTERY_CHANGED))
+		val batteryIntent = application.registerReceiver(null,
+			IntentFilter(Intent.ACTION_BATTERY_CHANGED)
+		)
 		isCharging = batteryIntent?.isCharging() == true
 		isUsbConnected = application.registerReceiver(null, IntentFilter(ACTION_USB_STATE))
 			?.getBooleanExtra(USB_CONNECTED, false) == true

@@ -2,7 +2,6 @@ package com.mar2sdk.core
 
 import android.app.Activity
 import android.app.Application
-import com.mar2sdk.core.ad.AdConfig
 import com.mar2sdk.core.ad.AdIniter
 import com.mar2sdk.core.ad.AdShower
 import com.mar2sdk.core.ad.callback.ShowCallback
@@ -15,6 +14,7 @@ import com.mar2sdk.core.log.ThinkingUtil
 import com.mar2sdk.core.policy.RiskUtil
 import com.mar2sdk.core.policy.TestMod
 import com.mar2sdk.core.policy.UserType
+import com.mar2sdk.core.util.AppObs
 
 /**
  * 核心库入口

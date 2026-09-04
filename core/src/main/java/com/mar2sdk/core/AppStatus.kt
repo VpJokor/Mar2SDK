@@ -1,6 +1,7 @@
 package com.mar2sdk.core
 
 import android.util.Log
+import com.mar2sdk.core.util.AppObs
 
 /**
  * APP状态管理类

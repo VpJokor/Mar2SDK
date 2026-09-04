@@ -7,6 +7,8 @@ import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
+import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.RecyclerView
 
 class InfoActivity : AppCompatActivity() {
 	var label = ""
@@ -28,7 +30,10 @@ class InfoActivity : AppCompatActivity() {
 		setRecycleView()
 	}
 
+	lateinit var recy: RecyclerView
 	private fun setRecycleView() {
+		recy = findViewById(R.id.infos)
+		recy.layoutManager = LinearLayoutManager(this)
 
 	}
 
@@ -45,7 +50,7 @@ class InfoActivity : AppCompatActivity() {
 	}
 
 	private fun loadLogs() {
-
+		// TODO: 加载日志
 	}
 
 	private fun loadUserInfo() {

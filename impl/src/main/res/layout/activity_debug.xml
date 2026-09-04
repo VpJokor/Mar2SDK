@@ -10,14 +10,24 @@
     android:layout_height="match_parent"
     tools:context=".DebugActivity">
 
-    <TextView
-        android:text="Mar2SDK调试页"
-        android:textSize="20sp"
-        android:textStyle="bold"
-        android:textColor="@android:color/black"
-        android:gravity="center"
+    <FrameLayout
         android:layout_width="match_parent"
-        android:layout_height="48dp"/>
+        android:layout_height="48dp">
+        <TextView
+            android:text="Mar2SDK调试页"
+            android:textSize="20sp"
+            android:textStyle="bold"
+            android:textColor="@android:color/black"
+            android:gravity="center"
+            android:layout_width="match_parent"
+            android:layout_height="48dp"/>
+        <ImageView
+            android:id="@+id/back"
+            android:src="@drawable/back"
+            android:padding="10dp"
+            android:layout_width="48dp"
+            android:layout_height="48dp"/>
+    </FrameLayout>
 
     <LinearLayout
         android:orientation="horizontal"
@@ -325,7 +335,7 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content">
         <androidx.cardview.widget.CardView
-            android:id="@+id/send_log"
+            android:id="@+id/log_btn"
             app:cardCornerRadius="10dp"
             app:cardElevation="0dp"
             app:cardBackgroundColor="@android:color/system_error_100"
@@ -342,13 +352,13 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:gravity="center"
-                    android:text="测试F打点"
+                    android:text="测试打点"
                     android:textColor="@android:color/black"
                     android:textSize="10sp" />
 
                 <TextView
                     android:layout_marginTop="4dp"
-                    android:text="打点日志"
+                    android:text="日志面板"
                     android:textStyle="bold"
                     android:textColor="@android:color/black"
                     android:textSize="15sp"

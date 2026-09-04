@@ -1,5 +1,6 @@
 package com.mar2sdk.impl
 
+import android.content.Intent
 import android.os.Bundle
 import android.view.View
 import android.widget.Button
@@ -25,6 +26,9 @@ class DebugActivity : AppCompatActivity() {
 			v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom)
 			insets
 		}
+		findViewById<View>(R.id.back).setOnClickListener {
+			finish()
+		}
 		findViewById<View>(R.id.refresh_btn).setOnClickListener {
 			refreshData()
 		}
@@ -33,6 +37,9 @@ class DebugActivity : AppCompatActivity() {
 		}
 		findViewById<View>(R.id.send_test_fcm).setOnClickListener {
 			Toast.makeText(this@DebugActivity, "发送FCM测试信息", Toast.LENGTH_LONG).show()
+		}
+		findViewById<View>(R.id.log_btn).setOnClickListener {
+			startActivity(Intent(this@DebugActivity, LogActivity::class.java))
 		}
 		findViewById<View>(R.id.change_test_mod).setOnClickListener {
 			if (Core.testMod == TestMod.FORCE) {

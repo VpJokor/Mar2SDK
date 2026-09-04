@@ -11,6 +11,7 @@ import com.mar2sdk.core.Core
 import com.mar2sdk.core.firebase.SingularConfig
 import com.mar2sdk.core.policy.RiskUtil
 import com.mar2sdk.core.policy.UserInfo
+import com.mar2sdk.core.util.DBUtil
 import com.singular.sdk.Singular
 import com.singular.sdk.SingularAdData
 import org.json.JSONObject
@@ -24,7 +25,11 @@ object LogUtil {
 		if (Core.appMod == AppMod.TEST || Core.appMod == AppMod.PRE_RELEASE) {
 			Log.e(TAG, "log: $eventName ${formatParams(params)}")
 		}
-		logFirebase(eventName, params)
+		try {
+			logFirebase(eventName, params)
+		} catch (exception: Exception) {
+			Log.e(TAG, "logFirebase error", exception)
+		}
 		logThinking(eventName, params)
 		logLocal(eventName, params)
 		if (eventName == LogAdEvent.ad_revenue) {
@@ -77,9 +82,18 @@ object LogUtil {
 		}
 	}
 
+	// 本地打点
 	fun logLocal(eventName: String, params: Map<String, Any>) {
-		// TODO: 把日志保存在本地sqlite中
-
+		val eventTimeMillis = System.currentTimeMillis()
+		try {
+			val jsonObject = JSONObject()
+			for ((key, value) in params) {
+				jsonObject.put(key, value)
+			}
+			DBUtil.insertLog(eventName, jsonObject.toString(), eventTimeMillis)
+		} catch (exception: Exception) {
+			Log.e(TAG, "logLocal error", exception)
+		}
 	}
 
 	fun logSingularAdRevenue(adPlatform: String, revenue: Double) {

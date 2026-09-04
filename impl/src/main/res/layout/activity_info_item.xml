@@ -45,11 +45,10 @@
         android:textSize="14sp"
         android:textColor="@android:color/black"
         android:lines="1"
-        android:maxEms="10"
-    android:ellipsize="end"
-    android:gravity="center_vertical"
-    android:layout_width="0dp"
-        android:layout_weight="1"
+        android:maxLines="1"
+        android:ellipsize="end"
+        android:gravity="center_vertical"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"/>
 
 </LinearLayout>

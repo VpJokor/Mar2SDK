@@ -29,6 +29,7 @@ import androidx.navigation.NavGraphBuilder
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.mar2sdk.impl.BaseActivity
+import com.mar2sdk.impl.BaseScreen
 import com.mar2sdk.impl.DebugActivity
 import com.mar2sdk.impl.LocalScreenName
 import com.mar2sdk.impl.SplashScreen
@@ -107,7 +108,9 @@ private fun NavGraphBuilder.contentComposable(
 	composable(route) { backStackEntry ->
 		val screenName = backStackEntry.destination.route ?: route
 		CompositionLocalProvider(LocalScreenName provides screenName) {
-			content()
+			BaseScreen {
+				content()
+			}
 		}
 	}
 }

@@ -6,40 +6,30 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.Button
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.Alignment
-import androidx.compose.ui.Alignment.Companion
 import androidx.compose.ui.Modifier
-import com.mar2sdk.impl.BaseScreen
-import org.intellij.lang.annotations.JdkConstants
 
 @Composable
 fun ContentScreen1(onNextClick: () -> Unit) {
-	BaseScreen {
-		Column(
-			modifier = Modifier.fillMaxSize(),
-			horizontalAlignment = Alignment.CenterHorizontally,
-			verticalArrangement = Arrangement.Center
-		) {
-			Text("内容页面 1")
-			Button(onClick = onNextClick) {
-				Text("跳转到内容页 2")
-			}
+	Column(
+		modifier = Modifier.fillMaxSize(),
+		verticalArrangement = Arrangement.Center
+	) {
+		Text("内容页面 1")
+		Button(onClick = onNextClick) {
+			Text("跳转到内容页 2")
 		}
 	}
 }
 
 @Composable
 fun ContentScreen2(onPreviousClick: () -> Unit) {
-	BaseScreen {
-		Column(
-			modifier = Modifier.fillMaxSize(),
-			horizontalAlignment = Alignment.CenterHorizontally,
-			verticalArrangement = Arrangement.Center
-		) {
-			Text("内容页面 2")
-			Button(onClick = onPreviousClick) {
-				Text("返回内容页 1")
-			}
+	Column(
+		modifier = Modifier.fillMaxSize(),
+		verticalArrangement = Arrangement.Center
+	) {
+		Text("内容页面 2")
+		Button(onClick = onPreviousClick) {
+			Text("返回内容页 1")
 		}
 	}
 }

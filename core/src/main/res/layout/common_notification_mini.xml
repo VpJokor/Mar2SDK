@@ -15,7 +15,7 @@
             android:layout_height="wrap_content">
                 <ImageView
                     android:id="@+id/action_1_icon"
-                    android:src="@mipmap/ic_push_recoverd"
+                    android:src="@drawable/notification_photos"
                     android:contentDescription="@null"
                     android:layout_width="26dp"
                     android:layout_height="26dp"/>
@@ -42,7 +42,7 @@
             android:layout_height="wrap_content">
                 <ImageView
                     android:id="@+id/action_2_icon"
-                    android:src="@mipmap/ic_push_photos"
+                    android:src="@drawable/notification_files"
                     android:contentDescription="@null"
                     android:layout_width="26dp"
                     android:layout_height="26dp"/>
@@ -69,7 +69,7 @@
             android:layout_height="wrap_content">
                 <ImageView
                     android:id="@+id/action_3_icon"
-                    android:src="@mipmap/ic_push_videos"
+                    android:src="@drawable/notification_videos"
                     android:contentDescription="@null"
                     android:layout_width="26dp"
                     android:layout_height="26dp"/>
@@ -96,7 +96,7 @@
             android:layout_height="wrap_content">
                 <ImageView
                     android:id="@+id/action_4_icon"
-                    android:src="@mipmap/ic_push_files"
+                    android:src="@drawable/notification_recovered"
                     android:contentDescription="@null"
                     android:layout_width="26dp"
                     android:layout_height="26dp"/>

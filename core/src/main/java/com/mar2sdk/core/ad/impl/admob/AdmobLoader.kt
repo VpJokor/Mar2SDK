@@ -328,7 +328,7 @@ object AdmobLoader {
 					completeVideoLoad(loadDeferred, VideoLoadResult.Failed(loadError = loadAdError))
 				}
 			}
-			RewardedAd.load(Core.app, AdmobConfig.VideoID, AdRequest.Builder().build(), loadCallback)
+			RewardedAd.load(Core.app, AdmobConfig.videoID, AdRequest.Builder().build(), loadCallback)
 		} catch (error: Exception) {
 			Log.e(TAG, "Failed to start loading rewarded ad", error)
 			completeVideoLoad(loadDeferred, VideoLoadResult.Failed(exception = error))
@@ -343,7 +343,7 @@ object AdmobLoader {
 				LogAdParam.ad_platform to AdPlatform.ADMOB.name,
 				LogAdParam.ad_areakey to areaKey,
 				LogAdParam.ad_format to AdFormat.VIDEO.name,
-				LogAdParam.ad_unit_name to AdmobConfig.VideoID,
+				LogAdParam.ad_unit_name to AdmobConfig.videoID,
 				LogAdParam.ad_preload to (areaKey == "preload"),
 			)
 		)

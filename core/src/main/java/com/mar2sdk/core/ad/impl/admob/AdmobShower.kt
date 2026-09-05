@@ -38,8 +38,6 @@ object AdmobShower {
 	private const val TAG = "AdmobShower"
 	private val adScope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
 
-
-
 	/**
 	 *  广告展示(开屏 & 插屏比价)
 	 *  限制：
@@ -452,7 +450,7 @@ object AdmobShower {
 				LogAdParam.ad_platform to AdPlatform.ADMOB.name,
 				LogAdParam.ad_areakey to callback.areaKey,
 				LogAdParam.ad_format to AdFormat.VIDEO.name,
-				LogAdParam.ad_unit_name to AdmobConfig.VideoID,
+				LogAdParam.ad_unit_name to AdmobConfig.videoID,
 			)
 		)
 		if (AppStatus.isShowingAd) {
@@ -488,7 +486,7 @@ object AdmobShower {
 					LogAdParam.ad_areakey to callback.areaKey,
 					LogAdParam.ad_format to AdFormat.VIDEO.name,
 					LogAdParam.ad_source to (currentVideoAd?.responseInfo?.loadedAdapterResponseInfo?.adSourceName ?: LogAdParam.unknow),
-					LogAdParam.ad_unit_name to AdmobConfig.VideoID,
+					LogAdParam.ad_unit_name to AdmobConfig.videoID,
 					LogAdParam.ad_preload to true,
 				)
 			)
@@ -550,7 +548,7 @@ object AdmobShower {
 			val revenueParams = mapOf(
 				LogAdParam.ad_areakey to callback.areaKey,
 				FirebaseAnalytics.Param.AD_PLATFORM to AdPlatform.ADMOB.name,
-				FirebaseAnalytics.Param.AD_UNIT_NAME to AdmobConfig.VideoID,
+				FirebaseAnalytics.Param.AD_UNIT_NAME to AdmobConfig.videoID,
 				FirebaseAnalytics.Param.AD_FORMAT to AdFormat.VIDEO.name,
 				FirebaseAnalytics.Param.AD_SOURCE to (currentVideoAd?.responseInfo?.loadedAdapterResponseInfo?.adSourceName ?: LogAdParam.unknow),
 				FirebaseAnalytics.Param.CURRENCY to adValue.currencyCode,

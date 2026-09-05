@@ -4,6 +4,7 @@ import com.mar2sdk.core.Core
 import com.mar2sdk.core.AppMod
 import com.mar2sdk.core.R
 import com.mar2sdk.core.util.PreferenceUtil
+import kotlin.jvm.JvmName
 import org.json.JSONObject
 
 //admob的广告配置
@@ -18,21 +19,22 @@ object AdmobConfig {
 
 	var openID = if (Core.appMod == AppMod.TEST || Core.appMod == AppMod.DEBUG) testOpenID else releaseOpenID
 	var interID = if (Core.appMod == AppMod.TEST || Core.appMod == AppMod.DEBUG) testInterID else releaseInterID
-	var VideoID = if (Core.appMod == AppMod.TEST || Core.appMod == AppMod.DEBUG) testVideoID else releaseVideoID
+	var videoID = if (Core.appMod == AppMod.TEST || Core.appMod == AppMod.DEBUG) testVideoID else releaseVideoID
 
 
-	//开屏广告过期时间(4小时)
+	//开屏广告过期时间(3.5小时)
 	var openTimeout = 3.5 * 60 * 60 * 1000L
 	//开屏广告池大小
 	var openPoolSize = 1
 
-	//插屏广告过期时间(1小时)
+	//插屏广告过期时间(50分钟)
 	var interTimeout = 50 * 60 * 1000L
-	// 插屏广告过期时间
+	// 插屏广告池大小
 	var interPoolSize = 1
 
-	//视频广告过期时间(1小时)
+	//视频广告过期时间(50分钟)
 	var videoTimeout = 50 * 60 * 1000L
+	// 视频广告池大小
 	var videoPoolSize = 1
 
 	fun init() {
@@ -50,9 +52,10 @@ object AdmobConfig {
 			releaseOpenID = getString("releaseOpenID")
 			releaseInterID = getString("releaseInterID")
 			releaseVideoID = getString("releaseVideoID")
-			openTimeout = getDouble("openTimeout")
-			interTimeout = getLong("interTimeout")
-			videoTimeout = getLong("videoTimeout")
+			// 超时配置兼容旧版 raw 文件，缺少字段时沿用代码默认值。
+			openTimeout = optDouble("openTimeout", openTimeout)
+			interTimeout = optLong("interTimeout", interTimeout)
+			videoTimeout = optLong("videoTimeout", videoTimeout)
 			openPoolSize = getInt("openPoolSize")
 			interPoolSize = getInt("interPoolSize")
 			videoPoolSize = getInt("videoPoolSize")
@@ -80,7 +83,7 @@ object AdmobConfig {
 		val isTest = (Core.appMod == AppMod.TEST) || (Core.appMod == AppMod.DEBUG)
 		openID = if (isTest) testOpenID else releaseOpenID
 		interID = if (isTest) testInterID else releaseInterID
-		VideoID = if (isTest) testVideoID else releaseVideoID
+		videoID = if (isTest) testVideoID else releaseVideoID
 	}
 
 	// 把配置保存到本地 (Preference)。
@@ -96,5 +99,6 @@ object AdmobConfig {
 			PreferenceUtil.commitInt(KEY_INTER_POOL_SIZE, interPoolSize)
 			PreferenceUtil.commitInt(KEY_VIDEO_POOL_SIZE, videoPoolSize)
 		}
+		updateAdUnitIds()
 	}
 }

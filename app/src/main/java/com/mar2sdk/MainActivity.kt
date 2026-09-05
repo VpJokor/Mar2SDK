@@ -139,7 +139,7 @@ private fun MainScreen(
 				modifier = Modifier.weight(1f),
 				contentPadding = PaddingValues(10.dp)
 			) {
-				Text(text = "内容页面")
+				Text(text = "内容页面1")
 			}
 			Spacer(modifier = Modifier.width(10.dp))
 			Button(
@@ -147,7 +147,7 @@ private fun MainScreen(
 				modifier = Modifier.weight(1f),
 				contentPadding = PaddingValues(10.dp)
 			) {
-				Text(text = "内容页面")
+				Text(text = "内容页面2")
 			}
 		}
 	}

@@ -5,8 +5,6 @@ import android.content.Intent
 import android.os.Bundle
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
-import androidx.core.view.ViewCompat
-import androidx.core.view.WindowInsetsCompat
 import androidx.lifecycle.lifecycleScope
 import com.mar2sdk.core.Core
 import com.mar2sdk.core.ad.callback.ShowCallback
@@ -19,6 +17,11 @@ class AdActivity : AppCompatActivity() {
 
 	companion object {
 		private const val TAG = "AdActivity"
+
+		// TODO: 判断 AdActivity 是否正在展示
+		fun adShowing() : Boolean {
+			return false
+		}
 
 		fun showAd(activity: Activity, adFormat: AdFormat, areaKey: String) {
 			val intent = Intent(activity, AdActivity::class.java)

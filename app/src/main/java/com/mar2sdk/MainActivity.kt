@@ -74,10 +74,25 @@ class MainActivity : BaseActivity() {
 						SplashScreen()
 					}
 					contentComposable(Routes.CONTENT_1) {
-						ContentScreen1()
+						ContentScreen1(
+							onNextClick = {
+								navController.navigate(Routes.CONTENT_2) {
+									launchSingleTop = true
+								}
+							}
+						)
 					}
 					contentComposable(Routes.CONTENT_2) {
-						ContentScreen2()
+						ContentScreen2(
+							onPreviousClick = {
+								navController.navigate(Routes.CONTENT_1) {
+									popUpTo(Routes.CONTENT_2) {
+										inclusive = true
+									}
+									launchSingleTop = true
+								}
+							}
+						)
 					}
 				}
 			}

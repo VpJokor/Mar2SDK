@@ -13,9 +13,9 @@ object AdConfig {
 	var defaultPlatform = AdPlatform.ADMOB
 	var activePlatforms = mutableSetOf<AdPlatform>()
 
-	// 广告展示超时时间
+	// 广告展示超时时间，单位毫秒
 	var showMaxTime = 10 * 1000L
-	// 广告展示前最小等待时间
+	// 广告展示前最小等待时间，单位毫秒
 	var showMinTime = 10 * 1000L
 
 	fun init() {
@@ -32,6 +32,8 @@ object AdConfig {
 		with(config) {
 			defaultPlatform = AdPlatform.valueOf(getString("defaultPlatform"))
 			activePlatforms = getJSONArray("activePlatforms").toAdPlatforms()
+			showMaxTime = optLong("showMaxTime", showMaxTime)
+			showMinTime = optLong("showMinTime", showMinTime)
 		}
 	}
 
@@ -44,6 +46,8 @@ object AdConfig {
 			activePlatforms = JSONArray(
 				PreferenceUtil.getString(KEY_ACTIVE_PLATFORMS, activePlatforms.toJson())
 			).toAdPlatforms()
+			showMaxTime = PreferenceUtil.getLong(KEY_SHOW_MAX_TIME, showMaxTime)
+			showMinTime = PreferenceUtil.getLong(KEY_SHOW_MIN_TIME, showMinTime)
 		}
 	}
 
@@ -52,6 +56,8 @@ object AdConfig {
 		with(AdKey) {
 			PreferenceUtil.commitString(KEY_DEFAULT_PLATFORM, defaultPlatform.name)
 			PreferenceUtil.commitString(KEY_ACTIVE_PLATFORMS, activePlatforms.toJson())
+			PreferenceUtil.commitLong(KEY_SHOW_MAX_TIME, showMaxTime)
+			PreferenceUtil.commitLong(KEY_SHOW_MIN_TIME, showMinTime)
 		}
 	}
 

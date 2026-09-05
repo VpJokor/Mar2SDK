@@ -21,15 +21,9 @@ object LogAdParam {
 	// 通用广告事件参数。
 	const val duration = "duration_time"
 	const val ad_platform = "ad_platform"
-	const val ad_platform_admob = "adMob"
 	const val ad_areakey = "areakey"
 	const val ad_format = "format"
-	const val ad_format_open = "open"
-	const val ad_format_inter = "inter"
-	const val ad_format_video = "video"
 
-	const val ad_format_banner = "banner"
-	const val ad_format_native = "native"
 	const val ad_source = "ad_source"
 	const val ad_unit_name = "ad_unit_name"
 	const val ad_reward_type = "reward_type"

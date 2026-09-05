@@ -9,7 +9,9 @@ import com.google.android.gms.ads.interstitial.InterstitialAdLoadCallback
 import com.google.android.gms.ads.rewarded.RewardedAd
 import com.google.android.gms.ads.rewarded.RewardedAdLoadCallback
 import com.mar2sdk.core.Core
+import com.mar2sdk.core.ad.status.AdFormat
 import com.mar2sdk.core.ad.status.AdLoadStatus
+import com.mar2sdk.core.ad.status.AdPlatform
 import com.mar2sdk.core.log.LogAdEvent
 import com.mar2sdk.core.log.LogAdParam
 import com.mar2sdk.core.log.LogUtil
@@ -69,7 +71,14 @@ object AdmobLoader {
 
 	// 填满所有广告池 fillOpen/fillInter/fillVideo 可同时执行
 	suspend fun fillPool() = coroutineScope {
-		LogUtil.log(LogAdEvent.fill_pool, mapOf(LogAdParam.scene to LogAdParam.scene_open_app))
+		LogUtil.log(
+			LogAdEvent.fill_pool,
+			mapOf(
+				LogAdParam.scene to LogAdParam.scene_open_app,
+				LogAdParam.ad_platform to AdPlatform.ADMOB.name,
+
+			)
+		)
 		launch { fillOpen() }
 		launch { fillInter() }
 		launch { fillVideo() }
@@ -169,9 +178,9 @@ object AdmobLoader {
 		LogUtil.log(
 			eventName,
 			mapOf(
-				LogAdParam.ad_platform to LogAdParam.ad_platform_admob,
+				LogAdParam.ad_platform to AdPlatform.ADMOB.name,
 				LogAdParam.ad_areakey to areaKey,
-				LogAdParam.ad_format to LogAdParam.ad_format_open,
+				LogAdParam.ad_format to AdFormat.OPEN.name,
 				LogAdParam.ad_unit_name to AdmobConfig.openID,
 				LogAdParam.ad_preload to (areaKey == "preload"),
 			)
@@ -250,9 +259,9 @@ object AdmobLoader {
 		LogUtil.log(
 			eventName,
 			mapOf(
-				LogAdParam.ad_platform to LogAdParam.ad_platform_admob,
+				LogAdParam.ad_platform to AdPlatform.ADMOB.name,
 				LogAdParam.ad_areakey to areaKey,
-				LogAdParam.ad_format to LogAdParam.ad_format_inter,
+				LogAdParam.ad_format to AdFormat.INTER.name,
 				LogAdParam.ad_unit_name to AdmobConfig.interID,
 				LogAdParam.ad_preload to (areaKey == "preload"),
 			)
@@ -331,9 +340,9 @@ object AdmobLoader {
 		LogUtil.log(
 			eventName,
 			mapOf(
-				LogAdParam.ad_platform to LogAdParam.ad_platform_admob,
+				LogAdParam.ad_platform to AdPlatform.ADMOB.name,
 				LogAdParam.ad_areakey to areaKey,
-				LogAdParam.ad_format to LogAdParam.ad_format_video,
+				LogAdParam.ad_format to AdFormat.VIDEO.name,
 				LogAdParam.ad_unit_name to AdmobConfig.VideoID,
 				LogAdParam.ad_preload to (areaKey == "preload"),
 			)

@@ -1,13 +1,22 @@
 package com.mar2sdk.core
 
 import android.util.Log
+import com.mar2sdk.core.ad.AdLoader
 import com.mar2sdk.core.util.AppObs
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.launch
 
 /**
  * APP状态管理类
  */
 object AppStatus {
 	private const val TAG = "AppStatus"
+	private val adPreloadScope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
+	private var adPreloadJob: Job? = null
 	// 屏幕状态 亮屏/熄屏
 	@Volatile
 	var isScreenOn = false
@@ -23,11 +32,72 @@ object AppStatus {
 
 	val listener = AppObs.Listener{ event ->
 		Log.e(TAG, "AppStatus change: $event" )
+		when(event) {
+			// INFO: 前后台切换
+			is AppObs.Event.ForegroundChanged -> {
+				if (event.isForeground) {
+					startAdPreload()
+				} else {
+
+				}
+			}
+			// INFO: HOME键
+			is AppObs.Event.HomePressed -> {
+
+			}
+			// INFO: RECENT键
+			is AppObs.Event.RecentAppsPressed -> {
+
+			}
+			// INFO: 亮屏熄屏
+			is AppObs.Event.ScreenChanged -> {
+
+			}
+			// INFO: 安装/卸载/更新
+			is AppObs.Event.PackageChanged -> {
+
+			}
+			// INFO: 媒体库(相册/文档/音乐/下载)
+			is AppObs.Event.MediaChanged -> {
+
+			}
+			// INFO: 电量
+			is AppObs.Event.PowerChanged -> {
+
+			}
+			// INFO: 音量
+			is AppObs.Event.VolumeChanged -> {
+
+			}
+			// INFO: USB
+			is AppObs.Event.UsbChanged -> {
+
+			}
+			// INFO: WIFI
+			is AppObs.Event.WifiChanged -> {
+
+			}
+			// INFO: 网络
+			is AppObs.Event.NetworkChanged -> {
+
+			}
+		}
+
 	}
 
-	// 通知状态 (是/否正在发送通知)
-	var isNotifying = false
-	// 通知状态 上次发送通知的时间
-	var lastNotifyTime = 0L
+
+
+	private fun startAdPreload() {
+		if (adPreloadJob?.isActive == true) return
+		adPreloadJob = adPreloadScope.launch {
+			try {
+				AdLoader.fillAd()
+			} catch (exception: CancellationException) {
+				throw exception
+			} catch (exception: Exception) {
+				Log.e(TAG, "Failed to preload ads when app entered foreground", exception)
+			}
+		}
+	}
 
 }

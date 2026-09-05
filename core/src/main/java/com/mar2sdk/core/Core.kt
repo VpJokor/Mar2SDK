@@ -2,8 +2,6 @@ package com.mar2sdk.core
 
 import android.app.Activity
 import android.app.Application
-import com.inmobi.media.re
-import com.ironsource.ac
 import com.mar2sdk.core.ad.AdIniter
 import com.mar2sdk.core.ad.AdShower
 import com.mar2sdk.core.ad.callback.ShowCallback
@@ -17,7 +15,7 @@ import com.mar2sdk.core.notify.NotificationUtil
 import com.mar2sdk.core.notify.app.AppNotificationUtil
 import com.mar2sdk.core.policy.RiskUtil
 import com.mar2sdk.core.policy.TestMod
-import com.mar2sdk.core.policy.UserType
+import com.mar2sdk.core.policy.status.UserType
 import com.mar2sdk.core.util.AppObs
 
 /**

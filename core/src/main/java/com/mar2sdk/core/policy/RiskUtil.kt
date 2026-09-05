@@ -3,6 +3,9 @@ package com.mar2sdk.core.policy
 import com.mar2sdk.core.AppMod
 import com.mar2sdk.core.Core
 import com.mar2sdk.core.log.ThinkingUtil
+import com.mar2sdk.core.policy.status.EcpmType
+import com.mar2sdk.core.policy.status.RiskType
+import com.mar2sdk.core.policy.status.UserType
 
 /**
  * 风控类

@@ -1,10 +1,10 @@
 package com.mar2sdk.core.policy
 
-import android.os.Process
 import android.util.Log
 import com.google.android.play.core.integrity.IntegrityManagerFactory
 import com.google.android.play.core.integrity.StandardIntegrityManager
 import com.mar2sdk.core.Core
+import com.mar2sdk.core.policy.status.RiskType
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.Json
@@ -17,7 +17,6 @@ import org.json.JSONObject
 import java.net.Inet4Address
 import java.net.InetAddress
 import java.security.MessageDigest
-import kotlin.system.exitProcess
 
 /**
  * Play Integrity token 请求工具。

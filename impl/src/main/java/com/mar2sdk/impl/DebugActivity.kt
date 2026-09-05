@@ -3,7 +3,6 @@ package com.mar2sdk.impl
 import android.content.Intent
 import android.os.Bundle
 import android.view.View
-import android.widget.Button
 import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.enableEdgeToEdge
@@ -11,21 +10,16 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
-import androidx.lifecycle.lifecycleScope
 import com.mar2sdk.core.AppMod
 import com.mar2sdk.core.Core
-import com.mar2sdk.core.ad.callback.ShowCallback
 import com.mar2sdk.core.ad.status.AdFormat
-import com.mar2sdk.core.ad.status.AdPlatform
-import com.mar2sdk.core.ad.status.ShowFailResult
 import com.mar2sdk.core.log.LogAppParam
 import com.mar2sdk.core.log.ThinkingUtil
 import com.mar2sdk.core.notify.NotificationUtil
 import com.mar2sdk.core.notify.app.AppNotificationUtil
 import com.mar2sdk.core.policy.TestMod
 import com.mar2sdk.core.policy.UserInfo
-import com.mar2sdk.core.policy.UserType
-import kotlinx.coroutines.launch
+import com.mar2sdk.core.policy.status.UserType
 
 class DebugActivity : AppCompatActivity() {
 	private val notificationPermissionLauncher =

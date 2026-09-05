@@ -30,7 +30,7 @@ fun BaseScreen(content: @Composable () -> Unit) {
 		val activity = LocalContext.current.findActivity()
 		LaunchedEffect(activity, areaKey) {
 			if (activity != null && !activity.isFinishing && !activity.isDestroyed) {
-				AdActivity.showAd(activity, AdFormat.OPEN, areaKey)
+				AdActivity.showAd(activity, AdFormat.INTER, areaKey)
 			}
 		}
 	}

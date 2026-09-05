@@ -111,9 +111,7 @@ private fun MainScreen(
 			.systemBarsPadding()
 	) {
 		Row(
-			modifier = Modifier
-				.fillMaxWidth()
-				.height(100.dp),
+			modifier = Modifier.fillMaxWidth(),
 			horizontalArrangement = Arrangement.SpaceBetween
 		) {
 			Button(
@@ -133,9 +131,7 @@ private fun MainScreen(
 			}
 		}
 		Row(
-			modifier = Modifier
-				.fillMaxWidth()
-				.height(100.dp),
+			modifier = Modifier.fillMaxWidth(),
 			horizontalArrangement = Arrangement.SpaceBetween
 		) {
 			Button(

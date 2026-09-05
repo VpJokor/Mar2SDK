@@ -9,7 +9,12 @@ import org.json.JSONObject
 object ThinkingUtil {
 	fun init() {
 		val config = TDConfig.getInstance(Core.app, ThinkingConfig.key, ThinkingConfig.url)
-		config.setMode(if(Core.appMod == AppMod.TEST || Core.appMod == AppMod.PRE_RELEASE) TDConfig.TDMode.DEBUG else TDConfig.TDMode.NORMAL)
+		val mod = if(Core.appMod == AppMod.DEBUG || Core.appMod == AppMod.TEST || Core.appMod == AppMod.PRE_RELEASE) {
+			TDConfig.TDMode.DEBUG
+		}  else {
+			TDConfig.TDMode.NORMAL
+		}
+		config.setMode(mod)
 		TDAnalytics.init(config)
 		TDAnalytics.enableAutoTrack(
 			TDAnalytics.TDAutoTrackEventType.APP_START or

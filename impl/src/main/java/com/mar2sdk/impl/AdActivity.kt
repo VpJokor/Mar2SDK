@@ -44,14 +44,9 @@ class AdActivity : AppCompatActivity() {
 			override var areaKey: String
 				get() = areaKey
 				set(value) {}
-			override var adFormat: AdFormat
-				get() = adFormat
-				set(value) {}
-			override var adPlatform: AdPlatform
-				get() = AdPlatform.TRADPLUS
-				set(value) {
-					adPlatform = value
-				}
+			override lateinit var adFormat: AdFormat
+
+			override lateinit var adPlatform: AdPlatform
 
 			override fun showFailed(reason: ShowFailResult) {
 				finish()

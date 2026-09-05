@@ -16,9 +16,9 @@ object AdmobConfig {
 	var releaseInterID = ""
 	var releaseVideoID = ""
 
-	var openID = if (Core.appMod == AppMod.TEST) testOpenID else releaseOpenID
-	var interID = if (Core.appMod == AppMod.TEST) testInterID else releaseInterID
-	var VideoID = if (Core.appMod == AppMod.TEST) testVideoID else releaseVideoID
+	var openID = if (Core.appMod == AppMod.TEST || Core.appMod == AppMod.DEBUG) testOpenID else releaseOpenID
+	var interID = if (Core.appMod == AppMod.TEST || Core.appMod == AppMod.DEBUG) testInterID else releaseInterID
+	var VideoID = if (Core.appMod == AppMod.TEST || Core.appMod == AppMod.DEBUG) testVideoID else releaseVideoID
 
 
 	//开屏广告过期时间(4小时)
@@ -77,7 +77,7 @@ object AdmobConfig {
 	}
 
 	private fun updateAdUnitIds() {
-		val isTest = Core.appMod == AppMod.TEST
+		val isTest = (Core.appMod == AppMod.TEST) || (Core.appMod == AppMod.DEBUG)
 		openID = if (isTest) testOpenID else releaseOpenID
 		interID = if (isTest) testInterID else releaseInterID
 		VideoID = if (isTest) testVideoID else releaseVideoID

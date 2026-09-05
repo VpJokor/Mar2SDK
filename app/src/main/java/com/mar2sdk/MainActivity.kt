@@ -18,9 +18,10 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.mar2sdk.impl.DebugActivity
-import com.mar2sdk.impl.Mar2Activity
+import com.mar2sdk.impl.BaseActivity
+import com.mar2sdk.impl.BaseScreen
 
-class MainActivity : Mar2Activity() {
+class MainActivity : BaseActivity() {
 	override fun onCreate(savedInstanceState: Bundle?) {
 		super.onCreate(savedInstanceState)
 		enableEdgeToEdge()
@@ -35,17 +36,19 @@ class MainActivity : Mar2Activity() {
 @Composable
 private fun MainScreen(onDebugClick: () -> Unit) {
 	MaterialTheme {
-		Column(
-			modifier = Modifier
-				.fillMaxSize()
-				.systemBarsPadding()
-		) {
-			Button(
-				onClick = onDebugClick,
-				modifier = Modifier.fillMaxWidth(),
-				contentPadding = PaddingValues(10.dp)
+		BaseScreen {
+			Column(
+				modifier = Modifier
+					.fillMaxSize()
+					.systemBarsPadding()
 			) {
-				Text(text = stringResource(R.string.debug_page))
+				Button(
+					onClick = onDebugClick,
+					modifier = Modifier.fillMaxWidth(),
+					contentPadding = PaddingValues(10.dp)
+				) {
+					Text(text = stringResource(R.string.debug_page))
+				}
 			}
 		}
 	}

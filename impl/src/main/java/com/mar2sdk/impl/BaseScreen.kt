@@ -35,7 +35,7 @@ fun NavGraphBuilder.contentComposable(
 }
 
 /**
- * 自动获取screen名生成areaKey
+ * 自动获取screen名生成areaKey(打开/返回/跳转)
  * 所有页面的公共容器。
  * 页面进入Screen时展示一次广告
  * 从其他页面返回

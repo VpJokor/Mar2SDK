@@ -13,15 +13,18 @@ import androidx.compose.ui.platform.LocalInspectionMode
 import com.mar2sdk.core.ad.status.AdFormat
 
 /**
+ * 自动获取screen名生成areaKey
  * 所有页面的公共容器。
  * 页面进入组合时展示一次告。
  */
 @Composable
-fun BaseScreen(areaKey: String = AreaKeys.KEY_TEST, content: @Composable () -> Unit) {
+fun BaseScreen(screen: String = "ContentScreen", content: @Composable () -> Unit) {
 
 	if (!LocalInspectionMode.current) {
 		val activity = LocalContext.current.findActivity()
-		LaunchedEffect(activity, areaKey) {
+		LaunchedEffect(activity, screen) {
+
+			val areaKey = "KEY_$screen"
 			if (activity != null && !activity.isFinishing && !activity.isDestroyed) {
 				AdActivity.showAd(activity, AdFormat.OPEN, areaKey)
 			}

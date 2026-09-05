@@ -23,62 +23,134 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.navigation.compose.NavHost
+import androidx.navigation.compose.composable
+import androidx.navigation.compose.rememberNavController
 import com.mar2sdk.impl.BaseActivity
-import com.mar2sdk.impl.BaseScreen
 import com.mar2sdk.impl.DebugActivity
+import com.mar2sdk.impl.SplashScreen
+
+private object Routes {
+	const val MAIN = "main"
+	const val SPLASH = "splash"
+	const val CONTENT_1 = "content1"
+	const val CONTENT_2 = "content2"
+}
 
 class MainActivity : BaseActivity() {
 	override fun onCreate(savedInstanceState: Bundle?) {
 		super.onCreate(savedInstanceState)
 		enableEdgeToEdge()
 		setContent {
-			MainScreen(
-				onDebugClick = {
-					startActivity(Intent(this@MainActivity, DebugActivity::class.java))
-				}
-			)
-		}
-	}
-}
+			val navController = rememberNavController()
 
-@Composable
-private fun MainScreen(onDebugClick: () -> Unit) {
-	MaterialTheme {
-		Column(
-			modifier = Modifier
-				.fillMaxSize()
-				.padding(horizontal = 10.dp)
-				.systemBarsPadding()
-		) {
-			Row(
-				modifier = Modifier
-					.fillMaxWidth()
-					.height(100.dp),
-				horizontalArrangement = Arrangement.SpaceBetween
-			) {
-				Button(
-					onClick = onDebugClick,
-					modifier = Modifier.weight(1f),
-					contentPadding = PaddingValues(10.dp)
+			MaterialTheme {
+				NavHost(
+					navController = navController,
+					startDestination = Routes.MAIN
 				) {
-					Text(text = "调试页")
-				}
-				Spacer(modifier = Modifier.width(10.dp))
-				Button(
-					onClick = onDebugClick,
-					modifier = Modifier.weight(1f),
-					contentPadding = PaddingValues(10.dp)
-				) {
-					Text(text = "开屏页")
+					composable(Routes.MAIN) {
+						MainScreen(
+							onDebugClick = {
+								startActivity(
+									Intent(this@MainActivity, DebugActivity::class.java)
+								)
+							},
+							onSplashClick = {
+								navController.navigate(Routes.SPLASH)
+							},
+							onContent1Click = {
+								navController.navigate(Routes.CONTENT_1)
+							},
+							onContent2Click = {
+								navController.navigate(Routes.CONTENT_2)
+							}
+						)
+					}
+					composable(Routes.SPLASH) {
+						SplashScreen()
+					}
+					composable(Routes.CONTENT_1) {
+						ContentScreen1()
+					}
+					composable(Routes.CONTENT_2) {
+						ContentScreen2()
+					}
 				}
 			}
 		}
 	}
 }
 
+@Composable
+private fun MainScreen(
+	onDebugClick: () -> Unit,
+	onSplashClick: () -> Unit,
+	onContent1Click: () -> Unit,
+	onContent2Click: () -> Unit
+) {
+	Column(
+		modifier = Modifier
+			.fillMaxSize()
+			.padding(horizontal = 10.dp)
+			.systemBarsPadding()
+	) {
+		Row(
+			modifier = Modifier
+				.fillMaxWidth()
+				.height(100.dp),
+			horizontalArrangement = Arrangement.SpaceBetween
+		) {
+			Button(
+				onClick = onDebugClick,
+				modifier = Modifier.weight(1f),
+				contentPadding = PaddingValues(10.dp)
+			) {
+				Text(text = stringResource(R.string.debug_page))
+			}
+			Spacer(modifier = Modifier.width(10.dp))
+			Button(
+				onClick = onSplashClick,
+				modifier = Modifier.weight(1f),
+				contentPadding = PaddingValues(10.dp)
+			) {
+				Text(text = "开屏页面")
+			}
+		}
+		Row(
+			modifier = Modifier
+				.fillMaxWidth()
+				.height(100.dp),
+			horizontalArrangement = Arrangement.SpaceBetween
+		) {
+			Button(
+				onClick = onContent1Click,
+				modifier = Modifier.weight(1f),
+				contentPadding = PaddingValues(10.dp)
+			) {
+				Text(text = "内容页面")
+			}
+			Spacer(modifier = Modifier.width(10.dp))
+			Button(
+				onClick = onContent2Click,
+				modifier = Modifier.weight(1f),
+				contentPadding = PaddingValues(10.dp)
+			) {
+				Text(text = "内容页面")
+			}
+		}
+	}
+}
 
 @Preview(showBackground = true)
 @Composable
 private fun MainScreenPreview() {
-	MainScreen(onDebugClick = {})
+	MaterialTheme {
+		MainScreen(
+			onDebugClick = {},
+			onSplashClick = {},
+			onContent1Click = {},
+			onContent2Click = {}
+		)
+	}
 }

@@ -8,6 +8,7 @@ import com.google.firebase.analytics.FirebaseAnalytics
 import com.inmobi.media.pa
 import com.mar2sdk.core.AppMod
 import com.mar2sdk.core.Core
+import com.mar2sdk.core.ad.status.AdFormat
 import com.mar2sdk.core.firebase.SingularConfig
 import com.mar2sdk.core.policy.RiskUtil
 import com.mar2sdk.core.policy.UserInfo
@@ -35,9 +36,9 @@ object LogUtil {
 		logNet(eventName, params)
 		if (eventName == LogAdEvent.ad_revenue) {
 			if (
-				(params[FirebaseAnalytics.Param.AD_FORMAT] as? String).equals(LogAdParam.ad_format_open) ||
-				(params[FirebaseAnalytics.Param.AD_FORMAT] as? String).equals(LogAdParam.ad_format_inter) ||
-				(params[FirebaseAnalytics.Param.AD_FORMAT] as? String).equals(LogAdParam.ad_format_video)
+				(params[FirebaseAnalytics.Param.AD_FORMAT] as? String).equals(AdFormat.OPEN.name) ||
+				(params[FirebaseAnalytics.Param.AD_FORMAT] as? String).equals(AdFormat.INTER.name) ||
+				(params[FirebaseAnalytics.Param.AD_FORMAT] as? String).equals(AdFormat.VIDEO.name)
 			) {
 				if (UserInfo.firstAdRevenue == -1.0) {
 					UserInfo.firstAdRevenue = (params[FirebaseAnalytics.Param.VALUE] as? Number)?.toDouble() ?: -1.0

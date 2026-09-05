@@ -97,13 +97,13 @@ class DebugActivity : AppCompatActivity() {
 		}
 
 		findViewById<View>(R.id.test_open).setOnClickListener {
-			AdActivity.showAd(this@DebugActivity, AdFormat.OPEN, "TEST")
+			AdActivity.showAd(this@DebugActivity, AdFormat.OPEN, AreaKeys.KEY_TEST)
 		}
 		findViewById<View>(R.id.test_inter).setOnClickListener {
-			AdActivity.showAd(this@DebugActivity, AdFormat.INTER, "TEST")
+			AdActivity.showAd(this@DebugActivity, AdFormat.INTER, AreaKeys.KEY_TEST)
 		}
 		findViewById<View>(R.id.test_video).setOnClickListener {
-			AdActivity.showAd(this@DebugActivity, AdFormat.VIDEO, "TEST")
+			AdActivity.showAd(this@DebugActivity, AdFormat.VIDEO, AreaKeys.KEY_TEST)
 		}
 	}
 

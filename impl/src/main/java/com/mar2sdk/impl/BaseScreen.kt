@@ -12,7 +12,7 @@ import androidx.compose.ui.Modifier
  * 2. 跳转到其他页面时展示完广告再跳转
  */
 @Composable
-fun BaseScreen(content: @Composable () -> Unit) {
+fun BaseScreen(areaKey: String = AreaKeys.KEY_TEST, content: @Composable () -> Unit) {
 
 	// TODO: 公共代码逻辑
 

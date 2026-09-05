@@ -12,7 +12,7 @@ open class Mar2Application : Application() {
 	override fun onCreate() {
 		super.onCreate()
 		// 核心库初始化
-		Core.init(this, AppMod.TEST)
+		Core.init(this, AppMod.DEBUG)
 	}
 
 }

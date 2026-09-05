@@ -11,6 +11,8 @@ import com.google.android.gms.ads.rewarded.RewardedAd
 import com.google.firebase.analytics.FirebaseAnalytics
 import com.mar2sdk.core.AppStatus
 import com.mar2sdk.core.ad.callback.ShowCallback
+import com.mar2sdk.core.ad.status.AdFormat
+import com.mar2sdk.core.ad.status.AdPlatform
 import com.mar2sdk.core.ad.status.AdShowStatus
 import com.mar2sdk.core.ad.status.ShowFailResult
 import com.mar2sdk.core.log.LogAdEvent
@@ -81,9 +83,9 @@ object AdmobShower {
 		LogUtil.log(
 			LogAdEvent.ad_occur,
 			mapOf(
-				LogAdParam.ad_platform to LogAdParam.ad_platform_admob,
+				LogAdParam.ad_platform to AdPlatform.ADMOB.name,
 				LogAdParam.ad_areakey to callback.areaKey,
-				LogAdParam.ad_format to LogAdParam.ad_format_open,
+				LogAdParam.ad_format to AdFormat.OPEN.name,
 				LogAdParam.ad_unit_name to AdmobConfig.openID,
 			)
 		)
@@ -115,10 +117,10 @@ object AdmobShower {
 			LogUtil.log(
 				eventName,
 				mapOf(
-					LogAdParam.ad_platform to LogAdParam.ad_platform_admob,
+					LogAdParam.ad_platform to AdPlatform.ADMOB.name,
 					LogAdParam.duration to (System.currentTimeMillis() - startShowTime),
 					LogAdParam.ad_areakey to callback.areaKey,
-					LogAdParam.ad_format to LogAdParam.ad_format_open,
+					LogAdParam.ad_format to AdFormat.OPEN.name,
 					LogAdParam.ad_source to (currentOpenAd?.responseInfo?.loadedAdapterResponseInfo?.adSourceName ?: LogAdParam.unknow),
 					LogAdParam.ad_unit_name to AdmobConfig.openID,
 					LogAdParam.ad_preload to true,
@@ -181,9 +183,9 @@ object AdmobShower {
 			val revenue = adValue.valueMicros / 1_000_000.0
 			val revenueParams = mapOf(
 				LogAdParam.ad_areakey to callback.areaKey,
-				FirebaseAnalytics.Param.AD_PLATFORM to LogAdParam.ad_platform_admob,
+				FirebaseAnalytics.Param.AD_PLATFORM to AdPlatform.ADMOB.name,
 				FirebaseAnalytics.Param.AD_UNIT_NAME to AdmobConfig.openID,
-				FirebaseAnalytics.Param.AD_FORMAT to LogAdParam.ad_format_open,
+				FirebaseAnalytics.Param.AD_FORMAT to AdFormat.OPEN.name,
 				FirebaseAnalytics.Param.AD_SOURCE to (currentOpenAd?.responseInfo?.loadedAdapterResponseInfo?.adSourceName ?: LogAdParam.unknow),
 				FirebaseAnalytics.Param.CURRENCY to adValue.currencyCode,
 				FirebaseAnalytics.Param.VALUE to revenue,
@@ -265,9 +267,9 @@ object AdmobShower {
 		LogUtil.log(
 			LogAdEvent.ad_occur,
 			mapOf(
-				LogAdParam.ad_platform to LogAdParam.ad_platform_admob,
+				LogAdParam.ad_platform to AdPlatform.ADMOB.name,
 				LogAdParam.ad_areakey to callback.areaKey,
-				LogAdParam.ad_format to LogAdParam.ad_format_inter,
+				LogAdParam.ad_format to AdFormat.INTER.name,
 				LogAdParam.ad_unit_name to AdmobConfig.interID,
 			)
 		)
@@ -299,10 +301,10 @@ object AdmobShower {
 			LogUtil.log(
 				eventName,
 				mapOf(
-					LogAdParam.ad_platform to LogAdParam.ad_platform_admob,
+					LogAdParam.ad_platform to AdPlatform.ADMOB.name,
 					LogAdParam.duration to (System.currentTimeMillis() - startShowTime),
 					LogAdParam.ad_areakey to callback.areaKey,
-					LogAdParam.ad_format to LogAdParam.ad_format_inter,
+					LogAdParam.ad_format to AdFormat.INTER.name,
 					LogAdParam.ad_source to (currentInterAd?.responseInfo?.loadedAdapterResponseInfo?.adSourceName ?: LogAdParam.unknow),
 					LogAdParam.ad_unit_name to AdmobConfig.interID,
 					LogAdParam.ad_preload to true,
@@ -365,9 +367,9 @@ object AdmobShower {
 			val revenue = adValue.valueMicros / 1_000_000.0
 			val revenueParams = mapOf(
 				LogAdParam.ad_areakey to callback.areaKey,
-				FirebaseAnalytics.Param.AD_PLATFORM to LogAdParam.ad_platform_admob,
+				FirebaseAnalytics.Param.AD_PLATFORM to AdPlatform.ADMOB.name,
 				FirebaseAnalytics.Param.AD_UNIT_NAME to AdmobConfig.interID,
-				FirebaseAnalytics.Param.AD_FORMAT to LogAdParam.ad_format_inter,
+				FirebaseAnalytics.Param.AD_FORMAT to AdFormat.INTER.name,
 				FirebaseAnalytics.Param.AD_SOURCE to (currentInterAd?.responseInfo?.loadedAdapterResponseInfo?.adSourceName ?: LogAdParam.unknow),
 				FirebaseAnalytics.Param.CURRENCY to adValue.currencyCode,
 				FirebaseAnalytics.Param.VALUE to revenue,
@@ -449,9 +451,9 @@ object AdmobShower {
 		LogUtil.log(
 			LogAdEvent.ad_occur,
 			mapOf(
-				LogAdParam.ad_platform to LogAdParam.ad_platform_admob,
+				LogAdParam.ad_platform to AdPlatform.ADMOB.name,
 				LogAdParam.ad_areakey to callback.areaKey,
-				LogAdParam.ad_format to LogAdParam.ad_format_video,
+				LogAdParam.ad_format to AdFormat.VIDEO.name,
 				LogAdParam.ad_unit_name to AdmobConfig.VideoID,
 			)
 		)
@@ -483,10 +485,10 @@ object AdmobShower {
 			LogUtil.log(
 				eventName,
 				mapOf(
-					LogAdParam.ad_platform to LogAdParam.ad_platform_admob,
+					LogAdParam.ad_platform to AdPlatform.ADMOB.name,
 					LogAdParam.duration to (System.currentTimeMillis() - startShowTime),
 					LogAdParam.ad_areakey to callback.areaKey,
-					LogAdParam.ad_format to LogAdParam.ad_format_video,
+					LogAdParam.ad_format to AdFormat.VIDEO.name,
 					LogAdParam.ad_source to (currentVideoAd?.responseInfo?.loadedAdapterResponseInfo?.adSourceName ?: LogAdParam.unknow),
 					LogAdParam.ad_unit_name to AdmobConfig.VideoID,
 					LogAdParam.ad_preload to true,
@@ -549,9 +551,9 @@ object AdmobShower {
 			val revenue = adValue.valueMicros / 1_000_000.0
 			val revenueParams = mapOf(
 				LogAdParam.ad_areakey to callback.areaKey,
-				FirebaseAnalytics.Param.AD_PLATFORM to LogAdParam.ad_platform_admob,
+				FirebaseAnalytics.Param.AD_PLATFORM to AdPlatform.ADMOB.name,
 				FirebaseAnalytics.Param.AD_UNIT_NAME to AdmobConfig.VideoID,
-				FirebaseAnalytics.Param.AD_FORMAT to LogAdParam.ad_format_video,
+				FirebaseAnalytics.Param.AD_FORMAT to AdFormat.VIDEO.name,
 				FirebaseAnalytics.Param.AD_SOURCE to (currentVideoAd?.responseInfo?.loadedAdapterResponseInfo?.adSourceName ?: LogAdParam.unknow),
 				FirebaseAnalytics.Param.CURRENCY to adValue.currencyCode,
 				FirebaseAnalytics.Param.VALUE to revenue,

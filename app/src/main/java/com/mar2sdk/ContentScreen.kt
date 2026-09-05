@@ -6,13 +6,15 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.Button
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 
 @Composable
 fun ContentScreen1(onNextClick: () -> Unit) {
 	Column(
 		modifier = Modifier.fillMaxSize(),
-		verticalArrangement = Arrangement.Center
+		verticalArrangement = Arrangement.Center,
+		horizontalAlignment = Alignment.CenterHorizontally
 	) {
 		Text("内容页面 1")
 		Button(onClick = onNextClick) {
@@ -25,7 +27,8 @@ fun ContentScreen1(onNextClick: () -> Unit) {
 fun ContentScreen2(onPreviousClick: () -> Unit) {
 	Column(
 		modifier = Modifier.fillMaxSize(),
-		verticalArrangement = Arrangement.Center
+		verticalArrangement = Arrangement.Center,
+		horizontalAlignment = Alignment.CenterHorizontally
 	) {
 		Text("内容页面 2")
 		Button(onClick = onPreviousClick) {

@@ -11,7 +11,6 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.systemBarsPadding
 import androidx.compose.foundation.layout.width
@@ -19,20 +18,17 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.navigation.compose.NavHost
-import androidx.navigation.NavGraphBuilder
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.mar2sdk.impl.BaseActivity
-import com.mar2sdk.impl.BaseScreen
 import com.mar2sdk.impl.DebugActivity
-import com.mar2sdk.impl.LocalScreenName
 import com.mar2sdk.impl.SplashScreen
+import com.mar2sdk.impl.contentComposable
 
 private object Routes {
 	const val MAIN = "main"
@@ -96,20 +92,6 @@ class MainActivity : BaseActivity() {
 						)
 					}
 				}
-			}
-		}
-	}
-}
-
-private fun NavGraphBuilder.contentComposable(
-	route: String,
-	content: @Composable () -> Unit
-) {
-	composable(route) { backStackEntry ->
-		val screenName = backStackEntry.destination.route ?: route
-		CompositionLocalProvider(LocalScreenName provides screenName) {
-			BaseScreen {
-				content()
 			}
 		}
 	}

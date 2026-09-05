@@ -31,6 +31,7 @@ class AdActivity : AppCompatActivity() {
 			return !activity.isFinishing && !activity.isDestroyed
 		}
 
+		// adFormat 以远端配置的为主，如果没有远端配置则使用传入的 adFormat
 		fun showAd(activity: Activity, adFormat: AdFormat = AdFormat.INTER_VIDEO, areaKey: String) {
 			if (showing()) {
 				if (Core.appMod == AppMod.DEBUG) {
@@ -43,6 +44,7 @@ class AdActivity : AppCompatActivity() {
 			intent.putExtra("areaKey", areaKey)
 			activity.startActivity(intent)
 		}
+
 	}
 
 	override fun onCreate(savedInstanceState: Bundle?) {

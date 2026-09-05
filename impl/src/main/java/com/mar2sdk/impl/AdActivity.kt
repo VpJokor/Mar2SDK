@@ -3,9 +3,11 @@ package com.mar2sdk.impl
 import android.app.Activity
 import android.content.Intent
 import android.os.Bundle
+import android.widget.Toast
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
+import com.mar2sdk.core.AppMod
 import com.mar2sdk.core.Core
 import com.mar2sdk.core.ad.callback.ShowCallback
 import com.mar2sdk.core.ad.status.AdFormat
@@ -21,13 +23,18 @@ class AdActivity : AppCompatActivity() {
 		private const val TAG = "AdActivity"
 		private val currentActivity = AtomicReference<WeakReference<AdActivity>?>(null)
 
-		// TODO: 判断 AdActivity 是否正在展示
-		fun adShowing(): Boolean {
+		fun showing(): Boolean {
 			val activity = currentActivity.get()?.get() ?: return false
 			return !activity.isFinishing && !activity.isDestroyed
 		}
 
 		fun showAd(activity: Activity, adFormat: AdFormat, areaKey: String) {
+			if (showing()) {
+				if (Core.appMod == AppMod.DEBUG) {
+					Toast.makeText(Core.app, "AdActivity 正在展示", Toast.LENGTH_LONG).show()
+				}
+				return
+			}
 			val intent = Intent(activity, AdActivity::class.java)
 			intent.putExtra("adFormat", adFormat.name)
 			intent.putExtra("areaKey", areaKey)

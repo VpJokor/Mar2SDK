@@ -37,12 +37,15 @@ fun NavGraphBuilder.contentComposable(
 /**
  * 自动获取screen名生成areaKey
  * 所有页面的公共容器。
- * 页面进入组合时展示一次告。
+ * 页面进入Screen时展示一次广告
+ * 从其他页面返回
  */
 @Composable
 fun BaseScreen(content: @Composable () -> Unit) {
 	val screenName = LocalScreenName.current
 	val areaKey = "${screenName}_start"
+//	val areaKey = "${screenName}_end"
+//	val areaKey = "${screenName}_back"
 
 	if (!LocalInspectionMode.current) {
 		val activity = LocalContext.current.findActivity()

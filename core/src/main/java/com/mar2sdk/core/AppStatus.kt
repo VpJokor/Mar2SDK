@@ -36,6 +36,7 @@ object AppStatus {
 			// INFO: 前后台切换
 			is AppObs.Event.ForegroundChanged -> {
 				if (event.isForeground) {
+					// INFO: 开屏填充广告池
 					startAdPreload()
 				} else {
 

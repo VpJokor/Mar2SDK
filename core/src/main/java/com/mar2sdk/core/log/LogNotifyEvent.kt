@@ -9,6 +9,8 @@ object LogNotifyEvent {
 
 	// 批量发送通知
 	const val notify_send_batch = "notify_send_batch"
-
-
+	// 发送一条通知
+	const val notify_send_item = "notify_send_item"
+	// 清空待发送队列
+	const val clear_notifications = "clear_notifications"
 }

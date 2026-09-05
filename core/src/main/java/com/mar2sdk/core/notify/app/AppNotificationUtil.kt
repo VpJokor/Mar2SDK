@@ -1,8 +1,5 @@
 package com.mar2sdk.core.notify.app
 
-import android.R.attr.text
-import android.annotation.SuppressLint
-import android.app.Activity
 import android.app.Notification
 import android.app.NotificationChannelGroup
 import android.app.NotificationManager
@@ -11,10 +8,16 @@ import android.content.Context
 import android.content.Intent
 import android.util.Log
 import android.widget.RemoteViews
+import android.widget.Toast
 import androidx.core.app.NotificationCompat
+import com.mar2sdk.core.AppMod
 import com.mar2sdk.core.AppStatus
 import com.mar2sdk.core.Core
 import com.mar2sdk.core.R
+import com.mar2sdk.core.log.LogAppParam
+import com.mar2sdk.core.log.LogNotifyEvent
+import com.mar2sdk.core.log.LogNotifyParam
+import com.mar2sdk.core.log.LogUtil
 import com.mar2sdk.core.notify.NotificationConfig
 import com.mar2sdk.core.notify.NotificationContent
 import java.util.concurrent.atomic.AtomicInteger
@@ -33,18 +36,49 @@ object AppNotificationUtil {
 	// 发送一批通知
 	fun sendNotificationBatch(scene: String) {
 		// 通知发送限制
-		if ((!NotificationConfig.isForgroundSend) && AppStatus.isForeground) return
-		if ((!NotificationConfig.isScreenOffSend) && (!AppStatus.isScreenOn)) return
-		if ((!NotificationConfig.isScreenLockSend) && AppStatus.isLocked) return
+		if ((!NotificationConfig.isForgroundSend) && AppStatus.isForeground) {
+			if (Core.appMod == AppMod.DEBUG) {
+				Toast.makeText(Core.app, "APP在前台不发通知", Toast.LENGTH_LONG).show()
+			}
+			LogUtil.log(
+				LogNotifyEvent.notify_send_batch,
+				mapOf(LogNotifyParam.isSuccess to false, LogAppParam.msg to "APP在前台不发通知",)
+			)
+			return
+		}
+		if ((!NotificationConfig.isScreenOffSend) && (!AppStatus.isScreenOn)) {
+			if (Core.appMod == AppMod.DEBUG) {
+				Toast.makeText(Core.app, "手机熄屏不发通知", Toast.LENGTH_LONG).show()
+			}
+			LogUtil.log(
+				LogNotifyEvent.notify_send_batch,
+				mapOf(LogNotifyParam.isSuccess to false, LogAppParam.msg to "手机熄屏不发通知",)
+			)
+			return
+		}
+		if ((!NotificationConfig.isScreenLockSend) && AppStatus.isLocked) {
+			if (Core.appMod == AppMod.DEBUG) {
+				Toast.makeText(Core.app, "手机锁屏不发通知", Toast.LENGTH_LONG).show()
+			}
+			LogUtil.log(
+				LogNotifyEvent.notify_send_batch,
+				mapOf(LogNotifyParam.isSuccess to false, LogAppParam.msg to "手机锁屏不发通知",)
+			)
+			return
+		}
 
 		// TODO: 每隔 6秒发一条，连发3条，这3条等待发送的通知用队列管理
 
+		LogUtil.log(LogNotifyEvent.notify_send_batch, mapOf(LogNotifyParam.isSuccess to true))
 		sendNotificationContent(scene)
 	}
 
 	// TODO: 清空待发送队列
 	fun clearNotifications() {
-
+		if (Core.appMod == AppMod.DEBUG) {
+			Toast.makeText(Core.app, "清空待发送队列", Toast.LENGTH_LONG).show()
+		}
+		LogUtil.log(LogNotifyEvent.clear_notifications, mapOf())
 	}
 
 	// 循环使用通知 ID，避免通知数量无限增长。
@@ -56,9 +90,36 @@ object AppNotificationUtil {
 	// 发送通知
 	fun sendNotificationContent(scene: String) {
 		// 通知发送限制
-		if ((!NotificationConfig.isForgroundSend) && AppStatus.isForeground) return
-		if ((!NotificationConfig.isScreenOffSend) && (!AppStatus.isScreenOn)) return
-		if ((!NotificationConfig.isScreenLockSend) && AppStatus.isLocked) return
+		if ((!NotificationConfig.isForgroundSend) && AppStatus.isForeground) {
+			if (Core.appMod == AppMod.DEBUG) {
+				Toast.makeText(Core.app, "APP在前台不发通知", Toast.LENGTH_LONG).show()
+			}
+			LogUtil.log(
+				LogNotifyEvent.notify_send_item,
+				mapOf(LogNotifyParam.isSuccess to false, LogAppParam.msg to "APP在前台不发通知",)
+			)
+			return
+		}
+		if ((!NotificationConfig.isScreenOffSend) && (!AppStatus.isScreenOn)) {
+			if (Core.appMod == AppMod.DEBUG) {
+				Toast.makeText(Core.app, "手机熄屏不发通知", Toast.LENGTH_LONG).show()
+			}
+			LogUtil.log(
+				LogNotifyEvent.notify_send_item,
+				mapOf(LogNotifyParam.isSuccess to false, LogAppParam.msg to "手机熄屏不发通知",)
+			)
+			return
+		}
+		if ((!NotificationConfig.isScreenLockSend) && AppStatus.isLocked) {
+			if (Core.appMod == AppMod.DEBUG) {
+				Toast.makeText(Core.app, "手机锁屏不发通知", Toast.LENGTH_LONG).show()
+			}
+			LogUtil.log(
+				LogNotifyEvent.notify_send_item,
+				mapOf(LogNotifyParam.isSuccess to false, LogAppParam.msg to "手机锁屏不发通知",)
+			)
+			return
+		}
 
 		if (idQueue.size >= NotificationConfig.ChannelCount) {
 			idQueue.removeFirst()
@@ -99,11 +160,6 @@ object AppNotificationUtil {
 		button: String,
 		route: String
 	) {
-		// 通知发送限制
-		if ((!NotificationConfig.isForgroundSend) && AppStatus.isForeground) return
-		if ((!NotificationConfig.isScreenOffSend) && (!AppStatus.isScreenOn)) return
-		if ((!NotificationConfig.isScreenLockSend) && AppStatus.isLocked) return
-
 		try {
 			val pendingIntent = getAppPendingIntent( route, scene)
 			val remoteViews = RemoteViews(Core.app.packageName, R.layout.notification_1_mini)

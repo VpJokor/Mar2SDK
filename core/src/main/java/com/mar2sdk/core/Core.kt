@@ -64,34 +64,6 @@ object Core {
 		}
 	}
 
-	// 展示开屏&插屏
-	suspend fun showOpenInter(activity: Activity, callback: ShowCallback) : AdShowStatus {
-		return AdShower.showOpenInter(activity, callback)
-	}
-
-	// 展示开屏&视频
-	suspend fun showInterVideo(activity: Activity, callback: ShowCallback) : AdShowStatus {
-		return AdShower.showInterVideo(activity, callback)
-	}
-
-	// 展示开屏
-	suspend fun showOpen(activity: Activity, callback: ShowCallback) : AdShowStatus {
-		callback.adFormat = AdFormat.OPEN
-		return AdShower.showOpen(activity, callback)
-	}
-
-	// 展示插屏
-	suspend fun showInter(activity: Activity, callback: ShowCallback) : AdShowStatus {
-		callback.adFormat = AdFormat.INTER
-		return AdShower.showInter(activity, callback)
-	}
-
-	// 展示视频
-	suspend fun showVideo(activity: Activity, callback: ShowCallback) : AdShowStatus {
-		callback.adFormat = AdFormat.VIDEO
-		return AdShower.showVideo(activity, callback)
-	}
-
 	// 日志上报
 	fun log(eventName: String, params: Map<String, Any>) {
 		LogUtil.log(eventName, params)

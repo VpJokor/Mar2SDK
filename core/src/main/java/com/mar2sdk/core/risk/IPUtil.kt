@@ -1,10 +1,10 @@
-package com.mar2sdk.core.policy
+package com.mar2sdk.core.risk
 
 import android.util.Log
 import com.mar2sdk.core.Core
 import com.mar2sdk.core.R
 import com.mar2sdk.core.log.ThinkingUtil
-import com.mar2sdk.core.policy.status.RiskType
+import com.mar2sdk.core.risk.status.RiskType
 import kotlinx.serialization.Serializable
 import okhttp3.OkHttpClient
 import okhttp3.Request

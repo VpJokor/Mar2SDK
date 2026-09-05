@@ -1,4 +1,4 @@
-package com.mar2sdk.core.policy.status
+package com.mar2sdk.core.risk.status
 
 enum class RiskType {
 	COMMON,

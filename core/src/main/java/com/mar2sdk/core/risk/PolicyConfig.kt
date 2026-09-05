@@ -1,4 +1,4 @@
-package com.mar2sdk.core.policy
+package com.mar2sdk.core.risk
 
 import com.mar2sdk.core.Core
 import com.mar2sdk.core.R

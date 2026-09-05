@@ -1,8 +1,8 @@
-package com.mar2sdk.core.policy
+package com.mar2sdk.core.risk
 
 import com.mar2sdk.core.log.ThinkingUtil
-import com.mar2sdk.core.policy.status.EcpmType
-import com.mar2sdk.core.policy.status.RiskType
+import com.mar2sdk.core.risk.status.EcpmType
+import com.mar2sdk.core.risk.status.RiskType
 import com.mar2sdk.core.util.PreferenceUtil
 
 object UserInfo {

@@ -1,17 +1,15 @@
 package com.mar2sdk.core.log
 
-import android.annotation.SuppressLint
 import android.os.Bundle
 import android.util.Log
 import cn.thinkingdata.analytics.TDAnalytics
 import com.google.firebase.analytics.FirebaseAnalytics
-import com.inmobi.media.pa
 import com.mar2sdk.core.AppMod
 import com.mar2sdk.core.Core
 import com.mar2sdk.core.ad.status.AdFormat
 import com.mar2sdk.core.firebase.SingularConfig
-import com.mar2sdk.core.policy.RiskUtil
-import com.mar2sdk.core.policy.UserInfo
+import com.mar2sdk.core.risk.RiskUtil
+import com.mar2sdk.core.risk.UserInfo
 import com.mar2sdk.core.util.DBUtil
 import com.singular.sdk.Singular
 import com.singular.sdk.SingularAdData

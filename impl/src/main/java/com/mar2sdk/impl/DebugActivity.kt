@@ -17,9 +17,9 @@ import com.mar2sdk.core.log.LogAppParam
 import com.mar2sdk.core.log.ThinkingUtil
 import com.mar2sdk.core.notify.NotificationUtil
 import com.mar2sdk.core.notify.app.AppNotificationUtil
-import com.mar2sdk.core.policy.TestMod
-import com.mar2sdk.core.policy.UserInfo
-import com.mar2sdk.core.policy.status.UserType
+import com.mar2sdk.core.risk.TestMod
+import com.mar2sdk.core.risk.UserInfo
+import com.mar2sdk.core.risk.status.UserType
 
 class DebugActivity : AppCompatActivity() {
 	private val notificationPermissionLauncher =

@@ -3,8 +3,8 @@ package com.mar2sdk.core.firebase
 import android.util.Log
 import cn.thinkingdata.analytics.TDAnalytics
 import com.mar2sdk.core.Core
-import com.mar2sdk.core.policy.RiskUtil
-import com.mar2sdk.core.policy.UserInfo
+import com.mar2sdk.core.risk.RiskUtil
+import com.mar2sdk.core.risk.UserInfo
 import com.singular.sdk.Singular
 import org.json.JSONException
 import org.json.JSONObject

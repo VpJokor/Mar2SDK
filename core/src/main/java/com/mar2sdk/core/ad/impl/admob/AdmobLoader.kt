@@ -69,6 +69,7 @@ object AdmobLoader {
 
 	// 填满所有广告池 fillOpen/fillInter/fillVideo 可同时执行
 	suspend fun fillPool() = coroutineScope {
+		LogUtil.log(LogAdEvent.fill_pool, mapOf(LogAdParam.scene to LogAdParam.scene_open_app))
 		launch { fillOpen() }
 		launch { fillInter() }
 		launch { fillVideo() }

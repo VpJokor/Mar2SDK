@@ -16,5 +16,7 @@ object LogAdEvent {
 
 	const val ad_impression = "ad_impression"
 	const val ad_revenue: String = "ad_revenue"
+	// 填充广告池
+	const val fill_pool: String = "fill_pool"
 
 }

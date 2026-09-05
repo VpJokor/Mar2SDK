@@ -13,6 +13,11 @@ const val ROUTE = "/ad_page"
  */
 object LogAdParam {
 
+	// 填充广告池场景
+	const val scene = ""
+	// 打开APP
+	const val scene_open_app = ""
+
 	// 通用广告事件参数。
 	const val duration = "duration_time"
 	const val ad_platform = "ad_platform"
@@ -23,7 +28,7 @@ object LogAdParam {
 	const val ad_format_inter = "inter"
 	const val ad_format_video = "video"
 
-	const val ad_format_banner = "merc"
+	const val ad_format_banner = "banner"
 	const val ad_format_native = "native"
 	const val ad_source = "ad_source"
 	const val ad_unit_name = "ad_unit_name"

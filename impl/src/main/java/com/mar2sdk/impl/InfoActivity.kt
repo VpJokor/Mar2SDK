@@ -19,8 +19,8 @@ import com.mar2sdk.core.ad.AdConfig
 import com.mar2sdk.core.ad.impl.admob.AdmobConfig
 import com.mar2sdk.core.firebase.SingularConfig
 import com.mar2sdk.core.log.ThinkingConfig
-import com.mar2sdk.core.risk.PolicyConfig
-import com.mar2sdk.core.risk.UserInfo
+import com.mar2sdk.core.common.PolicyConfig
+import com.mar2sdk.core.common.UserInfo
 import com.mar2sdk.core.util.DBUtil
 import kotlinx.coroutines.launch
 import java.time.Instant

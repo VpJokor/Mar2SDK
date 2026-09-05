@@ -1,4 +1,4 @@
-package com.mar2sdk.core.risk.status
+package com.mar2sdk.core.common.status
 
 enum class EcpmType {
 	ECPM_UNKNOW,

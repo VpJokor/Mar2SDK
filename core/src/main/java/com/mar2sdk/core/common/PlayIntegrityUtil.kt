@@ -1,10 +1,10 @@
-package com.mar2sdk.core.risk
+package com.mar2sdk.core.common
 
 import android.util.Log
 import com.google.android.play.core.integrity.IntegrityManagerFactory
 import com.google.android.play.core.integrity.StandardIntegrityManager
 import com.mar2sdk.core.Core
-import com.mar2sdk.core.risk.status.RiskType
+import com.mar2sdk.core.common.status.RiskType
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.Json

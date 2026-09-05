@@ -1,4 +1,4 @@
-package com.mar2sdk.core.risk
+package com.mar2sdk.core.common
 
 object PolicyKey {
 	const val KEY_FIRST_OPEN_TIME = "mar2sdk.user_info.first_open_time"

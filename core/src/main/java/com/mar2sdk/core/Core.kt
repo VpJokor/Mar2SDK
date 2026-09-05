@@ -13,9 +13,9 @@ import com.mar2sdk.core.log.LogUtil
 import com.mar2sdk.core.log.ThinkingUtil
 import com.mar2sdk.core.notify.NotificationUtil
 import com.mar2sdk.core.notify.app.AppNotificationUtil
-import com.mar2sdk.core.risk.RiskUtil
-import com.mar2sdk.core.risk.TestMod
-import com.mar2sdk.core.risk.status.UserType
+import com.mar2sdk.core.common.RiskUtil
+import com.mar2sdk.core.common.TestMod
+import com.mar2sdk.core.common.status.UserType
 import com.mar2sdk.core.util.AppObs
 
 /**

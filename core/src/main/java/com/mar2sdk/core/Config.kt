@@ -9,8 +9,8 @@ import com.mar2sdk.core.ad.impl.unity.UnityConfig
 import com.mar2sdk.core.firebase.SingularConfig
 import com.mar2sdk.core.log.ThinkingConfig
 import com.mar2sdk.core.notify.NotificationConfig
-import com.mar2sdk.core.risk.PolicyConfig
-import com.mar2sdk.core.risk.UserInfo
+import com.mar2sdk.core.common.PolicyConfig
+import com.mar2sdk.core.common.UserInfo
 import com.mar2sdk.core.util.DBUtil
 import com.mar2sdk.core.util.PreferenceUtil
 

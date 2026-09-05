@@ -1,4 +1,4 @@
-package com.mar2sdk.core.risk
+package com.mar2sdk.core.common
 
 /**
  * 测试模式

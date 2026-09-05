@@ -1,4 +1,4 @@
-package com.mar2sdk.core.risk.status
+package com.mar2sdk.core.common.status
 
 /**
  * 用户分类

@@ -17,7 +17,7 @@ import androidx.core.app.NotificationCompat
 import androidx.core.content.ContextCompat
 import com.mar2sdk.core.Core
 import com.mar2sdk.core.R
-import com.mar2sdk.core.risk.status.UserType
+import com.mar2sdk.core.common.status.UserType
 import java.util.concurrent.atomic.AtomicInteger
 
 /**

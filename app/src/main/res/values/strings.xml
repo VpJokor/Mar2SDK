@@ -1,3 +1,4 @@
 <resources>
     <string name="app_name">Mar2SDK</string>
+    <string name="debug_page">调试页面</string>
 </resources>

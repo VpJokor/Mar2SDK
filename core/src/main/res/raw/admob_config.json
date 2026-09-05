@@ -2,9 +2,6 @@
   "releaseOpenID": "ca-app-pub-3940256099942544/9257395921",
   "releaseInterID": "ca-app-pub-3940256099942544/9257395921",
   "releaseVideoID": "ca-app-pub-3940256099942544/9257395921",
-  "openTimeout":  12600000,
-  "interTimeout": 3000000,
-  "videoTimeout": 3000000,
   "openPoolSize": 1,
   "interPoolSize": 1,
   "videoPoolSize": 1

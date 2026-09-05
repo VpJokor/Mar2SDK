@@ -2,11 +2,21 @@ package com.mar2sdk
 
 import android.content.Intent
 import android.os.Bundle
-import android.widget.Button
+import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
-import androidx.appcompat.app.AppCompatActivity
-import androidx.core.view.ViewCompat
-import androidx.core.view.WindowInsetsCompat
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.systemBarsPadding
+import androidx.compose.material3.Button
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.dp
 import com.mar2sdk.impl.DebugActivity
 import com.mar2sdk.impl.Mar2Activity
 
@@ -14,15 +24,35 @@ class MainActivity : Mar2Activity() {
 	override fun onCreate(savedInstanceState: Bundle?) {
 		super.onCreate(savedInstanceState)
 		enableEdgeToEdge()
-		setContentView(R.layout.activity_main)
-		ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main)) { v, insets ->
-			val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
-			v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom)
-			insets
-		}
-
-		findViewById<Button>(R.id.debug).setOnClickListener {
-			startActivity(Intent(this@MainActivity, DebugActivity::class.java))
+		setContent {
+			MainScreen {
+				startActivity(Intent(this@MainActivity, DebugActivity::class.java))
+			}
 		}
 	}
+}
+
+@Composable
+private fun MainScreen(onDebugClick: () -> Unit) {
+	MaterialTheme {
+		Column(
+			modifier = Modifier
+				.fillMaxSize()
+				.systemBarsPadding()
+		) {
+			Button(
+				onClick = onDebugClick,
+				modifier = Modifier.fillMaxWidth(),
+				contentPadding = PaddingValues(10.dp)
+			) {
+				Text(text = stringResource(R.string.debug_page))
+			}
+		}
+	}
+}
+
+@Preview(showBackground = true)
+@Composable
+private fun MainScreenPreview() {
+	MainScreen(onDebugClick = {})
 }

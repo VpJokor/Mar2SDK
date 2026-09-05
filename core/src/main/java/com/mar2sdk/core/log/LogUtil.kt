@@ -8,8 +8,8 @@ import com.mar2sdk.core.AppMod
 import com.mar2sdk.core.Core
 import com.mar2sdk.core.ad.status.AdFormat
 import com.mar2sdk.core.firebase.SingularConfig
-import com.mar2sdk.core.risk.RiskUtil
-import com.mar2sdk.core.risk.UserInfo
+import com.mar2sdk.core.common.RiskUtil
+import com.mar2sdk.core.common.UserInfo
 import com.mar2sdk.core.util.DBUtil
 import com.singular.sdk.Singular
 import com.singular.sdk.SingularAdData

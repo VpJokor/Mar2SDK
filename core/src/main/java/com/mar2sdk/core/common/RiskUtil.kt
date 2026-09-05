@@ -1,11 +1,11 @@
-package com.mar2sdk.core.risk
+package com.mar2sdk.core.common
 
 import com.mar2sdk.core.AppMod
 import com.mar2sdk.core.Core
 import com.mar2sdk.core.log.ThinkingUtil
-import com.mar2sdk.core.risk.status.EcpmType
-import com.mar2sdk.core.risk.status.RiskType
-import com.mar2sdk.core.risk.status.UserType
+import com.mar2sdk.core.common.status.EcpmType
+import com.mar2sdk.core.common.status.RiskType
+import com.mar2sdk.core.common.status.UserType
 
 /**
  * 风控类

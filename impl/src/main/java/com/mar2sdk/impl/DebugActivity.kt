@@ -91,7 +91,7 @@ class DebugActivity : AppCompatActivity() {
 			refreshData()
 		}
 		findViewById<View>(R.id.test_user).setOnClickListener {
-			if (Core.appMod == AppMod.TEST && Core.testMod == TestMod.FORCE) {
+			if ((Core.appMod == AppMod.DEBUG || Core.appMod == AppMod.TEST) && Core.testMod == TestMod.FORCE) {
 				val userIndex = UserType.entries.indexOf(Core.userType)
 				var nextIndex = userIndex + 1
 				if (nextIndex >= UserType.entries.size) nextIndex = 0
@@ -102,6 +102,9 @@ class DebugActivity : AppCompatActivity() {
 			}
 		}
 
+		findViewById<View>(R.id.test_open).setOnClickListener {
+			AdActivity.showAd(this@DebugActivity, AdFormat.OPEN, "TEST")
+		}
 		findViewById<View>(R.id.test_open).setOnClickListener {
 			AdActivity.showAd(this@DebugActivity, AdFormat.OPEN, "TEST")
 		}
@@ -143,6 +146,5 @@ class DebugActivity : AppCompatActivity() {
 			findViewById<TextView>(R.id.test_user_name).text = Core.userType.name
 		}
 
-		Toast.makeText(this,"刷新成功", Toast.LENGTH_LONG).show()
 	}
 }

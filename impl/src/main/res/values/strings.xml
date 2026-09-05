@@ -8,4 +8,5 @@
     <string name="info_detail_name">名称：%1$s</string>
     <string name="info_detail_time">时间：%1$s</string>
     <string name="info_detail_content">内容：%1$s</string>
+    <string name="refresh">Refresh</string>
 </resources>

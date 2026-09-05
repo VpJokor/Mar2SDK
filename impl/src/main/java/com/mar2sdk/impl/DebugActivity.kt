@@ -41,6 +41,7 @@ class DebugActivity : AppCompatActivity() {
 		}
 		findViewById<View>(R.id.refresh_btn).setOnClickListener {
 			refreshData()
+			Toast.makeText(Core.app, "刷新成功", Toast.LENGTH_LONG).show()
 		}
 		findViewById<View>(R.id.user_info_card).setOnClickListener {
 			openInfo("User")

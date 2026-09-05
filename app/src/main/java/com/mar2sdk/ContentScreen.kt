@@ -8,7 +8,7 @@ import androidx.compose.ui.Modifier
 import com.mar2sdk.impl.AreaKeys
 import com.mar2sdk.impl.BaseScreen
 
-// debug页面
+// 内容页面
 @Composable
 fun ContentScreen() {
 	BaseScreen(areaKey = AreaKeys.KEY_TEST) {

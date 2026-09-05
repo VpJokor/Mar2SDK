@@ -7,10 +7,14 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalInspectionMode
 import com.mar2sdk.core.ad.status.AdFormat
+
+/** 当前导航页面的名称，由导航层注入。 */
+val LocalScreenName = compositionLocalOf { "UnknownScreen" }
 
 /**
  * 自动获取screen名生成areaKey
@@ -18,13 +22,13 @@ import com.mar2sdk.core.ad.status.AdFormat
  * 页面进入组合时展示一次告。
  */
 @Composable
-fun BaseScreen(screen: String = "ContentScreen", content: @Composable () -> Unit) {
+fun BaseScreen(content: @Composable () -> Unit) {
+	val screenName = LocalScreenName.current
+	val areaKey = "KEY_$screenName"
 
 	if (!LocalInspectionMode.current) {
 		val activity = LocalContext.current.findActivity()
-		LaunchedEffect(activity, screen) {
-
-			val areaKey = "KEY_$screen"
+		LaunchedEffect(activity, areaKey) {
 			if (activity != null && !activity.isFinishing && !activity.isDestroyed) {
 				AdActivity.showAd(activity, AdFormat.OPEN, areaKey)
 			}

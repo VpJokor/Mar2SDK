@@ -19,15 +19,18 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.navigation.compose.NavHost
+import androidx.navigation.NavGraphBuilder
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.mar2sdk.impl.BaseActivity
 import com.mar2sdk.impl.DebugActivity
+import com.mar2sdk.impl.LocalScreenName
 import com.mar2sdk.impl.SplashScreen
 
 private object Routes {
@@ -70,14 +73,26 @@ class MainActivity : BaseActivity() {
 					composable(Routes.SPLASH) {
 						SplashScreen()
 					}
-					composable(Routes.CONTENT_1) {
+					contentComposable(Routes.CONTENT_1) {
 						ContentScreen1()
 					}
-					composable(Routes.CONTENT_2) {
+					contentComposable(Routes.CONTENT_2) {
 						ContentScreen2()
 					}
 				}
 			}
+		}
+	}
+}
+
+private fun NavGraphBuilder.contentComposable(
+	route: String,
+	content: @Composable () -> Unit
+) {
+	composable(route) { backStackEntry ->
+		val screenName = backStackEntry.destination.route ?: route
+		CompositionLocalProvider(LocalScreenName provides screenName) {
+			content()
 		}
 	}
 }

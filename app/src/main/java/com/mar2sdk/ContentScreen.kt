@@ -5,23 +5,22 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import com.mar2sdk.impl.BaseScreen
 
-// 内容页1
 @Composable
 fun ContentScreen1() {
-	Box (
-		modifier = Modifier.fillMaxSize()
-	) {
-		Text("内容页1")
+	BaseScreen {
+		Box(modifier = Modifier.fillMaxSize()) {
+			Text("内容页面 1")
+		}
 	}
 }
 
-// 内容页2
 @Composable
 fun ContentScreen2() {
-	Box (
-		modifier = Modifier.fillMaxSize()
-	) {
-		Text("内容页2")
+	BaseScreen {
+		Box(modifier = Modifier.fillMaxSize()) {
+			Text("内容页面 2")
+		}
 	}
 }

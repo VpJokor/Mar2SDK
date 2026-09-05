@@ -25,6 +25,7 @@ object ThinkingUtil {
 
 	// 设置可覆盖的用户属性。
 	fun setUserAttr(key: String, value: Any) {
+		// TODO: 48小时限制
 		val userProperties =  JSONObject()
 		userProperties.put(key, value)
 		TDAnalytics.userSet(userProperties);
@@ -32,6 +33,7 @@ object ThinkingUtil {
 
 	// 设置只写一次的用户属性。
 	fun setUserOnceAttr(key: String, value: String) {
+		// TODO: 48小时限制
 		val userProperties =  JSONObject()
 		userProperties.put(key, value)
 		TDAnalytics.userSetOnce(userProperties);

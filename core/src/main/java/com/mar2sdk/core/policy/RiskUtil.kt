@@ -48,7 +48,7 @@ object RiskUtil {
 	// 用户分级
 	fun judgeUserType() {
 		//如果是测试模式，且测试模式设置为了强制模式，则强制不改变用户类型
-		if (Core.appMod == AppMod.TEST && Core.testMod == TestMod.FORCE) {
+		if ((Core.appMod == AppMod.TEST || Core.appMod == AppMod.DEBUG) && Core.testMod == TestMod.FORCE) {
 			return
 		}
 		//正式版本逻辑

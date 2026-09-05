@@ -31,8 +31,6 @@ class AdActivity : AppCompatActivity() {
 			return !activity.isFinishing && !activity.isDestroyed
 		}
 
-		fun adShowing(): Boolean = showing()
-
 		fun showAd(activity: Activity, adFormat: AdFormat, areaKey: String) {
 			if (showing()) {
 				if (Core.appMod == AppMod.DEBUG) {

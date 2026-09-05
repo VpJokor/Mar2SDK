@@ -31,7 +31,7 @@ class AdActivity : AppCompatActivity() {
 			return !activity.isFinishing && !activity.isDestroyed
 		}
 
-		fun showAd(activity: Activity, adFormat: AdFormat, areaKey: String) {
+		fun showAd(activity: Activity, adFormat: AdFormat = AdFormat.INTER_VIDEO, areaKey: String) {
 			if (showing()) {
 				if (Core.appMod == AppMod.DEBUG) {
 					Toast.makeText(Core.app, "AdActivity 正在展示", Toast.LENGTH_LONG).show()
@@ -43,7 +43,6 @@ class AdActivity : AppCompatActivity() {
 			intent.putExtra("areaKey", areaKey)
 			activity.startActivity(intent)
 		}
-
 	}
 
 	override fun onCreate(savedInstanceState: Bundle?) {

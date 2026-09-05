@@ -12,15 +12,19 @@ import com.mar2sdk.core.ad.status.AdFormat
 import com.mar2sdk.core.ad.status.AdPlatform
 import com.mar2sdk.core.ad.status.ShowFailResult
 import kotlinx.coroutines.launch
+import java.lang.ref.WeakReference
+import java.util.concurrent.atomic.AtomicReference
 
 class AdActivity : AppCompatActivity() {
 
 	companion object {
 		private const val TAG = "AdActivity"
+		private val currentActivity = AtomicReference<WeakReference<AdActivity>?>(null)
 
 		// TODO: 判断 AdActivity 是否正在展示
-		fun adShowing() : Boolean {
-			return false
+		fun adShowing(): Boolean {
+			val activity = currentActivity.get()?.get() ?: return false
+			return !activity.isFinishing && !activity.isDestroyed
 		}
 
 		fun showAd(activity: Activity, adFormat: AdFormat, areaKey: String) {
@@ -34,10 +38,18 @@ class AdActivity : AppCompatActivity() {
 
 	override fun onCreate(savedInstanceState: Bundle?) {
 		super.onCreate(savedInstanceState)
+		currentActivity.set(WeakReference(this))
 		enableEdgeToEdge()
 		setContentView(R.layout.activity_ad)
-
 		showAd()
+	}
+
+	override fun onDestroy() {
+		val reference = currentActivity.get()
+		if (reference?.get() === this) {
+			currentActivity.compareAndSet(reference, null)
+		}
+		super.onDestroy()
 	}
 
 	private fun showAd() {

@@ -1,4 +1,6 @@
 <resources>
+    <string name="ad_loading">加载广告...</string>
+    <string name="ad_close">关闭</string>
     <string name="clear_local_logs">清空本地日志</string>
     <string name="clear_local_logs_confirmation">清空后无法恢复，确定继续吗？</string>
     <string name="clear">清空</string>

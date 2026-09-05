@@ -3,6 +3,9 @@ package com.mar2sdk.impl
 import android.app.Activity
 import android.content.Intent
 import android.os.Bundle
+import android.view.View
+import android.widget.Button
+import android.widget.ProgressBar
 import android.widget.Toast
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
@@ -28,6 +31,8 @@ class AdActivity : AppCompatActivity() {
 			return !activity.isFinishing && !activity.isDestroyed
 		}
 
+		fun adShowing(): Boolean = showing()
+
 		fun showAd(activity: Activity, adFormat: AdFormat, areaKey: String) {
 			if (showing()) {
 				if (Core.appMod == AppMod.DEBUG) {
@@ -48,6 +53,7 @@ class AdActivity : AppCompatActivity() {
 		currentActivity.set(WeakReference(this))
 		enableEdgeToEdge()
 		setContentView(R.layout.activity_ad)
+		findViewById<Button>(R.id.close_ad).setOnClickListener { finish() }
 		showAd()
 	}
 
@@ -60,6 +66,7 @@ class AdActivity : AppCompatActivity() {
 	}
 
 	private fun showAd() {
+		val loading = findViewById<ProgressBar>(R.id.ad_loading)
 		val adFormat = AdFormat.valueOf(intent.getStringExtra("adFormat") ?: "OPEN")
 		val areaKey = intent.getStringExtra("areaKey") ?: "unknow"
 		val callback = object : ShowCallback{
@@ -76,13 +83,16 @@ class AdActivity : AppCompatActivity() {
 			override fun onAdClosed() {
 				finish()
 			}
-			override fun showSuccess() {}
+			override fun showSuccess() {
+				loading.visibility = View.GONE
+			}
 			override fun onClicked() {}
 			override fun onPaid() {}
 			override fun onReward() {}
 		}
 		lifecycleScope.launch {
 			Core.showAd(this@AdActivity, callback, adFormat)
+			loading.visibility = View.GONE
 		}
 	}
 

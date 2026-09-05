@@ -1,7 +1,11 @@
 package com.mar2sdk.core.ad.status
 
+// OPEN_INTER：优先开屏，候补插屏
+// INTER_VIDEO：优先插屏，候补视频
 enum class AdFormat {
 	OPEN,
 	INTER,
-	VIDEO
+	VIDEO,
+	OPEN_INTER,
+	INTER_VIDEO
 }

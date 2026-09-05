@@ -41,7 +41,31 @@ object AdmobShower {
 	var showVideoTimeout = 10 * 1000L
 
 	/**
-	 *  广告展示
+	 *  广告展示(开屏 & 插屏比价)
+	 *  限制：
+	 *  1. 整个APP只允许同时展示1个全屏广告(开屏/插屏/视频)，使用 AppStatus.isShowingAd 控制
+	 *  1.1 如果其他广告正在展示或者正在等待加载完展示则返回 AdShowStatus.OTHER_AD_IS_SHOWING
+	 *  2. 一直等待到ad.show调用方法或等待超时方法再返回 AdShowStatus
+	 *  2.1 等待超时 返回 AdShowStatus.TIMEOUT，并后续广告加载成功不调用ad.show 方法
+	 *
+	 *  展示规则
+	 *  1. 如果广告池里已经有加载好的广告，则直接取缓存的广告展示，并返回 AdShowStatus
+	 *  2. 如果广告池里没有广告且正在加载广告，则下一个广告加载完毕后立即展示(如果超时则放入广告池不展示)，并返回  AdShowStatus
+	 *  3. 如果广告池里没有广告且没有正在加载的广告，则开始加载广告，等广告加载完毕后立即展示(如果超时则放入广告池不展示)，并返回  AdShowStatus
+	 */
+	suspend fun showOpenInter(activity: Activity, callback: ShowCallback): AdShowStatus = withContext(Dispatchers.Main.immediate) {
+
+		return@withContext AdShowStatus.SHOW_SUCCESS
+
+	}
+
+	suspend fun showInterVideo(activity: Activity, callback: ShowCallback): AdShowStatus = withContext(Dispatchers.Main.immediate) {
+
+		return@withContext AdShowStatus.SHOW_SUCCESS
+	}
+
+	/**
+	 *  广告展示（开屏/插屏/视频）
 	 *  限制：
 	 *  1. 整个APP只允许同时展示1个全屏广告(开屏/插屏/视频)，使用 AppStatus.isShowingAd 控制
 	 *  1.1 如果其他广告正在展示或者正在等待加载完展示则返回 AdShowStatus.OTHER_AD_IS_SHOWING

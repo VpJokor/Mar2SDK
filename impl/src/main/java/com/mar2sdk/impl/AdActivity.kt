@@ -7,11 +7,13 @@ import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
+import androidx.lifecycle.lifecycleScope
 import com.mar2sdk.core.Core
 import com.mar2sdk.core.ad.callback.ShowCallback
 import com.mar2sdk.core.ad.status.AdFormat
 import com.mar2sdk.core.ad.status.AdPlatform
 import com.mar2sdk.core.ad.status.ShowFailResult
+import kotlinx.coroutines.launch
 
 class AdActivity : AppCompatActivity() {
 
@@ -62,9 +64,9 @@ class AdActivity : AppCompatActivity() {
 			override fun onPaid() {}
 			override fun onReward() {}
 		}
-//		when(adFormat) {
-//			AdFormat.OPEN -> Core.showOpen(this, callback)
-//		}
+		lifecycleScope.launch {
+			Core.showAd(this@AdActivity, callback, adFormat)
+		}
 	}
 
 }

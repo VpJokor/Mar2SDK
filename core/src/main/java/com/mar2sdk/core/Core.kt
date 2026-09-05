@@ -3,6 +3,7 @@ package com.mar2sdk.core
 import android.app.Activity
 import android.app.Application
 import com.inmobi.media.re
+import com.ironsource.ac
 import com.mar2sdk.core.ad.AdIniter
 import com.mar2sdk.core.ad.AdShower
 import com.mar2sdk.core.ad.callback.ShowCallback
@@ -54,16 +55,28 @@ object Core {
 	}
 
 	suspend fun showAd(activity: Activity, callback: ShowCallback, adFormat: AdFormat): AdShowStatus {
-		callback.adFormat = adFormat
 		return when(adFormat) {
+			AdFormat.OPEN_INTER -> AdShower.showOpenInter(activity, callback)
+			AdFormat.INTER_VIDEO -> AdShower.showInterVideo(activity, callback)
 			AdFormat.OPEN -> AdShower.showOpen(activity, callback)
 			AdFormat.INTER -> AdShower.showInter(activity, callback)
 			AdFormat.VIDEO -> AdShower.showVideo(activity, callback)
 		}
 	}
 
+	// 展示开屏&插屏
+	suspend fun showOpenInter(activity: Activity, callback: ShowCallback) : AdShowStatus {
+		return AdShower.showOpenInter(activity, callback)
+	}
+
+	// 展示开屏&视频
+	suspend fun showInterVideo(activity: Activity, callback: ShowCallback) : AdShowStatus {
+		return AdShower.showInterVideo(activity, callback)
+	}
+
 	// 展示开屏
 	suspend fun showOpen(activity: Activity, callback: ShowCallback) : AdShowStatus {
+		callback.adFormat = AdFormat.OPEN
 		return AdShower.showOpen(activity, callback)
 	}
 

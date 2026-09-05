@@ -102,43 +102,8 @@ class DebugActivity : AppCompatActivity() {
 			}
 		}
 
-		val adCallback = object : ShowCallback {
-			override var areaKey = "test_open"
-			override var adFormat = AdFormat.OPEN
-			override var adPlatform = AdPlatform.ADMOB
-
-			override fun showFailed(reason: ShowFailResult) {
-				Toast.makeText(
-					this@DebugActivity,
-					"Open ad failed: ${reason.name}",
-					Toast.LENGTH_SHORT,
-				).show()
-			}
-
-			override fun showSuccess() {
-				Toast.makeText(this@DebugActivity, "Open ad shown", Toast.LENGTH_SHORT).show()
-			}
-
-			override fun onClicked() {
-				Toast.makeText(this@DebugActivity, "Open ad clicked", Toast.LENGTH_SHORT).show()
-			}
-
-			override fun onAdClosed() {
-				Toast.makeText(this@DebugActivity, "Open ad closed", Toast.LENGTH_SHORT).show()
-			}
-
-			override fun onPaid() {
-				Toast.makeText(this@DebugActivity, "Open ad paid", Toast.LENGTH_SHORT).show()
-			}
-
-			override fun onReward() {
-				Toast.makeText(this@DebugActivity, "Open ad rewarded", Toast.LENGTH_SHORT).show()
-			}
-		}
 		findViewById<View>(R.id.test_open).setOnClickListener {
-			lifecycleScope.launch {
-				Core.showOpen(this@DebugActivity, adCallback)
-			}
+			AdActivity.showAd(this@DebugActivity, AdFormat.OPEN, "TEST")
 		}
 
 	}

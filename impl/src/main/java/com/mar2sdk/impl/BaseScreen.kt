@@ -24,7 +24,7 @@ val LocalScreenName = compositionLocalOf { "UnknownScreen" }
 @Composable
 fun BaseScreen(content: @Composable () -> Unit) {
 	val screenName = LocalScreenName.current
-	val areaKey = "KEY_$screenName"
+	val areaKey = "${screenName}_start"
 
 	if (!LocalInspectionMode.current) {
 		val activity = LocalContext.current.findActivity()

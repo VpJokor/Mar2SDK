@@ -1,6 +1,7 @@
 package com.mar2sdk.core.ad.impl.admob
 
 import android.app.Activity
+import android.os.SystemClock
 import android.util.Log
 import com.google.android.gms.ads.AdError
 import com.google.android.gms.ads.FullScreenContentCallback
@@ -11,6 +12,7 @@ import com.google.android.gms.ads.rewarded.RewardedAd
 import com.google.firebase.analytics.FirebaseAnalytics
 import com.mar2sdk.core.AppStatus
 import com.mar2sdk.core.ad.AdConfig.showMaxTime
+import com.mar2sdk.core.ad.AdConfig.showMinTime
 import com.mar2sdk.core.ad.callback.ShowCallback
 import com.mar2sdk.core.ad.status.AdFormat
 import com.mar2sdk.core.ad.status.AdPlatform
@@ -24,6 +26,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.currentCoroutineContext
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -38,6 +41,12 @@ object AdmobShower {
 	private const val TAG = "AdmobShower"
 	private val adScope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
 
+	private suspend fun waitForMinimumShowTime(startedAtMs: Long, minimumTimeMs: Long) {
+		val elapsedMs = (SystemClock.elapsedRealtime() - startedAtMs).coerceAtLeast(0L)
+		val remainingMs = minimumTimeMs - elapsedMs
+		if (remainingMs > 0L) delay(remainingMs)
+	}
+
 	/**
 	 *  广告展示(开屏 & 插屏比价)
 	 *  限制：
@@ -47,9 +56,10 @@ object AdmobShower {
 	 *  2.1 等待超时 返回 AdShowStatus.TIMEOUT，并后续广告加载成功不调用ad.show 方法
 	 *
 	 *  展示规则
-	 *  1. 如果广告池里已经有加载好的广告，则直接取缓存的广告展示，并返回 AdShowStatus
-	 *  2. 如果广告池里没有广告且正在加载广告，则下一个广告加载完毕后立即展示(如果超时则放入广告池不展示)，并返回  AdShowStatus
-	 *  3. 如果广告池里没有广告且没有正在加载的广告，则开始加载广告，等广告加载完毕后立即展示(如果超时则放入广告池不展示)，并返回  AdShowStatus
+	 *  1. 如果广告池里已经有加载好的广告，则满足最小等待时间后展示，并返回 AdShowStatus
+	 *  2. 如果广告池里没有广告且正在加载广告，则加载完毕且满足最小等待时间后展示(如果超时则放入广告池不展示)，并返回 AdShowStatus
+	 *  3. 如果广告池里没有广告且没有正在加载的广告，则开始加载广告，加载完毕且满足最小等待时间后展示(如果超时则放入广告池不展示)，并返回 AdShowStatus
+	 *  4. 广告加载耗时计入最小等待时间
 	 */
 	suspend fun showOpenInter(activity: Activity, callback: ShowCallback): AdShowStatus = withContext(Dispatchers.Main.immediate) {
 
@@ -71,9 +81,10 @@ object AdmobShower {
 	 *  2.1 等待超时 返回 AdShowStatus.TIMEOUT，并后续广告加载成功不调用ad.show 方法
 	 *
 	 *  展示规则
-	 *  1. 如果广告池里已经有加载好的广告，则直接取缓存的广告展示，并返回 AdShowStatus
-	 *  2. 如果广告池里没有广告且正在加载广告，则下一个广告加载完毕后立即展示(如果超时则放入广告池不展示)，并返回  AdShowStatus
-	 *  3. 如果广告池里没有广告且没有正在加载的广告，则开始加载广告，等广告加载完毕后立即展示(如果超时则放入广告池不展示)，并返回  AdShowStatus
+	 *  1. 如果广告池里已经有加载好的广告，则满足最小等待时间后展示，并返回 AdShowStatus
+	 *  2. 如果广告池里没有广告且正在加载广告，则加载完毕且满足最小等待时间后展示(如果超时则放入广告池不展示)，并返回 AdShowStatus
+	 *  3. 如果广告池里没有广告且没有正在加载的广告，则开始加载广告，加载完毕且满足最小等待时间后展示(如果超时则放入广告池不展示)，并返回 AdShowStatus
+	 *  4. 广告加载耗时计入最小等待时间
 	 */
 	suspend fun showOpen(activity: Activity, callback: ShowCallback): AdShowStatus = withContext(Dispatchers.Main.immediate) {
 		LogUtil.log(
@@ -95,7 +106,8 @@ object AdmobShower {
 
 		//修改APP状态
 		AppStatus.isShowingAd = true
-		val startShowTime = System.currentTimeMillis()
+		val startShowTime = SystemClock.elapsedRealtime()
+		val minimumShowTime = showMinTime.coerceAtLeast(0L)
 		var currentOpenAd: AppOpenAd? = null
 		val showFailed = AtomicBoolean(false)
 		val fillOpenPoolStarted = AtomicBoolean(false)
@@ -114,7 +126,7 @@ object AdmobShower {
 				eventName,
 				mapOf(
 					LogAdParam.ad_platform to AdPlatform.ADMOB.name,
-					LogAdParam.duration to (System.currentTimeMillis() - startShowTime),
+					LogAdParam.duration to (SystemClock.elapsedRealtime() - startShowTime),
 					LogAdParam.ad_areakey to callback.areaKey,
 					LogAdParam.ad_format to AdFormat.OPEN.name,
 					LogAdParam.ad_source to (currentOpenAd?.responseInfo?.loadedAdapterResponseInfo?.adSourceName ?: LogAdParam.unknow),
@@ -195,10 +207,14 @@ object AdmobShower {
 
 		suspend fun show(ad: AppOpenAd): AdShowStatus {
 			currentCoroutineContext().ensureActive()
-			currentOpenAd = ad
 			if (activity.isFinishing || activity.isDestroyed) {
 				return fail(ShowFailResult.ACTIVITY_IS_FINISHING)
 			}
+			waitForMinimumShowTime(startShowTime, minimumShowTime)
+			if (activity.isFinishing || activity.isDestroyed) {
+				return fail(ShowFailResult.ACTIVITY_IS_FINISHING)
+			}
+			currentOpenAd = ad
 			showCommitted = true
 			val showStatus = try {
 				// 广告只能展示一次，展示前从池中移除
@@ -279,7 +295,8 @@ object AdmobShower {
 
 		//修改APP状态
 		AppStatus.isShowingAd = true
-		val startShowTime = System.currentTimeMillis()
+		val startShowTime = SystemClock.elapsedRealtime()
+		val minimumShowTime = showMinTime.coerceAtLeast(0L)
 		var currentInterAd: InterstitialAd? = null
 		val showFailed = AtomicBoolean(false)
 		val fillInterPoolStarted = AtomicBoolean(false)
@@ -298,7 +315,7 @@ object AdmobShower {
 				eventName,
 				mapOf(
 					LogAdParam.ad_platform to AdPlatform.ADMOB.name,
-					LogAdParam.duration to (System.currentTimeMillis() - startShowTime),
+					LogAdParam.duration to (SystemClock.elapsedRealtime() - startShowTime),
 					LogAdParam.ad_areakey to callback.areaKey,
 					LogAdParam.ad_format to AdFormat.INTER.name,
 					LogAdParam.ad_source to (currentInterAd?.responseInfo?.loadedAdapterResponseInfo?.adSourceName ?: LogAdParam.unknow),
@@ -379,10 +396,14 @@ object AdmobShower {
 
 		suspend fun show(ad: InterstitialAd): AdShowStatus {
 			currentCoroutineContext().ensureActive()
-			currentInterAd = ad
 			if (activity.isFinishing || activity.isDestroyed) {
 				return fail(ShowFailResult.ACTIVITY_IS_FINISHING)
 			}
+			waitForMinimumShowTime(startShowTime, minimumShowTime)
+			if (activity.isFinishing || activity.isDestroyed) {
+				return fail(ShowFailResult.ACTIVITY_IS_FINISHING)
+			}
+			currentInterAd = ad
 			showCommitted = true
 			val showStatus = try {
 				// 广告只能展示一次，展示前从池中移除
@@ -463,7 +484,8 @@ object AdmobShower {
 
 		//修改APP状态
 		AppStatus.isShowingAd = true
-		val startShowTime = System.currentTimeMillis()
+		val startShowTime = SystemClock.elapsedRealtime()
+		val minimumShowTime = showMinTime.coerceAtLeast(0L)
 		var currentVideoAd: RewardedAd? = null
 		val showFailed = AtomicBoolean(false)
 		val fillVideoPoolStarted = AtomicBoolean(false)
@@ -482,7 +504,7 @@ object AdmobShower {
 				eventName,
 				mapOf(
 					LogAdParam.ad_platform to AdPlatform.ADMOB.name,
-					LogAdParam.duration to (System.currentTimeMillis() - startShowTime),
+					LogAdParam.duration to (SystemClock.elapsedRealtime() - startShowTime),
 					LogAdParam.ad_areakey to callback.areaKey,
 					LogAdParam.ad_format to AdFormat.VIDEO.name,
 					LogAdParam.ad_source to (currentVideoAd?.responseInfo?.loadedAdapterResponseInfo?.adSourceName ?: LogAdParam.unknow),
@@ -563,10 +585,14 @@ object AdmobShower {
 
 		suspend fun show(ad: RewardedAd): AdShowStatus {
 			currentCoroutineContext().ensureActive()
-			currentVideoAd = ad
 			if (activity.isFinishing || activity.isDestroyed) {
 				return fail(ShowFailResult.ACTIVITY_IS_FINISHING)
 			}
+			waitForMinimumShowTime(startShowTime, minimumShowTime)
+			if (activity.isFinishing || activity.isDestroyed) {
+				return fail(ShowFailResult.ACTIVITY_IS_FINISHING)
+			}
+			currentVideoAd = ad
 			showCommitted = true
 			val showStatus = try {
 				// 广告只能展示一次，展示前从池中移除

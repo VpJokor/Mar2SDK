@@ -10,6 +10,7 @@ import com.google.android.gms.ads.interstitial.InterstitialAd
 import com.google.android.gms.ads.rewarded.RewardedAd
 import com.google.firebase.analytics.FirebaseAnalytics
 import com.mar2sdk.core.AppStatus
+import com.mar2sdk.core.ad.AdConfig.showMaxTime
 import com.mar2sdk.core.ad.callback.ShowCallback
 import com.mar2sdk.core.ad.status.AdFormat
 import com.mar2sdk.core.ad.status.AdPlatform
@@ -37,10 +38,7 @@ object AdmobShower {
 	private const val TAG = "AdmobShower"
 	private val adScope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
 
-	// 开屏广告展示超时时间
-	var showOpenTimeout = 10 * 1000L
-	var showInterTimeout = 10 * 1000L
-	var showVideoTimeout = 10 * 1000L
+
 
 	/**
 	 *  广告展示(开屏 & 插屏比价)
@@ -222,7 +220,7 @@ object AdmobShower {
 		try {
 			val openAd = AdmobLoader.openPool.keys.firstOrNull() ?: when (
 				val loadResult = try {
-					withTimeoutOrNull(showOpenTimeout) {
+					withTimeoutOrNull(showMaxTime) {
 						AdmobLoader.loadOpenResult(areaKey = callback.areaKey)
 					}
 				} catch (e: CancellationException) {
@@ -406,7 +404,7 @@ object AdmobShower {
 		try {
 			val interAd = AdmobLoader.interPool.keys.firstOrNull() ?: when (
 				val loadResult = try {
-					withTimeoutOrNull(showInterTimeout) {
+					withTimeoutOrNull(showMaxTime) {
 						AdmobLoader.loadInterResult(areaKey = callback.areaKey)
 					}
 				} catch (e: CancellationException) {
@@ -592,7 +590,7 @@ object AdmobShower {
 		try {
 			val videoAd = AdmobLoader.videoPool.keys.firstOrNull() ?: when (
 				val loadResult = try {
-					withTimeoutOrNull(showVideoTimeout) {
+					withTimeoutOrNull(showMaxTime) {
 						AdmobLoader.loadVideoResult(areaKey = callback.areaKey)
 					}
 				} catch (e: CancellationException) {

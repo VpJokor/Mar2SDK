@@ -13,6 +13,11 @@ object AdConfig {
 	var defaultPlatform = AdPlatform.ADMOB
 	var activePlatforms = mutableSetOf<AdPlatform>()
 
+	// 广告展示超时时间
+	var showMaxTime = 10 * 1000L
+	// 广告展示前最小等待时间
+	var showMinTime = 10 * 1000L
+
 	fun init() {
 		loadConfigFromRaw()
 		loadConfigFromPreference()

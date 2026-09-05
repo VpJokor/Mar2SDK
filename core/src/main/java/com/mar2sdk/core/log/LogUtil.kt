@@ -22,7 +22,7 @@ import org.json.JSONObject
 object LogUtil {
 	private const val TAG = "LogUtil"
 	fun log(eventName: String, params: Map<String, Any>) {
-		if (Core.appMod == AppMod.TEST || Core.appMod == AppMod.PRE_RELEASE) {
+		if (Core.appMod == AppMod.DEBUG || Core.appMod == AppMod.TEST || Core.appMod == AppMod.PRE_RELEASE) {
 			Log.e(TAG, "log: $eventName ${formatParams(params)}")
 		}
 		try {

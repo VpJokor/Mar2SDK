@@ -105,10 +105,12 @@ class DebugActivity : AppCompatActivity() {
 		findViewById<View>(R.id.test_open).setOnClickListener {
 			AdActivity.showAd(this@DebugActivity, AdFormat.OPEN, "TEST")
 		}
-		findViewById<View>(R.id.test_open).setOnClickListener {
-			AdActivity.showAd(this@DebugActivity, AdFormat.OPEN, "TEST")
+		findViewById<View>(R.id.test_inter).setOnClickListener {
+			AdActivity.showAd(this@DebugActivity, AdFormat.INTER, "TEST")
 		}
-
+		findViewById<View>(R.id.test_video).setOnClickListener {
+			AdActivity.showAd(this@DebugActivity, AdFormat.VIDEO, "TEST")
+		}
 	}
 
 	private fun handleNotificationPermissionResult(granted: Boolean) {

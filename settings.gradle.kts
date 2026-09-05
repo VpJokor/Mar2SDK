@@ -32,3 +32,4 @@ rootProject.name = "Mar2SDK"
 include(":app")
 include(":core")
 include(":impl")
+include(":debug")

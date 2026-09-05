@@ -1,9 +1,13 @@
 plugins {
 	alias(libs.plugins.android.library)
+	alias(libs.plugins.kotlin.compose)
 }
 
 android {
 	namespace = "com.mar2sdk.impl"
+	buildFeatures {
+		compose = true
+	}
 	compileSdk {
 		version = release(37) {
 			minorApiLevel = 0
@@ -24,6 +28,12 @@ android {
 
 dependencies {
 	implementation(libs.androidx.activity.ktx)
+	implementation(platform(libs.androidx.compose.bom))
+	implementation(libs.androidx.activity.compose)
+	implementation(libs.androidx.compose.material3)
+	implementation(libs.androidx.compose.ui)
+	implementation(libs.androidx.compose.ui.tooling.preview)
+	debugImplementation(libs.androidx.compose.ui.tooling)
 	implementation(libs.androidx.appcompat)
 	implementation(libs.androidx.constraintlayout)
 	implementation(libs.androidx.core.ktx)

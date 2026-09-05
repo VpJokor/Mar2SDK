@@ -68,6 +68,9 @@ class AdActivity : AppCompatActivity() {
 		val loading = findViewById<ProgressBar>(R.id.ad_loading)
 		val adFormat = AdFormat.valueOf(intent.getStringExtra("adFormat") ?: "OPEN")
 		val areaKey = intent.getStringExtra("areaKey") ?: "unknow"
+		if (Core.appMod == AppMod.DEBUG) {
+			Toast.makeText(Core.app, "展示广告 areaKey= $areaKey", Toast.LENGTH_LONG).show()
+		}
 		val callback = object : ShowCallback{
 			override var areaKey: String
 				get() = areaKey

@@ -17,6 +17,8 @@ object AdConfig {
 	var showMaxTime = 10 * 1000L
 	// 广告展示前最小等待时间，单位毫秒
 	var showMinTime = 500L
+	// 广告位的具体配置
+	var areaConfigs = mapOf("AreaKey" to "AreaValue")
 
 	fun init() {
 		loadConfigFromRaw()

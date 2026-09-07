@@ -121,7 +121,14 @@ object AdmobLoader {
 	}
 
 	// 加载开屏
-	suspend fun loadOpen(areaKey: String = "preload"): AdLoadStatus = withContext(Dispatchers.Main.immediate) {
+	suspend fun loadOpen(
+		adContext: ScreenAdContext = ScreenAdContext(
+			adFormat = AdFormat.OPEN,
+			adPlatform = AdPlatform.ADMOB,
+			trigger = ScreenAdTrigger.UNKNOW,
+			adUnitId = AdmobConfig.openID
+		)
+	): AdLoadStatus = withContext(Dispatchers.Main.immediate) {
 		// 检查过期广告
 		checkOpenPool()
 		// 有广告正在加载
@@ -129,7 +136,7 @@ object AdmobLoader {
 		// 检查广告池是否满
 		if (openPool.size >= AdmobConfig.openPoolSize) return@withContext AdLoadStatus.POOL_FULL
 
-		when (startOpenLoad().await()) {
+		when (startOpenLoad(adContext).await()) {
 			is OpenLoadResult.Loaded -> AdLoadStatus.LOAD_SUCCESS
 			is OpenLoadResult.Failed -> AdLoadStatus.LOAD_FAIL
 			OpenLoadResult.PoolFull -> AdLoadStatus.POOL_FULL

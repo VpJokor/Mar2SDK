@@ -328,8 +328,7 @@ object AdmobLoader {
 	)
 
 	private fun logLoad(eventName: String, adContext: ScreenAdContext) {
-		val params = adContext.toAdLogParams()
-		LogUtil.log(eventName, params + mapOf(LogAdParam.ad_preload to (adContext.areaKey == "preload")))
+		LogUtil.log(eventName, adContext.toAdLogParams() + mapOf(LogAdParam.ad_preload to (adContext.areaKey == "preload")))
 	}
 
 	private inline fun <T> cacheLoadedAd(

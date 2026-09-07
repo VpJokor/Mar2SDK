@@ -126,14 +126,13 @@ object AdmobLoader {
 
 	internal suspend fun loadOpenResult(
 		adContext: ScreenAdContext = defaultContext(AdFormat.OPEN, AdmobConfig.openID)
-	): OpenLoadResult = withContext(Dispatchers.Main.immediate) {
-		// 检查过期广告
-		checkOpenPool()
-		openLoadDeferred?.let { return@withContext it.await() }
-		// 检查广告池是否满
-		if (openPool.size >= AdmobConfig.openPoolSize) return@withContext OpenLoadResult.PoolFull
-		startOpenLoad(adContext).await()
-	}
+	): OpenLoadResult = loadResult(
+		checkPool = ::checkOpenPool,
+		currentLoad = { openLoadDeferred },
+		isPoolFull = { openPool.size >= AdmobConfig.openPoolSize },
+		poolFull = OpenLoadResult.PoolFull,
+		startLoad = { startOpenLoad(adContext) },
+	)
 
 	private fun startOpenLoad(
 		adContext: ScreenAdContext
@@ -194,14 +193,13 @@ object AdmobLoader {
 
 	internal suspend fun loadInterResult(
 		adContext: ScreenAdContext = defaultContext(AdFormat.INTER, AdmobConfig.interID)
-	): InterLoadResult = withContext(Dispatchers.Main.immediate) {
-		// 检查过期广告
-		checkInterPool()
-		interLoadDeferred?.let { return@withContext it.await() }
-		// 检查广告池是否满
-		if (interPool.size >= AdmobConfig.interPoolSize) return@withContext InterLoadResult.PoolFull
-		startInterLoad(adContext).await()
-	}
+	): InterLoadResult = loadResult(
+		checkPool = ::checkInterPool,
+		currentLoad = { interLoadDeferred },
+		isPoolFull = { interPool.size >= AdmobConfig.interPoolSize },
+		poolFull = InterLoadResult.PoolFull,
+		startLoad = { startInterLoad(adContext) },
+	)
 
 	private fun startInterLoad(
 		adContext: ScreenAdContext
@@ -262,14 +260,13 @@ object AdmobLoader {
 
 	internal suspend fun loadVideoResult(
 		adContext: ScreenAdContext = defaultContext(AdFormat.VIDEO, AdmobConfig.videoID)
-	): VideoLoadResult = withContext(Dispatchers.Main.immediate) {
-		// 检查过期广告
-		checkVideoPool()
-		videoLoadDeferred?.let { return@withContext it.await() }
-		// 检查广告池是否满
-		if (videoPool.size >= AdmobConfig.videoPoolSize) return@withContext VideoLoadResult.PoolFull
-		startVideoLoad(adContext).await()
-	}
+	): VideoLoadResult = loadResult(
+		checkPool = ::checkVideoPool,
+		currentLoad = { videoLoadDeferred },
+		isPoolFull = { videoPool.size >= AdmobConfig.videoPoolSize },
+		poolFull = VideoLoadResult.PoolFull,
+		startLoad = { startVideoLoad(adContext) },
+	)
 
 	private fun startVideoLoad(
 		adContext: ScreenAdContext
@@ -308,6 +305,19 @@ object AdmobLoader {
 			isLoadingVideo = false
 		}
 		loadDeferred.complete(result)
+	}
+
+	private suspend fun <R> loadResult(
+		checkPool: () -> Unit,
+		currentLoad: () -> CompletableDeferred<R>?,
+		isPoolFull: () -> Boolean,
+		poolFull: R,
+		startLoad: () -> CompletableDeferred<R>,
+	): R = withContext(Dispatchers.Main.immediate) {
+		checkPool()
+		currentLoad()?.let { return@withContext it.await() }
+		if (isPoolFull()) return@withContext poolFull
+		startLoad().await()
 	}
 
 	private fun defaultContext(adFormat: AdFormat, adUnitId: String) = ScreenAdContext(

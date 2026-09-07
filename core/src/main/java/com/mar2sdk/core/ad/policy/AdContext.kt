@@ -10,6 +10,7 @@ enum class ScreenAdTrigger {
 	ENTER, RETURN, LEAVE
 }
 
+// 广告展示上下文
 @Parcelize
 data class ScreenAdContext(
 	val requestId: String = UUID.randomUUID().toString(),

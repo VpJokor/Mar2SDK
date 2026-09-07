@@ -24,7 +24,6 @@ import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
-
 /**
  * admob的广告加载器
  * 同一时间只能有1个开屏，1个插屏，1个视频广告加载
@@ -79,7 +78,6 @@ object AdmobLoader {
 			mapOf(
 				LogAdParam.scene to LogAdParam.scene_open_app,
 				LogAdParam.ad_platform to AdPlatform.ADMOB.name,
-
 			)
 		)
 		launch { fillOpen() }
@@ -90,44 +88,27 @@ object AdmobLoader {
 	// 等待正在加载的广告，加载完一个再加载下一个，直到广告池填满
 	suspend fun fillOpen() {
 		while (true) {
-			when (loadOpenResult()) {
-				is OpenLoadResult.Loaded -> continue
-				is OpenLoadResult.Failed,
-				OpenLoadResult.PoolFull -> return
-			}
+			if (loadOpenResult() !is OpenLoadResult.Loaded) return
 		}
 	}
 
 	// 等待正在加载的广告，加载完一个再加载下一个，直到广告池填满
 	suspend fun fillInter() {
 		while (true) {
-			when (loadInterResult()) {
-				is InterLoadResult.Loaded -> continue
-				is InterLoadResult.Failed,
-				InterLoadResult.PoolFull -> return
-			}
+			if (loadInterResult() !is InterLoadResult.Loaded) return
 		}
 	}
 
 	// 等待正在加载的广告，加载完一个再加载下一个，直到广告池填满
 	suspend fun fillVideo() {
 		while (true) {
-			when (loadVideoResult()) {
-				is VideoLoadResult.Loaded -> continue
-				is VideoLoadResult.Failed,
-				VideoLoadResult.PoolFull -> return
-			}
+			if (loadVideoResult() !is VideoLoadResult.Loaded) return
 		}
 	}
 
 	// 加载开屏
 	suspend fun loadOpen(
-		adContext: ScreenAdContext = ScreenAdContext(
-			adFormat = AdFormat.OPEN,
-			adPlatform = AdPlatform.ADMOB,
-			trigger = ScreenAdTrigger.UNKNOW,
-			adUnitId = AdmobConfig.openID
-		)
+		adContext: ScreenAdContext = defaultContext(AdFormat.OPEN, AdmobConfig.openID)
 	): AdLoadStatus = withContext(Dispatchers.Main.immediate) {
 		// 检查过期广告
 		checkOpenPool()
@@ -144,12 +125,7 @@ object AdmobLoader {
 	}
 
 	internal suspend fun loadOpenResult(
-		adContext: ScreenAdContext = ScreenAdContext(
-			adFormat = AdFormat.OPEN,
-			adPlatform = AdPlatform.ADMOB,
-			trigger = ScreenAdTrigger.UNKNOW,
-			adUnitId = AdmobConfig.openID
-		)
+		adContext: ScreenAdContext = defaultContext(AdFormat.OPEN, AdmobConfig.openID)
 	): OpenLoadResult = withContext(Dispatchers.Main.immediate) {
 		// 检查过期广告
 		checkOpenPool()
@@ -160,29 +136,17 @@ object AdmobLoader {
 	}
 
 	private fun startOpenLoad(
-		adContext: ScreenAdContext = ScreenAdContext(
-			adFormat = AdFormat.OPEN,
-			adPlatform = AdPlatform.ADMOB,
-			trigger = ScreenAdTrigger.UNKNOW,
-			adUnitId = AdmobConfig.openID
-		)
+		adContext: ScreenAdContext
 	): CompletableDeferred<OpenLoadResult> {
 		val loadContext = adContext.copy()
 		val loadDeferred = CompletableDeferred<OpenLoadResult>()
 		openLoadDeferred = loadDeferred
 		isLoadingOpen = true
 		try {
-			logOpenLoad(LogAdEvent.ad_start_loading, loadContext)
+			logLoad(LogAdEvent.ad_start_loading, loadContext)
 			val loadCallback = object : AppOpenAd.AppOpenAdLoadCallback() {
 				override fun onAdLoaded(openAd: AppOpenAd) {
-					try {
-						logOpenLoad(LogAdEvent.ad_finish_loading, loadContext)
-					} catch (error: Exception) {
-						Log.e(TAG, "Failed to log loaded open ad", error)
-					}
-					try {
-						openPool[openAd] = System.currentTimeMillis()
-					} finally {
+					cacheLoadedAd(openAd, openPool, loadContext, "open") {
 						completeOpenLoad(loadDeferred, OpenLoadResult.Loaded(openAd))
 					}
 				}
@@ -199,11 +163,6 @@ object AdmobLoader {
 		return loadDeferred
 	}
 
-	private fun logOpenLoad(eventName: String, adContext: ScreenAdContext) {
-		val params = adContext.toAdLogParams()
-		LogUtil.log(eventName, params + mapOf(LogAdParam.ad_preload to (adContext.areaKey == "preload")))
-	}
-
 	private fun completeOpenLoad(
 		loadDeferred: CompletableDeferred<OpenLoadResult>,
 		result: OpenLoadResult,
@@ -217,12 +176,7 @@ object AdmobLoader {
 
 	// 加载插屏
 	suspend fun loadInter(
-		adContext: ScreenAdContext = ScreenAdContext(
-			adFormat = AdFormat.INTER,
-			adPlatform = AdPlatform.ADMOB,
-			trigger = ScreenAdTrigger.UNKNOW,
-			adUnitId = AdmobConfig.interID
-		)
+		adContext: ScreenAdContext = defaultContext(AdFormat.INTER, AdmobConfig.interID)
 	): AdLoadStatus = withContext(Dispatchers.Main.immediate) {
 		// 检查过期广告
 		checkInterPool()
@@ -238,47 +192,29 @@ object AdmobLoader {
 		}
 	}
 
-
 	internal suspend fun loadInterResult(
-		adContext: ScreenAdContext = ScreenAdContext(
-			adFormat = AdFormat.INTER,
-			adPlatform = AdPlatform.ADMOB,
-			trigger = ScreenAdTrigger.UNKNOW,
-			adUnitId = AdmobConfig.interID
-		)
+		adContext: ScreenAdContext = defaultContext(AdFormat.INTER, AdmobConfig.interID)
 	): InterLoadResult = withContext(Dispatchers.Main.immediate) {
 		// 检查过期广告
 		checkInterPool()
 		interLoadDeferred?.let { return@withContext it.await() }
 		// 检查广告池是否满
 		if (interPool.size >= AdmobConfig.interPoolSize) return@withContext InterLoadResult.PoolFull
-		startInterLoad( adContext).await()
+		startInterLoad(adContext).await()
 	}
 
 	private fun startInterLoad(
-		adContext: ScreenAdContext = ScreenAdContext(
-			adFormat = AdFormat.INTER,
-			adPlatform = AdPlatform.ADMOB,
-			trigger = ScreenAdTrigger.UNKNOW,
-			adUnitId = AdmobConfig.interID
-		)
+		adContext: ScreenAdContext
 	): CompletableDeferred<InterLoadResult> {
 		val loadContext = adContext.copy()
 		val loadDeferred = CompletableDeferred<InterLoadResult>()
 		interLoadDeferred = loadDeferred
 		isLoadingInter = true
 		try {
-			logInterLoad(LogAdEvent.ad_start_loading, loadContext)
+			logLoad(LogAdEvent.ad_start_loading, loadContext)
 			val loadCallback = object : InterstitialAdLoadCallback() {
 				override fun onAdLoaded(interstitialAd: InterstitialAd) {
-					try {
-						logInterLoad(LogAdEvent.ad_finish_loading, loadContext)
-					} catch (error: Exception) {
-						Log.e(TAG, "Failed to log loaded interstitial ad", error)
-					}
-					try {
-						interPool[interstitialAd] = System.currentTimeMillis()
-					} finally {
+					cacheLoadedAd(interstitialAd, interPool, loadContext, "interstitial") {
 						completeInterLoad(loadDeferred, InterLoadResult.Loaded(interstitialAd))
 					}
 				}
@@ -295,16 +231,6 @@ object AdmobLoader {
 		return loadDeferred
 	}
 
-	private fun logInterLoad(eventName: String, adContext: ScreenAdContext) {
-		val params = adContext.toAdLogParams()
-		LogUtil.log(
-			eventName,
-			params + mapOf(
-				LogAdParam.ad_preload to (adContext.areaKey == "preload"),
-			)
-		)
-	}
-
 	private fun completeInterLoad(
 		loadDeferred: CompletableDeferred<InterLoadResult>,
 		result: InterLoadResult,
@@ -318,12 +244,7 @@ object AdmobLoader {
 
 	// 加载视频
 	suspend fun loadVideo(
-		adContext: ScreenAdContext = ScreenAdContext(
-			adFormat = AdFormat.VIDEO,
-			adPlatform = AdPlatform.ADMOB,
-			trigger = ScreenAdTrigger.UNKNOW,
-			adUnitId = AdmobConfig.videoID
-		)
+		adContext: ScreenAdContext = defaultContext(AdFormat.VIDEO, AdmobConfig.videoID)
 	): AdLoadStatus = withContext(Dispatchers.Main.immediate) {
 		// 检查过期广告
 		checkVideoPool()
@@ -340,12 +261,7 @@ object AdmobLoader {
 	}
 
 	internal suspend fun loadVideoResult(
-		adContext: ScreenAdContext = ScreenAdContext(
-			adFormat = AdFormat.VIDEO,
-			adPlatform = AdPlatform.ADMOB,
-			trigger = ScreenAdTrigger.UNKNOW,
-			adUnitId = AdmobConfig.videoID
-		)
+		adContext: ScreenAdContext = defaultContext(AdFormat.VIDEO, AdmobConfig.videoID)
 	): VideoLoadResult = withContext(Dispatchers.Main.immediate) {
 		// 检查过期广告
 		checkVideoPool()
@@ -356,29 +272,17 @@ object AdmobLoader {
 	}
 
 	private fun startVideoLoad(
-		adContext: ScreenAdContext = ScreenAdContext(
-			adFormat = AdFormat.VIDEO,
-			adPlatform = AdPlatform.ADMOB,
-			trigger = ScreenAdTrigger.UNKNOW,
-			adUnitId = AdmobConfig.videoID
-		)
+		adContext: ScreenAdContext
 	): CompletableDeferred<VideoLoadResult> {
 		val loadContext = adContext.copy()
 		val loadDeferred = CompletableDeferred<VideoLoadResult>()
 		videoLoadDeferred = loadDeferred
 		isLoadingVideo = true
 		try {
-			logVideoLoad(LogAdEvent.ad_start_loading, loadContext)
+			logLoad(LogAdEvent.ad_start_loading, loadContext)
 			val loadCallback = object : RewardedAdLoadCallback() {
 				override fun onAdLoaded(rewardedAd: RewardedAd) {
-					try {
-						logVideoLoad(LogAdEvent.ad_finish_loading, loadContext)
-					} catch (error: Exception) {
-						Log.e(TAG, "Failed to log loaded rewarded ad", error)
-					}
-					try {
-						videoPool[rewardedAd] = System.currentTimeMillis()
-					} finally {
+					cacheLoadedAd(rewardedAd, videoPool, loadContext, "rewarded") {
 						completeVideoLoad(loadDeferred, VideoLoadResult.Loaded(rewardedAd))
 					}
 				}
@@ -395,11 +299,6 @@ object AdmobLoader {
 		return loadDeferred
 	}
 
-	private fun logVideoLoad(eventName: String, adContext: ScreenAdContext) {
-		val params = adContext.toAdLogParams()
-		LogUtil.log(eventName, params + mapOf(LogAdParam.ad_preload to (adContext.areaKey == "preload")))
-	}
-
 	private fun completeVideoLoad(
 		loadDeferred: CompletableDeferred<VideoLoadResult>,
 		result: VideoLoadResult,
@@ -409,6 +308,37 @@ object AdmobLoader {
 			isLoadingVideo = false
 		}
 		loadDeferred.complete(result)
+	}
+
+	private fun defaultContext(adFormat: AdFormat, adUnitId: String) = ScreenAdContext(
+		adFormat = adFormat,
+		adPlatform = AdPlatform.ADMOB,
+		trigger = ScreenAdTrigger.UNKNOW,
+		adUnitId = adUnitId
+	)
+
+	private fun logLoad(eventName: String, adContext: ScreenAdContext) {
+		val params = adContext.toAdLogParams()
+		LogUtil.log(eventName, params + mapOf(LogAdParam.ad_preload to (adContext.areaKey == "preload")))
+	}
+
+	private inline fun <T> cacheLoadedAd(
+		ad: T,
+		pool: MutableMap<T, Long>,
+		adContext: ScreenAdContext,
+		adName: String,
+		complete: () -> Unit,
+	) {
+		try {
+			logLoad(LogAdEvent.ad_finish_loading, adContext)
+		} catch (error: Exception) {
+			Log.e(TAG, "Failed to log loaded $adName ad", error)
+		}
+		try {
+			pool[ad] = System.currentTimeMillis()
+		} finally {
+			complete()
+		}
 	}
 
 	// 检查并移除开屏广告池过期广告
@@ -431,5 +361,4 @@ object AdmobLoader {
 			System.currentTimeMillis() - time > AdmobConfig.videoTimeout
 		}
 	}
-
 }

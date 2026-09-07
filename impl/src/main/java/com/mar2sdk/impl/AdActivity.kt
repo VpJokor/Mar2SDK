@@ -10,12 +10,12 @@ import android.widget.ProgressBar
 import android.widget.Toast
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.content.IntentCompat
 import androidx.lifecycle.lifecycleScope
 import com.mar2sdk.core.AppMod
 import com.mar2sdk.core.Core
 import com.mar2sdk.core.ad.callback.ShowCallback
 import com.mar2sdk.core.ad.policy.ScreenAdContext
-import com.mar2sdk.core.ad.status.AdFormat
 import com.mar2sdk.core.ad.status.AdPlatform
 import com.mar2sdk.core.ad.status.ShowFailResult
 import kotlinx.coroutines.CancellationException
@@ -28,6 +28,7 @@ class AdActivity : AppCompatActivity() {
 
 	companion object {
 		private const val TAG = "AdActivity"
+		private const val EXTRA_AD_CONTEXT = "com.mar2sdk.impl.extra.AD_CONTEXT"
 		private val currentActivity = AtomicReference<WeakReference<AdActivity>?>(null)
 		private val launchPending = AtomicBoolean(false)
 
@@ -37,12 +38,12 @@ class AdActivity : AppCompatActivity() {
 		}
 
 		// 展示广告，返回是否成功启动广告页。
-		fun showAd(activity: Activity, adFormat: AdFormat = AdFormat.INTER_VIDEO, adContext: ScreenAdContext): Boolean {
+		fun showAd(activity: Activity, adContext: ScreenAdContext): Boolean {
 			// TODO: 广告策略判断是否应该播放广告
-			return tryShowAd(activity, adFormat, areaKey)
+			return tryShowAd(activity, adContext)
 		}
 
-		private fun tryShowAd(activity: Activity, adFormat: AdFormat, areaKey: String): Boolean {
+		private fun tryShowAd(activity: Activity, adContext: ScreenAdContext): Boolean {
 			if (activity.isFinishing || activity.isDestroyed) return false
 			if (!launchPending.compareAndSet(false, true)) {
 				if (Core.appMod == AppMod.DEBUG) {
@@ -57,15 +58,14 @@ class AdActivity : AppCompatActivity() {
 				}
 				return false
 			}
-			val intent = Intent(activity, AdActivity::class.java)
-			intent.putExtra("adFormat", adFormat.name)
-			intent.putExtra("areaKey", areaKey)
 			return try {
+				val intent = Intent(activity, AdActivity::class.java)
+					.putExtra(EXTRA_AD_CONTEXT, adContext)
 				activity.startActivity(intent)
 				true
 			} catch (exception: RuntimeException) {
 				launchPending.set(false)
-				Log.e(TAG, "Unable to start ad activity for $areaKey", exception)
+				Log.e(TAG, "Unable to start ad activity for $adContext", exception)
 				false
 			}
 		}
@@ -76,10 +76,22 @@ class AdActivity : AppCompatActivity() {
 		super.onCreate(savedInstanceState)
 		currentActivity.set(WeakReference(this))
 		launchPending.set(false)
+		val adContext = try {
+			IntentCompat.getParcelableExtra(intent, EXTRA_AD_CONTEXT, ScreenAdContext::class.java)
+		} catch (exception: RuntimeException) {
+			Log.e(TAG, "Unable to read ad context", exception)
+			finish()
+			return
+		}
+		if (adContext == null) {
+			Log.e(TAG, "Missing ad context")
+			finish()
+			return
+		}
 		enableEdgeToEdge()
 		setContentView(R.layout.activity_ad)
 		findViewById<Button>(R.id.close_ad).setOnClickListener { finish() }
-		showRequestedAd()
+		showRequestedAd(adContext)
 	}
 
 	override fun onDestroy() {
@@ -90,16 +102,14 @@ class AdActivity : AppCompatActivity() {
 		super.onDestroy()
 	}
 
-	private fun showRequestedAd() {
+	private fun showRequestedAd(adContext: ScreenAdContext) {
 		val loading = findViewById<ProgressBar>(R.id.ad_loading)
-		val requestedAdFormat = AdFormat.valueOf(intent.getStringExtra("adFormat") ?: "OPEN")
-		val requestedAreaKey = intent.getStringExtra("areaKey") ?: "unknown"
 		if (Core.appMod == AppMod.DEBUG) {
-			Toast.makeText(Core.app, "展示广告 areaKey= $requestedAreaKey", Toast.LENGTH_LONG).show()
+			Toast.makeText(Core.app, "展示广告 areaKey= $adContext", Toast.LENGTH_LONG).show()
 		}
 		val callback = object : ShowCallback {
-			override var areaKey = requestedAreaKey
-			override var adFormat = requestedAdFormat
+			override var areaKey = adContext.areaKey
+			override var adFormat = adContext.adFormat
 			override lateinit var adPlatform: AdPlatform
 
 			override fun showFailed(reason: ShowFailResult) = finish()
@@ -113,12 +123,12 @@ class AdActivity : AppCompatActivity() {
 		}
 		lifecycleScope.launch {
 			try {
-				Core.showAd(this@AdActivity, callback, requestedAdFormat)
+				Core.showAd(this@AdActivity, callback, adContext.adFormat)
 				loading.visibility = View.GONE
 			} catch (exception: CancellationException) {
 				throw exception
 			} catch (exception: Exception) {
-				Log.e(TAG, "Unexpected failure while showing $requestedAreaKey", exception)
+				Log.e(TAG, "Unexpected failure while showing ${adContext.areaKey} (request ${adContext.requestId})", exception)
 				finish()
 			}
 		}

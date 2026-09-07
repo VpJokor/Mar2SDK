@@ -18,6 +18,13 @@ import com.mar2sdk.core.common.TestMod
 import com.mar2sdk.core.common.status.UserType
 import com.mar2sdk.core.util.AppObs
 
+enum class AppMod {
+	DEBUG,
+	TEST,
+	PRE_RELEASE,
+	RELEASE
+}
+
 /**
  * 核心库入口
  */

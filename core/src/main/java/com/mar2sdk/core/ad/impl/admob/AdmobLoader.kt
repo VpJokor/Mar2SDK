@@ -216,7 +216,14 @@ object AdmobLoader {
 	}
 
 	// 加载插屏
-	suspend fun loadInter(): AdLoadStatus = withContext(Dispatchers.Main.immediate) {
+	suspend fun loadInter(
+		adContext: ScreenAdContext = ScreenAdContext(
+			adFormat = AdFormat.INTER,
+			adPlatform = AdPlatform.ADMOB,
+			trigger = ScreenAdTrigger.UNKNOW,
+			adUnitId = AdmobConfig.interID
+		)
+	): AdLoadStatus = withContext(Dispatchers.Main.immediate) {
 		// 检查过期广告
 		checkInterPool()
 		// 有广告正在加载
@@ -224,7 +231,7 @@ object AdmobLoader {
 		// 检查广告池是否满
 		if (interPool.size >= AdmobConfig.interPoolSize) return@withContext AdLoadStatus.POOL_FULL
 
-		when (startInterLoad().await()) {
+		when (startInterLoad(adContext).await()) {
 			is InterLoadResult.Loaded -> AdLoadStatus.LOAD_SUCCESS
 			is InterLoadResult.Failed -> AdLoadStatus.LOAD_FAIL
 			InterLoadResult.PoolFull -> AdLoadStatus.POOL_FULL
@@ -310,7 +317,14 @@ object AdmobLoader {
 	}
 
 	// 加载视频
-	suspend fun loadVideo(): AdLoadStatus = withContext(Dispatchers.Main.immediate) {
+	suspend fun loadVideo(
+		adContext: ScreenAdContext = ScreenAdContext(
+			adFormat = AdFormat.VIDEO,
+			adPlatform = AdPlatform.ADMOB,
+			trigger = ScreenAdTrigger.UNKNOW,
+			adUnitId = AdmobConfig.videoID
+		)
+	): AdLoadStatus = withContext(Dispatchers.Main.immediate) {
 		// 检查过期广告
 		checkVideoPool()
 		// 有广告正在加载
@@ -318,7 +332,7 @@ object AdmobLoader {
 		// 检查广告池是否满
 		if (videoPool.size >= AdmobConfig.videoPoolSize) return@withContext AdLoadStatus.POOL_FULL
 
-		when (startVideoLoad().await()) {
+		when (startVideoLoad(adContext).await()) {
 			is VideoLoadResult.Loaded -> AdLoadStatus.LOAD_SUCCESS
 			is VideoLoadResult.Failed -> AdLoadStatus.LOAD_FAIL
 			VideoLoadResult.PoolFull -> AdLoadStatus.POOL_FULL

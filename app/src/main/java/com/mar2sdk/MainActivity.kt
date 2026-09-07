@@ -29,6 +29,7 @@ import com.mar2sdk.impl.BaseActivity
 import com.mar2sdk.impl.DebugActivity
 import com.mar2sdk.impl.SplashScreen
 import com.mar2sdk.impl.contentComposable
+import com.mar2sdk.impl.rememberNavigateWithAd
 
 private object Routes {
 	const val MAIN = "main"
@@ -71,22 +72,28 @@ class MainActivity : BaseActivity() {
 						SplashScreen()
 					}
 					contentComposable(Routes.CONTENT_1) {
+						val navigateWithAd = rememberNavigateWithAd()
 						ContentScreen1(
 							onNextClick = {
-								navController.navigate(Routes.CONTENT_2) {
-									launchSingleTop = true
+								navigateWithAd {
+									navController.navigate(Routes.CONTENT_2) {
+										launchSingleTop = true
+									}
 								}
 							}
 						)
 					}
 					contentComposable(Routes.CONTENT_2) {
+						val navigateWithAd = rememberNavigateWithAd()
 						ContentScreen2(
 							onPreviousClick = {
-								navController.navigate(Routes.CONTENT_1) {
-									popUpTo(Routes.CONTENT_2) {
-										inclusive = true
+								navigateWithAd {
+									navController.navigate(Routes.CONTENT_1) {
+										popUpTo(Routes.CONTENT_2) {
+											inclusive = true
+										}
+										launchSingleTop = true
 									}
-									launchSingleTop = true
 								}
 							}
 						)

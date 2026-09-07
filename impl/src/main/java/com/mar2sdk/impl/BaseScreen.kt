@@ -8,25 +8,39 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.DisposableEffect
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.compositionLocalOf
-import androidx.lifecycle.Lifecycle
-import androidx.lifecycle.LifecycleEventObserver
-import androidx.navigation.NavBackStackEntry
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalInspectionMode
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
+import androidx.lifecycle.LifecycleOwner
+import androidx.navigation.NavBackStackEntry
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.compose.composable
 import com.mar2sdk.core.ad.status.AdFormat
 
-/** 当前导航页面的名称，由导航层注入。 */
+/** 当前导航页面名称。 */
 val LocalScreenName = compositionLocalOf { "UnknownScreen" }
 val LocalNavBackStackEntry = compositionLocalOf<NavBackStackEntry?> { null }
 
+private val LocalNavigateWithAd = compositionLocalOf<(() -> Unit) -> Unit> {
+	{ navigation -> navigation() }
+}
+
 private const val HAS_ENTERED_KEY = "base_screen_has_entered"
 
-/** 为需要广告的内容页统一注册导航 destination。 */
+/**
+ * 返回一个跳转包装器：先展示当前页面的 `${screenName}_to` 广告，广告页结束后再执行跳转。
+ * 如果广告无法启动，则立即继续跳转。
+ */
+@Composable
+fun rememberNavigateWithAd(): ((() -> Unit) -> Unit) = LocalNavigateWithAd.current
+
+/** 注册带页面广告的导航 destination。 */
 fun NavGraphBuilder.contentComposable(
 	route: String,
 	content: @Composable () -> Unit
@@ -44,67 +58,69 @@ fun NavGraphBuilder.contentComposable(
 	}
 }
 
-/**
- * 自动获取screen名生成areaKey(打开/返回/跳转)
- * 所有页面的公共容器。
- * 页面进入Screen时展示一次广告
- * 从其他页面返回
- */
+/** 页面进入、返回时展示广告，并提供带广告的跳转。 */
 @Composable
 fun BaseScreen(content: @Composable () -> Unit) {
 	val screenName = LocalScreenName.current
 	val backStackEntry = LocalNavBackStackEntry.current
+	val activity = LocalContext.current.findActivity()
+	val lifecycleOwner = backStackEntry ?: activity as? LifecycleOwner
+	val adsEnabled = !LocalInspectionMode.current
+	val standaloneHasEntered = rememberSaveable(screenName) { mutableStateOf(false) }
+	val session = remember(backStackEntry, screenName) { ScreenAdSession(screenName) }
+	val launchAd = remember(activity, adsEnabled) {
+		{ areaKey: String ->
+			adsEnabled && activity?.let {
+				AdActivity.tryShowAd(it, AdFormat.INTER, areaKey)
+			} == true
+		}
+	}
+	val navigateWithAd = remember(session, launchAd) {
+		{ navigation: () -> Unit ->
+			session.navigateAfterAd(launchAd, navigation)
+		}
+	}
 
-	if (!LocalInspectionMode.current) {
-		val activity = LocalContext.current.findActivity()
-		if (backStackEntry != null) {
-			DisposableEffect(backStackEntry, activity, screenName) {
-				var resumeHandled = false
-				var adPendingResume = false
-				val observer = LifecycleEventObserver { _, event ->
-					when (event) {
-						Lifecycle.Event.ON_RESUME -> {
-							if (!resumeHandled) {
-								resumeHandled = true
-								if (adPendingResume) {
-									adPendingResume = false
+	if (adsEnabled && lifecycleOwner != null) {
+		DisposableEffect(lifecycleOwner, session, launchAd) {
+			val observer = LifecycleEventObserver { _, event ->
+				when (event) {
+					Lifecycle.Event.ON_RESUME -> {
+						val hasEntered = backStackEntry?.savedStateHandle
+							?.get<Boolean>(HAS_ENTERED_KEY) == true ||
+							(backStackEntry == null && standaloneHasEntered.value)
+						session.onResume(
+							hasEntered = hasEntered,
+							markEntered = {
+								if (backStackEntry == null) {
+									standaloneHasEntered.value = true
 								} else {
-									val hasEntered = backStackEntry.savedStateHandle
-										.get<Boolean>(HAS_ENTERED_KEY) == true
-									val suffix = if (hasEntered) "back" else "start"
 									backStackEntry.savedStateHandle[HAS_ENTERED_KEY] = true
-									if (activity != null && !activity.isFinishing && !activity.isDestroyed && !AdActivity.showing()) {
-										adPendingResume = true
-										AdActivity.showAd(activity, AdFormat.INTER, "${screenName}_$suffix")
-									}
 								}
-							}
-						}
-						Lifecycle.Event.ON_PAUSE,
-						Lifecycle.Event.ON_STOP -> resumeHandled = false
-						else -> Unit
+							},
+							launchAd = launchAd
+						)
 					}
-				}
-
-				backStackEntry.lifecycle.addObserver(observer)
-				if (backStackEntry.lifecycle.currentState.isAtLeast(Lifecycle.State.RESUMED)) {
-					observer.onStateChanged(backStackEntry, Lifecycle.Event.ON_RESUME)
-				}
-				onDispose {
-					backStackEntry.lifecycle.removeObserver(observer)
+					Lifecycle.Event.ON_PAUSE,
+					Lifecycle.Event.ON_STOP -> session.onPause()
+					else -> Unit
 				}
 			}
-		} else {
-			LaunchedEffect(activity, screenName) {
-				if (activity != null && !activity.isFinishing && !activity.isDestroyed && !AdActivity.showing()) {
-					AdActivity.showAd(activity, AdFormat.INTER, "${screenName}_start")
-				}
+
+			lifecycleOwner.lifecycle.addObserver(observer)
+			if (lifecycleOwner.lifecycle.currentState.isAtLeast(Lifecycle.State.RESUMED)) {
+				observer.onStateChanged(lifecycleOwner, Lifecycle.Event.ON_RESUME)
+			}
+			onDispose {
+				lifecycleOwner.lifecycle.removeObserver(observer)
 			}
 		}
 	}
 
-	Box(modifier = Modifier.fillMaxSize()) {
-		content()
+	CompositionLocalProvider(LocalNavigateWithAd provides navigateWithAd) {
+		Box(modifier = Modifier.fillMaxSize()) {
+			content()
+		}
 	}
 }
 

@@ -21,6 +21,9 @@ import androidx.lifecycle.LifecycleOwner
 import androidx.navigation.NavBackStackEntry
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.compose.composable
+import com.mar2sdk.core.ad.AdConfig
+import com.mar2sdk.core.ad.policy.ScreenAdContext
+import com.mar2sdk.core.ad.policy.ScreenAdTrigger
 import com.mar2sdk.core.ad.status.AdFormat
 
 /** 当前导航页面名称。 */
@@ -68,10 +71,26 @@ fun BaseScreen(content: @Composable () -> Unit) {
 	val adsEnabled = !LocalInspectionMode.current
 	val standaloneHasEntered = rememberSaveable(screenName) { mutableStateOf(false) }
 	val session = remember(backStackEntry, screenName) { ScreenAdSession(screenName) }
-	val launchAd = remember(activity, adsEnabled) {
+	val launchAd = remember(activity, adsEnabled, screenName) {
 		{ areaKey: String ->
 			adsEnabled && activity?.let {
-				AdActivity.showAd(it, AdFormat.INTER, areaKey)
+				val trigger = when (areaKey) {
+					"${screenName}_start" -> ScreenAdTrigger.ENTER
+					"${screenName}_back" -> ScreenAdTrigger.RETURN
+					"${screenName}_to" -> ScreenAdTrigger.LEAVE
+					else -> ScreenAdTrigger.UNKNOW
+				}
+				AdActivity.showAd(
+					it,
+					ScreenAdContext(
+						areaKey = areaKey,
+						adFormat = AdFormat.INTER,
+						adPlatform = AdConfig.defaultPlatform,
+						trigger = trigger,
+						fromRoute = if (trigger == ScreenAdTrigger.LEAVE) screenName else "",
+						toRoute = if (trigger == ScreenAdTrigger.ENTER || trigger == ScreenAdTrigger.RETURN) screenName else ""
+					)
+				)
 			} == true
 		}
 	}

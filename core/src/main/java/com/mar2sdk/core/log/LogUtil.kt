@@ -6,6 +6,7 @@ import cn.thinkingdata.analytics.TDAnalytics
 import com.google.firebase.analytics.FirebaseAnalytics
 import com.mar2sdk.core.AppMod
 import com.mar2sdk.core.Core
+import com.mar2sdk.core.ad.policy.ScreenAdContext
 import com.mar2sdk.core.ad.status.AdFormat
 import com.mar2sdk.core.firebase.SingularConfig
 import com.mar2sdk.core.common.RiskUtil
@@ -102,12 +103,22 @@ object LogUtil {
 	}
 
 	fun logSingularAdRevenue(adPlatform: String, revenue: Double) {
+		logSingularAdRevenue(adPlatform, revenue, null)
+	}
+
+	fun logSingularAdRevenue(adContext: ScreenAdContext, revenue: Double) {
+		logSingularAdRevenue(adContext.adPlatform.name, revenue, adContext)
+	}
+
+	private fun logSingularAdRevenue(adPlatform: String, revenue: Double, adContext: ScreenAdContext?) {
 		if (!SingularConfig.trackRevenue) {
 			return
 		}
 		try {
 			if (revenue > 0) {
-				Singular.adRevenue(SingularAdData(adPlatform, LogAdParam.USD, revenue))
+				val adData = adContext?.toSingularAdData(revenue)
+					?: SingularAdData(adPlatform, LogAdParam.USD, revenue)
+				Singular.adRevenue(adData)
 			}
 		} catch (e: Exception) {
 			Log.e(TAG, "logSingularAdRevenue error: ${e.message}")

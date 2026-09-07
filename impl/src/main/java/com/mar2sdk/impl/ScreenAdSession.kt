@@ -58,7 +58,7 @@ internal class ScreenAdSession(private val screenName: String) {
 		requestAd("${screenName}_$suffix", PendingAd.SCREEN, launchAd)
 	}
 
-	/** 标记页面已离开恢复状态，使下一次恢复事件可以被处理。 */
+	// 标记页面已离开恢复状态，使下一次恢复事件可以被处理。
 	fun onPause() {
 		resumeHandled = false
 	}
@@ -110,7 +110,6 @@ internal class ScreenAdSession(private val screenName: String) {
 
 	/**
 	 * 尝试展示当前页面的导航广告；广告无法启动时直接执行待处理的跳转。
-	 *
 	 * @param launchAd 根据广告位标识启动广告的操作。
 	 */
 	private fun launchNavigationAdOrRun(launchAd: (areaKey: String) -> Boolean) {

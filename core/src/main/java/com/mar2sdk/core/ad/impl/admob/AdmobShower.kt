@@ -10,6 +10,7 @@ import com.google.android.gms.ads.appopen.AppOpenAd
 import com.google.android.gms.ads.interstitial.InterstitialAd
 import com.google.android.gms.ads.rewarded.RewardedAd
 import com.google.firebase.analytics.FirebaseAnalytics
+import com.inmobi.media.Bo
 import com.mar2sdk.core.AppStatus
 import com.mar2sdk.core.ad.AdConfig.showMaxTime
 import com.mar2sdk.core.ad.AdConfig.showMinTime
@@ -62,13 +63,13 @@ object AdmobShower {
 	 *  4. 广告加载耗时计入最小等待时间
 	 */
 	suspend fun showOpenInter(activity: Activity, callback: ShowCallback): AdShowStatus = withContext(Dispatchers.Main.immediate) {
-
+		// TODO: 暂时还没想好实现方案先搁置
 		return@withContext AdShowStatus.SHOW_SUCCESS
 
 	}
 
 	suspend fun showInterVideo(activity: Activity, callback: ShowCallback): AdShowStatus = withContext(Dispatchers.Main.immediate) {
-
+		// TODO: 暂时还没想好实现方案先搁置
 		return@withContext AdShowStatus.SHOW_SUCCESS
 	}
 
@@ -120,7 +121,6 @@ object AdmobShower {
 				callback.adContext.toAdLogParams() + mapOf(
 					LogAdParam.duration to (SystemClock.elapsedRealtime() - startShowTime),
 					LogAdParam.ad_source to (currentOpenAd?.responseInfo?.loadedAdapterResponseInfo?.adSourceName ?: LogAdParam.unknow),
-					LogAdParam.ad_preload to true,
 				)
 			)
 		}
@@ -182,7 +182,6 @@ object AdmobShower {
 				FirebaseAnalytics.Param.AD_SOURCE to (currentOpenAd?.responseInfo?.loadedAdapterResponseInfo?.adSourceName ?: LogAdParam.unknow),
 				FirebaseAnalytics.Param.CURRENCY to adValue.currencyCode,
 				FirebaseAnalytics.Param.VALUE to revenue,
-				LogAdParam.ad_preload to true,
 			)
 			LogUtil.log(LogAdEvent.ad_impression, revenueParams)
 			LogUtil.log(LogAdEvent.ad_revenue, revenueParams)
@@ -295,7 +294,6 @@ object AdmobShower {
 				callback.adContext.toAdLogParams() + mapOf(
 					LogAdParam.duration to (SystemClock.elapsedRealtime() - startShowTime),
 					LogAdParam.ad_source to (currentInterAd?.responseInfo?.loadedAdapterResponseInfo?.adSourceName ?: LogAdParam.unknow),
-					LogAdParam.ad_preload to true,
 				)
 			)
 		}
@@ -357,7 +355,6 @@ object AdmobShower {
 				FirebaseAnalytics.Param.AD_SOURCE to (currentInterAd?.responseInfo?.loadedAdapterResponseInfo?.adSourceName ?: LogAdParam.unknow),
 				FirebaseAnalytics.Param.CURRENCY to adValue.currencyCode,
 				FirebaseAnalytics.Param.VALUE to revenue,
-				LogAdParam.ad_preload to true,
 			)
 			LogUtil.log(LogAdEvent.ad_impression, revenueParams)
 			LogUtil.log(LogAdEvent.ad_revenue, revenueParams)
@@ -470,7 +467,6 @@ object AdmobShower {
 				callback.adContext.toAdLogParams() + mapOf(
 					LogAdParam.duration to (SystemClock.elapsedRealtime() - startShowTime),
 					LogAdParam.ad_source to (currentVideoAd?.responseInfo?.loadedAdapterResponseInfo?.adSourceName ?: LogAdParam.unknow),
-					LogAdParam.ad_preload to true,
 				)
 			)
 		}
@@ -532,7 +528,6 @@ object AdmobShower {
 				FirebaseAnalytics.Param.AD_SOURCE to (currentVideoAd?.responseInfo?.loadedAdapterResponseInfo?.adSourceName ?: LogAdParam.unknow),
 				FirebaseAnalytics.Param.CURRENCY to adValue.currencyCode,
 				FirebaseAnalytics.Param.VALUE to revenue,
-				LogAdParam.ad_preload to true,
 			)
 			LogUtil.log(LogAdEvent.ad_impression, revenueParams)
 			LogUtil.log(LogAdEvent.ad_revenue, revenueParams)

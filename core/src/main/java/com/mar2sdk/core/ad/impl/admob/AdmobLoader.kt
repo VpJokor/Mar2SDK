@@ -146,31 +146,20 @@ object AdmobLoader {
 			val loadCallback = object : AppOpenAd.AppOpenAdLoadCallback() {
 				override fun onAdLoaded(openAd: AppOpenAd) {
 					cacheLoadedAd(openAd, openPool, loadContext, "open") {
-						completeOpenLoad(loadDeferred, OpenLoadResult.Loaded(openAd))
+						completeLoad(loadDeferred, OpenLoadResult.Loaded(openAd))
 					}
 				}
 
 				override fun onAdFailedToLoad(loadAdError: LoadAdError) {
-					completeOpenLoad(loadDeferred, OpenLoadResult.Failed(loadError = loadAdError))
+					completeLoad(loadDeferred, OpenLoadResult.Failed(loadError = loadAdError))
 				}
 			}
 			AppOpenAd.load(Core.app, adContext.adUnitId, AdRequest.Builder().build(), loadCallback)
 		} catch (error: Exception) {
 			Log.e(TAG, "Failed to start loading open ad", error)
-			completeOpenLoad(loadDeferred, OpenLoadResult.Failed(exception = error))
+			completeLoad(loadDeferred, OpenLoadResult.Failed(exception = error))
 		}
 		return loadDeferred
-	}
-
-	private fun completeOpenLoad(
-		loadDeferred: CompletableDeferred<OpenLoadResult>,
-		result: OpenLoadResult,
-	) {
-		if (openLoadDeferred === loadDeferred) {
-			openLoadDeferred = null
-			isLoadingOpen = false
-		}
-		loadDeferred.complete(result)
 	}
 
 	// 加载插屏
@@ -213,31 +202,20 @@ object AdmobLoader {
 			val loadCallback = object : InterstitialAdLoadCallback() {
 				override fun onAdLoaded(interstitialAd: InterstitialAd) {
 					cacheLoadedAd(interstitialAd, interPool, loadContext, "interstitial") {
-						completeInterLoad(loadDeferred, InterLoadResult.Loaded(interstitialAd))
+						completeLoad(loadDeferred, InterLoadResult.Loaded(interstitialAd))
 					}
 				}
 
 				override fun onAdFailedToLoad(loadAdError: LoadAdError) {
-					completeInterLoad(loadDeferred, InterLoadResult.Failed(loadError = loadAdError))
+					completeLoad(loadDeferred, InterLoadResult.Failed(loadError = loadAdError))
 				}
 			}
 			InterstitialAd.load(Core.app, adContext.adUnitId, AdRequest.Builder().build(), loadCallback)
 		} catch (error: Exception) {
 			Log.e(TAG, "Failed to start loading interstitial ad", error)
-			completeInterLoad(loadDeferred, InterLoadResult.Failed(exception = error))
+			completeLoad(loadDeferred, InterLoadResult.Failed(exception = error))
 		}
 		return loadDeferred
-	}
-
-	private fun completeInterLoad(
-		loadDeferred: CompletableDeferred<InterLoadResult>,
-		result: InterLoadResult,
-	) {
-		if (interLoadDeferred === loadDeferred) {
-			interLoadDeferred = null
-			isLoadingInter = false
-		}
-		loadDeferred.complete(result)
 	}
 
 	// 加载视频
@@ -280,29 +258,39 @@ object AdmobLoader {
 			val loadCallback = object : RewardedAdLoadCallback() {
 				override fun onAdLoaded(rewardedAd: RewardedAd) {
 					cacheLoadedAd(rewardedAd, videoPool, loadContext, "rewarded") {
-						completeVideoLoad(loadDeferred, VideoLoadResult.Loaded(rewardedAd))
+						completeLoad(loadDeferred, VideoLoadResult.Loaded(rewardedAd))
 					}
 				}
 
 				override fun onAdFailedToLoad(loadAdError: LoadAdError) {
-					completeVideoLoad(loadDeferred, VideoLoadResult.Failed(loadError = loadAdError))
+					completeLoad(loadDeferred, VideoLoadResult.Failed(loadError = loadAdError))
 				}
 			}
 			RewardedAd.load(Core.app, adContext.adUnitId, AdRequest.Builder().build(), loadCallback)
 		} catch (error: Exception) {
 			Log.e(TAG, "Failed to start loading rewarded ad", error)
-			completeVideoLoad(loadDeferred, VideoLoadResult.Failed(exception = error))
+			completeLoad(loadDeferred, VideoLoadResult.Failed(exception = error))
 		}
 		return loadDeferred
 	}
 
-	private fun completeVideoLoad(
-		loadDeferred: CompletableDeferred<VideoLoadResult>,
-		result: VideoLoadResult,
+	private fun <R> completeLoad(
+		loadDeferred: CompletableDeferred<R>,
+		result: R,
 	) {
-		if (videoLoadDeferred === loadDeferred) {
-			videoLoadDeferred = null
-			isLoadingVideo = false
+		when {
+			openLoadDeferred === loadDeferred -> {
+				openLoadDeferred = null
+				isLoadingOpen = false
+			}
+			interLoadDeferred === loadDeferred -> {
+				interLoadDeferred = null
+				isLoadingInter = false
+			}
+			videoLoadDeferred === loadDeferred -> {
+				videoLoadDeferred = null
+				isLoadingVideo = false
+			}
 		}
 		loadDeferred.complete(result)
 	}

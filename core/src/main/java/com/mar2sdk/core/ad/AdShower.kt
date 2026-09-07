@@ -29,6 +29,7 @@ object AdShower {
 
 	// 一直等待到 AdmobShower.showOpen 返回结果再返回
 	suspend fun showOpen(activity: Activity, callback: ShowCallback): AdShowStatus {
+		// TODO: 执行比价算法，确定播哪个平台的广告
 		return when(callback.adContext.adPlatform) {
 			AdPlatform.ADMOB -> AdmobShower.showOpen(activity, callback)
 			// TODO implement Max/UNITY/TRADPLUS/TOPON

@@ -14,13 +14,13 @@ import com.mar2sdk.core.AppStatus
 import com.mar2sdk.core.ad.AdConfig.showMaxTime
 import com.mar2sdk.core.ad.AdConfig.showMinTime
 import com.mar2sdk.core.ad.callback.ShowCallback
-import com.mar2sdk.core.ad.status.AdFormat
 import com.mar2sdk.core.ad.status.AdPlatform
 import com.mar2sdk.core.ad.status.AdShowStatus
 import com.mar2sdk.core.ad.status.ShowFailResult
 import com.mar2sdk.core.log.LogAdEvent
 import com.mar2sdk.core.log.LogAdParam
 import com.mar2sdk.core.log.LogUtil
+import com.mar2sdk.core.log.toAdLogParams
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -87,15 +87,8 @@ object AdmobShower {
 	 *  4. 广告加载耗时计入最小等待时间
 	 */
 	suspend fun showOpen(activity: Activity, callback: ShowCallback): AdShowStatus = withContext(Dispatchers.Main.immediate) {
-		LogUtil.log(
-			LogAdEvent.ad_occur,
-			mapOf(
-				LogAdParam.ad_platform to AdPlatform.ADMOB.name,
-				LogAdParam.ad_areakey to callback.adContext.areaKey,
-				LogAdParam.ad_format to AdFormat.OPEN.name,
-				LogAdParam.ad_unit_name to AdmobConfig.openID,
-			)
-		)
+		callback.adContext.adUnitId = AdmobConfig.openID
+		LogUtil.log(LogAdEvent.ad_occur, callback.adContext.toAdLogParams())
 		if (AppStatus.isShowingAd) {
 			Log.e(TAG, "showOpen: AppStatus.isShowingAd" )
 			callback.showFailed(ShowFailResult.OTHER_AD_IS_SHOWING)
@@ -124,13 +117,9 @@ object AdmobShower {
 		fun logShowEvent(eventName: String) {
 			LogUtil.log(
 				eventName,
-				mapOf(
-					LogAdParam.ad_platform to AdPlatform.ADMOB.name,
+				callback.adContext.toAdLogParams() + mapOf(
 					LogAdParam.duration to (SystemClock.elapsedRealtime() - startShowTime),
-					LogAdParam.ad_areakey to callback.adContext.areaKey,
-					LogAdParam.ad_format to AdFormat.OPEN.name,
 					LogAdParam.ad_source to (currentOpenAd?.responseInfo?.loadedAdapterResponseInfo?.adSourceName ?: LogAdParam.unknow),
-					LogAdParam.ad_unit_name to AdmobConfig.openID,
 					LogAdParam.ad_preload to true,
 				)
 			)
@@ -189,11 +178,7 @@ object AdmobShower {
 			Log.e(TAG, "showOpen: $adValue" )
 			// info: 处理收入打点
 			val revenue = adValue.valueMicros / 1_000_000.0
-			val revenueParams = mapOf(
-				LogAdParam.ad_areakey to callback.adContext.areaKey,
-				FirebaseAnalytics.Param.AD_PLATFORM to AdPlatform.ADMOB.name,
-				FirebaseAnalytics.Param.AD_UNIT_NAME to AdmobConfig.openID,
-				FirebaseAnalytics.Param.AD_FORMAT to AdFormat.OPEN.name,
+			val revenueParams = callback.adContext.toAdLogParams(FirebaseAnalytics.Param.AD_FORMAT) + mapOf(
 				FirebaseAnalytics.Param.AD_SOURCE to (currentOpenAd?.responseInfo?.loadedAdapterResponseInfo?.adSourceName ?: LogAdParam.unknow),
 				FirebaseAnalytics.Param.CURRENCY to adValue.currencyCode,
 				FirebaseAnalytics.Param.VALUE to revenue,
@@ -201,12 +186,13 @@ object AdmobShower {
 			)
 			LogUtil.log(LogAdEvent.ad_impression, revenueParams)
 			LogUtil.log(LogAdEvent.ad_revenue, revenueParams)
-			LogUtil.logSingularAdRevenue(LogAdParam.adMob, revenue)
+			LogUtil.logSingularAdRevenue(callback.adContext, revenue)
 			callback.onPaid()
 		}
 
 		suspend fun show(ad: AppOpenAd): AdShowStatus {
 			currentCoroutineContext().ensureActive()
+			callback.adContext.adUnitId = ad.adUnitId
 			if (activity.isFinishing || activity.isDestroyed) {
 				return fail(ShowFailResult.ACTIVITY_IS_FINISHING)
 			}
@@ -235,7 +221,7 @@ object AdmobShower {
 			val openAd = AdmobLoader.openPool.keys.firstOrNull() ?: when (
 				val loadResult = try {
 					withTimeoutOrNull(showMaxTime) {
-						AdmobLoader.loadOpenResult(areaKey = callback.adContext.areaKey)
+						AdmobLoader.loadOpenResult(adContext = callback.adContext)
 					}
 				} catch (e: CancellationException) {
 					throw e
@@ -276,14 +262,10 @@ object AdmobShower {
 	}
 
 	suspend fun showInter(activity: Activity, callback: ShowCallback): AdShowStatus = withContext(Dispatchers.Main.immediate) {
+		callback.adContext.adUnitId = AdmobConfig.interID
 		LogUtil.log(
 			LogAdEvent.ad_occur,
-			mapOf(
-				LogAdParam.ad_platform to AdPlatform.ADMOB.name,
-				LogAdParam.ad_areakey to callback.adContext.areaKey,
-				LogAdParam.ad_format to AdFormat.INTER.name,
-				LogAdParam.ad_unit_name to AdmobConfig.interID,
-			)
+			callback.adContext.toAdLogParams()
 		)
 		if (AppStatus.isShowingAd) {
 			Log.e(TAG, "showInter: AppStatus.isShowingAd")
@@ -313,13 +295,9 @@ object AdmobShower {
 		fun logShowEvent(eventName: String) {
 			LogUtil.log(
 				eventName,
-				mapOf(
-					LogAdParam.ad_platform to AdPlatform.ADMOB.name,
+				callback.adContext.toAdLogParams() + mapOf(
 					LogAdParam.duration to (SystemClock.elapsedRealtime() - startShowTime),
-					LogAdParam.ad_areakey to callback.adContext.areaKey,
-					LogAdParam.ad_format to AdFormat.INTER.name,
 					LogAdParam.ad_source to (currentInterAd?.responseInfo?.loadedAdapterResponseInfo?.adSourceName ?: LogAdParam.unknow),
-					LogAdParam.ad_unit_name to AdmobConfig.interID,
 					LogAdParam.ad_preload to true,
 				)
 			)
@@ -378,11 +356,7 @@ object AdmobShower {
 			Log.e(TAG, "showInter: $adValue")
 			// info: 处理收入打点
 			val revenue = adValue.valueMicros / 1_000_000.0
-			val revenueParams = mapOf(
-				LogAdParam.ad_areakey to callback.adContext.areaKey,
-				FirebaseAnalytics.Param.AD_PLATFORM to AdPlatform.ADMOB.name,
-				FirebaseAnalytics.Param.AD_UNIT_NAME to AdmobConfig.interID,
-				FirebaseAnalytics.Param.AD_FORMAT to AdFormat.INTER.name,
+			val revenueParams = callback.adContext.toAdLogParams(FirebaseAnalytics.Param.AD_FORMAT) + mapOf(
 				FirebaseAnalytics.Param.AD_SOURCE to (currentInterAd?.responseInfo?.loadedAdapterResponseInfo?.adSourceName ?: LogAdParam.unknow),
 				FirebaseAnalytics.Param.CURRENCY to adValue.currencyCode,
 				FirebaseAnalytics.Param.VALUE to revenue,
@@ -390,12 +364,13 @@ object AdmobShower {
 			)
 			LogUtil.log(LogAdEvent.ad_impression, revenueParams)
 			LogUtil.log(LogAdEvent.ad_revenue, revenueParams)
-			LogUtil.logSingularAdRevenue(LogAdParam.adMob, revenue)
+			LogUtil.logSingularAdRevenue(callback.adContext, revenue)
 			callback.onPaid()
 		}
 
 		suspend fun show(ad: InterstitialAd): AdShowStatus {
 			currentCoroutineContext().ensureActive()
+			callback.adContext.adUnitId = ad.adUnitId
 			if (activity.isFinishing || activity.isDestroyed) {
 				return fail(ShowFailResult.ACTIVITY_IS_FINISHING)
 			}
@@ -424,7 +399,7 @@ object AdmobShower {
 			val interAd = AdmobLoader.interPool.keys.firstOrNull() ?: when (
 				val loadResult = try {
 					withTimeoutOrNull(showMaxTime) {
-						AdmobLoader.loadInterResult(areaKey = callback.adContext.areaKey)
+						AdmobLoader.loadInterResult(adContext = callback.adContext)
 					}
 				} catch (e: CancellationException) {
 					throw e
@@ -465,14 +440,10 @@ object AdmobShower {
 	}
 
 	suspend fun showVideo(activity: Activity, callback: ShowCallback): AdShowStatus = withContext(Dispatchers.Main.immediate) {
+		callback.adContext.adUnitId = AdmobConfig.videoID
 		LogUtil.log(
 			LogAdEvent.ad_occur,
-			mapOf(
-				LogAdParam.ad_platform to AdPlatform.ADMOB.name,
-				LogAdParam.ad_areakey to callback.adContext.areaKey,
-				LogAdParam.ad_format to AdFormat.VIDEO.name,
-				LogAdParam.ad_unit_name to AdmobConfig.videoID,
-			)
+			callback.adContext.toAdLogParams()
 		)
 		if (AppStatus.isShowingAd) {
 			Log.e(TAG, "showVideo: AppStatus.isShowingAd")
@@ -502,13 +473,9 @@ object AdmobShower {
 		fun logShowEvent(eventName: String) {
 			LogUtil.log(
 				eventName,
-				mapOf(
-					LogAdParam.ad_platform to AdPlatform.ADMOB.name,
+				callback.adContext.toAdLogParams() + mapOf(
 					LogAdParam.duration to (SystemClock.elapsedRealtime() - startShowTime),
-					LogAdParam.ad_areakey to callback.adContext.areaKey,
-					LogAdParam.ad_format to AdFormat.VIDEO.name,
 					LogAdParam.ad_source to (currentVideoAd?.responseInfo?.loadedAdapterResponseInfo?.adSourceName ?: LogAdParam.unknow),
-					LogAdParam.ad_unit_name to AdmobConfig.videoID,
 					LogAdParam.ad_preload to true,
 				)
 			)
@@ -567,11 +534,7 @@ object AdmobShower {
 			Log.e(TAG, "showVideo: $adValue")
 			// info: 处理收入打点
 			val revenue = adValue.valueMicros / 1_000_000.0
-			val revenueParams = mapOf(
-				LogAdParam.ad_areakey to callback.adContext.areaKey,
-				FirebaseAnalytics.Param.AD_PLATFORM to AdPlatform.ADMOB.name,
-				FirebaseAnalytics.Param.AD_UNIT_NAME to AdmobConfig.videoID,
-				FirebaseAnalytics.Param.AD_FORMAT to AdFormat.VIDEO.name,
+			val revenueParams = callback.adContext.toAdLogParams(FirebaseAnalytics.Param.AD_FORMAT) + mapOf(
 				FirebaseAnalytics.Param.AD_SOURCE to (currentVideoAd?.responseInfo?.loadedAdapterResponseInfo?.adSourceName ?: LogAdParam.unknow),
 				FirebaseAnalytics.Param.CURRENCY to adValue.currencyCode,
 				FirebaseAnalytics.Param.VALUE to revenue,
@@ -579,12 +542,13 @@ object AdmobShower {
 			)
 			LogUtil.log(LogAdEvent.ad_impression, revenueParams)
 			LogUtil.log(LogAdEvent.ad_revenue, revenueParams)
-			LogUtil.logSingularAdRevenue(LogAdParam.adMob, revenue)
+			LogUtil.logSingularAdRevenue(callback.adContext, revenue)
 			callback.onPaid()
 		}
 
 		suspend fun show(ad: RewardedAd): AdShowStatus {
 			currentCoroutineContext().ensureActive()
+			callback.adContext.adUnitId = ad.adUnitId
 			if (activity.isFinishing || activity.isDestroyed) {
 				return fail(ShowFailResult.ACTIVITY_IS_FINISHING)
 			}
@@ -615,7 +579,7 @@ object AdmobShower {
 			val videoAd = AdmobLoader.videoPool.keys.firstOrNull() ?: when (
 				val loadResult = try {
 					withTimeoutOrNull(showMaxTime) {
-						AdmobLoader.loadVideoResult(areaKey = callback.adContext.areaKey)
+						AdmobLoader.loadVideoResult(adContext = callback.adContext)
 					}
 				} catch (e: CancellationException) {
 					throw e

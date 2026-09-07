@@ -18,6 +18,6 @@ data class ScreenAdContext(
 	var adFormat: AdFormat,
 	var adPlatform: AdPlatform,
 	val trigger: ScreenAdTrigger,
-	val fromRoute: String?,
+	val fromRoute: String,
 	val toRoute: String
 ) : Parcelable

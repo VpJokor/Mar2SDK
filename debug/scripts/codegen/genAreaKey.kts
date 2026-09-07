@@ -25,6 +25,12 @@ private val CONTENT_COMPOSABLE = Regex("""\bcontentComposable\s*\(""")
 private val STRING_CONST = Regex(
 	"""\bconst\s+val\s+([A-Za-z_][A-Za-z0-9_]*)(?:\s*:\s*(?:kotlin\s*\.\s*)?String)?\s*="""
 )
+private val PACKAGE_DECLARATION = Regex(
+	"""\bpackage\s+([A-Za-z_][A-Za-z0-9_]*(?:\s*\.\s*[A-Za-z_][A-Za-z0-9_]*)*)"""
+)
+private val TYPE_DECLARATION = Regex(
+	"""\b(?:class|interface|object)\s+([A-Za-z_][A-Za-z0-9_]*)"""
+)
 private val AREA_KEY_REFERENCE = Regex("""\bAreaKeys\s*\.\s*([A-Za-z_][A-Za-z0-9_]*)""")
 private val CONST_REFERENCE = Regex(
 	"""[A-Za-z_][A-Za-z0-9_]*(?:\s*\.\s*[A-Za-z_][A-Za-z0-9_]*)*"""
@@ -45,6 +51,7 @@ private data class SourceFile(
 private data class StringConstant(
 	val name: String,
 	val value: String,
+	val qualifiedName: String,
 	val source: SourceFile,
 	val offset: Int
 )
@@ -119,8 +126,8 @@ private fun resolveProjectRoot(explicitRoot: Path?): Path {
 	}
 
 	val workingDirectory = Paths.get("").toAbsolutePath().normalize()
-	return findProjectRoot(workingDirectory)
-		?: processScriptPath()?.let(::findProjectRoot)
+	return processScriptPath()?.let(::findProjectRoot)
+		?: findProjectRoot(workingDirectory)
 		?: fail("无法定位项目根目录；请将项目根目录作为第一个参数传入")
 }
 
@@ -135,7 +142,9 @@ private fun readSources(projectRoot: Path, outputFile: Path): List<SourceFile> {
 		Files.walk(sourceRoot).use { stream ->
 			stream.filter { path ->
 				Files.isRegularFile(path) &&
-					(path.fileName.toString().endsWith(".kt") || path.fileName.toString().endsWith(".kts")) &&
+					(path.fileName.toString().endsWith(".kt") ||
+						path.fileName.toString().endsWith(".kts") ||
+						path.fileName.toString().endsWith(".java")) &&
 					path.toAbsolutePath().normalize() != outputFile
 			}.forEach(paths::add)
 		}
@@ -270,12 +279,47 @@ private fun collectStringConstants(sources: List<SourceFile>): Map<String, List<
 	sources.forEach { source ->
 		STRING_CONST.findAll(source.codeMask).forEach { match ->
 			val parsed = parseStringAt(source.text, match.range.last + 1) ?: return@forEach
+			val lineEnd = source.codeMask.indexOf('\n', parsed.endExclusive)
+				.let { if (it < 0) source.codeMask.length else it }
+			val remainder = source.codeMask.substring(parsed.endExclusive, lineEnd).trimStart()
+			if (remainder.isNotEmpty() && !remainder.startsWith(';')) return@forEach
+
 			val name = match.groupValues[1]
+			val packageName = PACKAGE_DECLARATION.find(source.codeMask)
+				?.groupValues?.get(1)?.replace(Regex("\\s+"), "")
+			val owners = TYPE_DECLARATION.findAll(source.codeMask.substring(0, match.range.first))
+				.mapNotNull { declaration ->
+					val openingBrace = source.codeMask.indexOf('{', declaration.range.last + 1)
+					if (openingBrace < 0 || openingBrace >= match.range.first) return@mapNotNull null
+					val closingBrace = findClosingBrace(source.codeMask, openingBrace)
+					if (closingBrace == null || closingBrace > match.range.first) {
+						declaration.groupValues[1] to openingBrace
+					} else {
+						null
+					}
+				}
+				.sortedBy { it.second }
+				.map { it.first }
+			val qualifiedName = (listOfNotNull(packageName) + owners + name).joinToString(".")
 			constants.getOrPut(name) { mutableListOf() }
-				.add(StringConstant(name, parsed.value, source, match.range.first))
+				.add(StringConstant(name, parsed.value, qualifiedName, source, match.range.first))
 		}
 	}
 	return constants
+}
+
+private fun findClosingBrace(mask: String, openingIndex: Int): Int? {
+	var depth = 0
+	for (index in openingIndex until mask.length) {
+		when (mask[index]) {
+			'{' -> depth++
+			'}' -> {
+				depth--
+				if (depth == 0) return index
+			}
+		}
+	}
+	return null
 }
 
 private fun findClosingParenthesis(mask: String, openingIndex: Int): Int? {
@@ -344,8 +388,10 @@ private fun namedRouteExpression(argument: String): String? {
 }
 
 private fun isContentComposableDeclaration(source: SourceFile, offset: Int): Boolean {
-	val lineStart = source.codeMask.lastIndexOf('\n', offset - 1).let { if (it < 0) 0 else it + 1 }
-	return Regex("""\bfun\b""").containsMatchIn(source.codeMask.substring(lineStart, offset))
+	val prefixStart = listOf('{', '}', ';', '=')
+		.maxOf { delimiter -> source.codeMask.lastIndexOf(delimiter, offset - 1) }
+		.let { it + 1 }
+	return Regex("""\bfun\b""").containsMatchIn(source.codeMask.substring(prefixStart, offset))
 }
 
 private fun sourceLocation(projectRoot: Path, source: SourceFile, offset: Int): String {
@@ -356,6 +402,7 @@ private fun sourceLocation(projectRoot: Path, source: SourceFile, offset: Int): 
 
 private fun resolveRoute(
 	projectRoot: Path,
+	source: SourceFile,
 	expression: String,
 	constants: Map<String, List<StringConstant>>,
 	location: String
@@ -367,17 +414,26 @@ private fun resolveRoute(
 		fail("$location 的 contentComposable route 不是可静态解析的字符串：$expression")
 	}
 
-	val name = reference.substringAfterLast('.').trim()
-	val definitions = constants[name].orEmpty()
+	val compactReference = reference.replace(Regex("\\s*\\.\\s*"), ".")
+	val name = compactReference.substringAfterLast('.')
+	val namedDefinitions = constants[name].orEmpty()
+	val definitions = if ('.' in compactReference) {
+		namedDefinitions.filter { definition ->
+			definition.qualifiedName == compactReference ||
+				definition.qualifiedName.endsWith(".$compactReference")
+		}
+	} else {
+		namedDefinitions.filter { it.source.path == source.path }.ifEmpty { namedDefinitions }
+	}
 	if (definitions.isEmpty()) {
-		fail("$location 无法解析 route 常量：$reference")
+		fail("$location 无法解析 route 常量：$compactReference")
 	}
 	val values = definitions.map { it.value }.distinct()
 	if (values.size != 1) {
 		val definitionLocations = definitions.joinToString { definition ->
 			sourceLocation(projectRoot, definition.source, definition.offset)
 		}
-		fail("$location 的 route 常量 $reference 存在多个不同定义：$definitionLocations")
+		fail("$location 的 route 常量 $compactReference 存在多个不同定义：$definitionLocations")
 	}
 	return values.single()
 }
@@ -407,7 +463,7 @@ private fun collectRoutes(
 				.firstOrNull()
 				?: arguments.first()
 			val location = sourceLocation(projectRoot, source, match.range.first)
-			val route = resolveRoute(projectRoot, routeExpression, constants, location)
+			val route = resolveRoute(projectRoot, source, routeExpression, constants, location)
 			if (route.isBlank()) fail("$location 的 contentComposable route 不能为空")
 			routes += route
 		}
@@ -539,14 +595,15 @@ private fun generate(arguments: Array<String>) {
 	val manualKeys = linkedMapOf<String, String>()
 
 	referencedKeys.sorted().forEach { name ->
-		if (name in generatedKeys) return@forEach
-		manualKeys[name] = oldKeys[name]
-			?: fail("源码引用了 AreaKeys.$name，但 AreaKeys.kt 中没有对应的字符串常量")
-	}
-	manualKeys.forEach { (name, value) ->
 		val generatedValue = generatedKeys[name]
-		if (generatedValue != null && generatedValue != value) {
-			fail("手工常量 $name 与生成广告点位 $generatedValue 冲突")
+		val oldValue = oldKeys[name]
+		if (generatedValue != null) {
+			if (oldValue != null && oldValue != generatedValue) {
+				fail("AreaKeys.$name 的现有值 $oldValue 与生成广告点位 $generatedValue 冲突")
+			}
+		} else {
+			manualKeys[name] = oldValue
+				?: fail("源码引用了 AreaKeys.$name，但 AreaKeys.kt 中没有对应的字符串常量")
 		}
 	}
 

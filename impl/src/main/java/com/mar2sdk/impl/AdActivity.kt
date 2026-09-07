@@ -3,6 +3,7 @@ package com.mar2sdk.impl
 import android.app.Activity
 import android.content.Intent
 import android.os.Bundle
+import android.util.Log
 import android.view.View
 import android.widget.Button
 import android.widget.ProgressBar
@@ -16,8 +17,10 @@ import com.mar2sdk.core.ad.callback.ShowCallback
 import com.mar2sdk.core.ad.status.AdFormat
 import com.mar2sdk.core.ad.status.AdPlatform
 import com.mar2sdk.core.ad.status.ShowFailResult
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.launch
 import java.lang.ref.WeakReference
+import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicReference
 
 class AdActivity : AppCompatActivity() {
@@ -25,24 +28,49 @@ class AdActivity : AppCompatActivity() {
 	companion object {
 		private const val TAG = "AdActivity"
 		private val currentActivity = AtomicReference<WeakReference<AdActivity>?>(null)
+		private val launchPending = AtomicBoolean(false)
 
-		fun showing(): Boolean {
-			val activity = currentActivity.get()?.get() ?: return false
-			return !activity.isFinishing && !activity.isDestroyed
+		private fun activeActivity(): AdActivity? {
+			val activity = currentActivity.get()?.get() ?: return null
+			return activity.takeUnless { it.isFinishing || it.isDestroyed }
 		}
 
-		// adFormat 以远端配置的为主，如果没有远端配置则使用传入的 adFormat
+
+		fun showing(): Boolean {
+			return launchPending.get() || activeActivity() != null
+		}
+
+		// 保留无返回值的公开入口，内部入口用于判断是否成功启动。
 		fun showAd(activity: Activity, adFormat: AdFormat = AdFormat.INTER_VIDEO, areaKey: String) {
-			if (showing()) {
+			tryShowAd(activity, adFormat, areaKey)
+		}
+
+		internal fun tryShowAd(activity: Activity, adFormat: AdFormat, areaKey: String): Boolean {
+			if (activity.isFinishing || activity.isDestroyed) return false
+			if (!launchPending.compareAndSet(false, true)) {
 				if (Core.appMod == AppMod.DEBUG) {
 					Toast.makeText(Core.app, "AdActivity 正在展示", Toast.LENGTH_LONG).show()
 				}
-				return
+				return false
+			}
+			if (activeActivity() != null) {
+				launchPending.set(false)
+				if (Core.appMod == AppMod.DEBUG) {
+					Toast.makeText(Core.app, "AdActivity 正在展示", Toast.LENGTH_LONG).show()
+				}
+				return false
 			}
 			val intent = Intent(activity, AdActivity::class.java)
 			intent.putExtra("adFormat", adFormat.name)
 			intent.putExtra("areaKey", areaKey)
-			activity.startActivity(intent)
+			return try {
+				activity.startActivity(intent)
+				true
+			} catch (exception: RuntimeException) {
+				launchPending.set(false)
+				Log.e(TAG, "Unable to start ad activity for $areaKey", exception)
+				false
+			}
 		}
 
 	}
@@ -50,10 +78,11 @@ class AdActivity : AppCompatActivity() {
 	override fun onCreate(savedInstanceState: Bundle?) {
 		super.onCreate(savedInstanceState)
 		currentActivity.set(WeakReference(this))
+		launchPending.set(false)
 		enableEdgeToEdge()
 		setContentView(R.layout.activity_ad)
 		findViewById<Button>(R.id.close_ad).setOnClickListener { finish() }
-		showAd()
+		showRequestedAd()
 	}
 
 	override fun onDestroy() {
@@ -64,37 +93,37 @@ class AdActivity : AppCompatActivity() {
 		super.onDestroy()
 	}
 
-	private fun showAd() {
+	private fun showRequestedAd() {
 		val loading = findViewById<ProgressBar>(R.id.ad_loading)
-		val adFormat = AdFormat.valueOf(intent.getStringExtra("adFormat") ?: "OPEN")
-		val areaKey = intent.getStringExtra("areaKey") ?: "unknow"
+		val requestedAdFormat = AdFormat.valueOf(intent.getStringExtra("adFormat") ?: "OPEN")
+		val requestedAreaKey = intent.getStringExtra("areaKey") ?: "unknown"
 		if (Core.appMod == AppMod.DEBUG) {
-			Toast.makeText(Core.app, "展示广告 areaKey= $areaKey", Toast.LENGTH_LONG).show()
+			Toast.makeText(Core.app, "展示广告 areaKey= $requestedAreaKey", Toast.LENGTH_LONG).show()
 		}
-		val callback = object : ShowCallback{
-			override var areaKey: String
-				get() = areaKey
-				set(value) {}
-			override lateinit var adFormat: AdFormat
-
+		val callback = object : ShowCallback {
+			override var areaKey = requestedAreaKey
+			override var adFormat = requestedAdFormat
 			override lateinit var adPlatform: AdPlatform
 
-			override fun showFailed(reason: ShowFailResult) {
-				finish()
-			}
-			override fun onAdClosed() {
-				finish()
-			}
+			override fun showFailed(reason: ShowFailResult) = finish()
+			override fun onAdClosed() = finish()
 			override fun showSuccess() {
 				loading.visibility = View.GONE
 			}
-			override fun onClicked() {}
-			override fun onPaid() {}
-			override fun onReward() {}
+			override fun onClicked() = Unit
+			override fun onPaid() = Unit
+			override fun onReward() = Unit
 		}
 		lifecycleScope.launch {
-			Core.showAd(this@AdActivity, callback, adFormat)
-			loading.visibility = View.GONE
+			try {
+				Core.showAd(this@AdActivity, callback, requestedAdFormat)
+				loading.visibility = View.GONE
+			} catch (exception: CancellationException) {
+				throw exception
+			} catch (exception: Exception) {
+				Log.e(TAG, "Unexpected failure while showing $requestedAreaKey", exception)
+				finish()
+			}
 		}
 	}
 

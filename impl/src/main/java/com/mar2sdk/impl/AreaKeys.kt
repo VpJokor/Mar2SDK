@@ -13,4 +13,5 @@ object AreaKeys {
 	const val KEY_CONTENT2_START = "content2_start"
 	const val KEY_CONTENT2_BACK = "content2_back"
 	const val KEY_CONTENT2_TO = "content2_to"
+
 }

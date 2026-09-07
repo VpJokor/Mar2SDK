@@ -14,7 +14,7 @@ enum class ScreenAdTrigger {
 @Parcelize
 data class ScreenAdContext(
 	val requestId: String = UUID.randomUUID().toString(),
-	val areaKey: String,
+	var areaKey: String = "preload",
 	var adFormat: AdFormat,
 	var adPlatform: AdPlatform,
 	val trigger: ScreenAdTrigger,

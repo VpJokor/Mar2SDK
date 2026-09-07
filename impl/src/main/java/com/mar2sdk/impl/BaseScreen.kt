@@ -71,7 +71,7 @@ fun BaseScreen(content: @Composable () -> Unit) {
 	val launchAd = remember(activity, adsEnabled) {
 		{ areaKey: String ->
 			adsEnabled && activity?.let {
-				AdActivity.tryShowAd(it, AdFormat.INTER, areaKey)
+				AdActivity.showAd(it, AdFormat.INTER, areaKey)
 			} == true
 		}
 	}

@@ -35,13 +35,13 @@ class AdActivity : AppCompatActivity() {
 			return activity.takeUnless { it.isFinishing || it.isDestroyed }
 		}
 
-		// 保留无返回值的公开入口，内部入口用于判断是否成功启动。
-		fun showAd(activity: Activity, adFormat: AdFormat = AdFormat.INTER_VIDEO, areaKey: String) {
+		/** 展示广告，返回是否成功启动广告页。 */
+		fun showAd(activity: Activity, adFormat: AdFormat = AdFormat.INTER_VIDEO, areaKey: String): Boolean {
 			// TODO: 广告策略判断是否应该播放广告
-			tryShowAd(activity, adFormat, areaKey)
+			return tryShowAd(activity, adFormat, areaKey)
 		}
 
-		internal fun tryShowAd(activity: Activity, adFormat: AdFormat, areaKey: String): Boolean {
+		private fun tryShowAd(activity: Activity, adFormat: AdFormat, areaKey: String): Boolean {
 			if (activity.isFinishing || activity.isDestroyed) return false
 			if (!launchPending.compareAndSet(false, true)) {
 				if (Core.appMod == AppMod.DEBUG) {

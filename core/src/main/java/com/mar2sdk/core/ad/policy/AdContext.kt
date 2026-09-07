@@ -1,12 +1,22 @@
 package com.mar2sdk.core.ad.policy
 
+import android.os.Parcelable
+import com.mar2sdk.core.ad.status.AdFormat
+import com.mar2sdk.core.ad.status.AdPlatform
+import kotlinx.parcelize.Parcelize
+import java.util.UUID
+
 enum class ScreenAdTrigger {
 	ENTER, RETURN, LEAVE
 }
 
+@Parcelize
 data class ScreenAdContext(
+	val requestId: String = UUID.randomUUID().toString(),
 	val areaKey: String,
+	val adFormat: AdFormat,
+	val adPlatform: AdPlatform,
 	val trigger: ScreenAdTrigger,
 	val fromRoute: String?,
 	val toRoute: String
-)
+) : Parcelable

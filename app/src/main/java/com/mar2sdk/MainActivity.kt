@@ -25,8 +25,8 @@ import androidx.compose.ui.unit.dp
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import com.mar2sdk.debug.DebugActivity
 import com.mar2sdk.impl.BaseActivity
-import com.mar2sdk.impl.DebugActivity
 import com.mar2sdk.impl.SplashScreen
 import com.mar2sdk.impl.contentComposable
 import com.mar2sdk.impl.rememberNavigateWithAd

@@ -1,4 +1,4 @@
-package com.mar2sdk.impl
+package com.mar2sdk.debug
 
 import android.content.Intent
 import android.os.Bundle
@@ -20,6 +20,7 @@ import com.mar2sdk.core.notify.app.AppNotificationUtil
 import com.mar2sdk.core.common.TestMod
 import com.mar2sdk.core.common.UserInfo
 import com.mar2sdk.core.common.status.UserType
+import com.mar2sdk.impl.AdActivity
 
 class DebugActivity : AppCompatActivity() {
 	private val notificationPermissionLauncher =

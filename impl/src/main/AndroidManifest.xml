@@ -36,14 +36,6 @@
         </receiver>
 
         <activity
-            android:name=".DebugActivity"
-            android:exported="false"
-            android:windowSoftInputMode="adjustResize" />
-        <activity
-            android:name=".InfoActivity"
-            android:exported="false"
-            android:windowSoftInputMode="adjustResize" />
-        <activity
             android:name=".AdActivity"
             android:exported="false"
             android:windowSoftInputMode="adjustResize" />

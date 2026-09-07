@@ -1,4 +1,4 @@
-package com.mar2sdk.impl
+package com.mar2sdk.debug
 
 import android.os.Bundle
 import android.text.TextUtils

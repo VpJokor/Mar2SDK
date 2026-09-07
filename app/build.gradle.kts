@@ -57,5 +57,6 @@ dependencies {
 	androidTestImplementation(libs.androidx.junit)
 	androidTestImplementation(project(":core"))
 	implementation(project(":impl"))
+	implementation(project(":debug"))
 
 }

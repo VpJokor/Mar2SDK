@@ -1,0 +1,10 @@
+<resources>
+    <string name="clear_local_logs">清空本地日志</string>
+    <string name="clear_local_logs_confirmation">清空后无法恢复，确定继续吗？</string>
+    <string name="clear">清空</string>
+    <string name="info_details">详细信息</string>
+    <string name="info_detail_name">名称：%1$s</string>
+    <string name="info_detail_time">时间：%1$s</string>
+    <string name="info_detail_content">内容：%1$s</string>
+    <string name="refresh">Refresh</string>
+</resources>

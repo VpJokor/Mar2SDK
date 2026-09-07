@@ -12,6 +12,9 @@ import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import com.mar2sdk.core.AppMod
 import com.mar2sdk.core.Core
+import com.mar2sdk.core.ad.AdConfig
+import com.mar2sdk.core.ad.policy.ScreenAdContext
+import com.mar2sdk.core.ad.policy.ScreenAdTrigger
 import com.mar2sdk.core.ad.status.AdFormat
 import com.mar2sdk.core.log.LogAppParam
 import com.mar2sdk.core.log.ThinkingUtil
@@ -99,14 +102,26 @@ class DebugActivity : AppCompatActivity() {
 		}
 
 		findViewById<View>(R.id.test_open).setOnClickListener {
-			AdActivity.showAd(this@DebugActivity, AdFormat.OPEN, AreaKeys.KEY_TEST)
+			showTestAd(AdFormat.OPEN)
 		}
 		findViewById<View>(R.id.test_inter).setOnClickListener {
-			AdActivity.showAd(this@DebugActivity, AdFormat.INTER, AreaKeys.KEY_TEST)
+			showTestAd(AdFormat.INTER)
 		}
 		findViewById<View>(R.id.test_video).setOnClickListener {
-			AdActivity.showAd(this@DebugActivity, AdFormat.VIDEO, AreaKeys.KEY_TEST)
+			showTestAd(AdFormat.VIDEO)
 		}
+	}
+
+	private fun showTestAd(adFormat: AdFormat) {
+		AdActivity.showAd(
+			this,
+			ScreenAdContext(
+				areaKey = AreaKeys.KEY_TEST,
+				adFormat = adFormat,
+				adPlatform = AdConfig.defaultPlatform,
+				trigger = ScreenAdTrigger.UNKNOW
+			)
+		)
 	}
 
 	private fun handleNotificationPermissionResult(granted: Boolean) {

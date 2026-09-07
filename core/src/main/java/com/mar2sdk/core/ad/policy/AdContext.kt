@@ -7,7 +7,7 @@ import kotlinx.parcelize.Parcelize
 import java.util.UUID
 
 enum class ScreenAdTrigger {
-	ENTER, RETURN, LEAVE
+	ENTER, RETURN, LEAVE, UNKNOW
 }
 
 // 广告展示上下文
@@ -18,7 +18,7 @@ data class ScreenAdContext(
 	var adFormat: AdFormat,
 	var adPlatform: AdPlatform,
 	val trigger: ScreenAdTrigger,
-	val fromRoute: String,
-	val toRoute: String,
+	val fromRoute: String = "",
+	val toRoute: String = "",
 	var adUnitId: String = ""
 ) : Parcelable

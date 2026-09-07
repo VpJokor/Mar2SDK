@@ -352,22 +352,25 @@ object AdmobLoader {
 
 	// 检查并移除开屏广告池过期广告
 	fun checkOpenPool() {
-		openPool.entries.removeIf { (_, time) ->
-			System.currentTimeMillis() - time > AdmobConfig.openTimeout
-		}
+		checkPool(openPool) { elapsed -> elapsed > AdmobConfig.openTimeout }
 	}
 
 	// 检查并移除插屏广告池过期广告
 	fun checkInterPool() {
-		interPool.entries.removeIf { (_, time) ->
-			System.currentTimeMillis() - time > AdmobConfig.interTimeout
-		}
+		checkPool(interPool) { elapsed -> elapsed > AdmobConfig.interTimeout }
 	}
 
 	// 检查并移除视频广告池过期广告
 	fun checkVideoPool() {
-		videoPool.entries.removeIf { (_, time) ->
-			System.currentTimeMillis() - time > AdmobConfig.videoTimeout
+		checkPool(videoPool) { elapsed -> elapsed > AdmobConfig.videoTimeout }
+	}
+
+	private fun <T> checkPool(
+		pool: MutableMap<T, Long>,
+		isExpired: (Long) -> Boolean,
+	) {
+		pool.entries.removeIf { (_, time) ->
+			isExpired(System.currentTimeMillis() - time)
 		}
 	}
 }

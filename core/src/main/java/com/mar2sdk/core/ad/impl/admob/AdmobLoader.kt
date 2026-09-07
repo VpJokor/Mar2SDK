@@ -363,8 +363,7 @@ object AdmobLoader {
 			adUnitId = AdmobConfig.videoID
 		)
 	): CompletableDeferred<VideoLoadResult> {
-		val adUnitId = AdmobConfig.videoID
-		val loadContext = adContext.copy(adUnitId = adUnitId)
+		val loadContext = adContext.copy()
 		val loadDeferred = CompletableDeferred<VideoLoadResult>()
 		videoLoadDeferred = loadDeferred
 		isLoadingVideo = true
@@ -388,7 +387,7 @@ object AdmobLoader {
 					completeVideoLoad(loadDeferred, VideoLoadResult.Failed(loadError = loadAdError))
 				}
 			}
-			RewardedAd.load(Core.app, adUnitId, AdRequest.Builder().build(), loadCallback)
+			RewardedAd.load(Core.app, adContext.adUnitId, AdRequest.Builder().build(), loadCallback)
 		} catch (error: Exception) {
 			Log.e(TAG, "Failed to start loading rewarded ad", error)
 			completeVideoLoad(loadDeferred, VideoLoadResult.Failed(exception = error))

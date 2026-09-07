@@ -96,7 +96,7 @@ object AdmobShower {
 			return@withContext AdShowStatus.OTHER_AD_IS_SHOWING
 		}
 		//检查广告池广告是否过期
-		AdmobLoader.checkOpenPool()
+		AdmobLoader.checkPool(callback.adContext.adFormat)
 
 		//修改APP状态
 		AppStatus.isShowingAd = true
@@ -269,7 +269,7 @@ object AdmobShower {
 			return@withContext AdShowStatus.OTHER_AD_IS_SHOWING
 		}
 		//检查广告池广告是否过期
-		AdmobLoader.checkInterPool()
+		AdmobLoader.checkPool(callback.adContext.adFormat)
 
 		//修改APP状态
 		AppStatus.isShowingAd = true
@@ -442,7 +442,7 @@ object AdmobShower {
 			return@withContext AdShowStatus.OTHER_AD_IS_SHOWING
 		}
 		//检查广告池广告是否过期
-		AdmobLoader.checkVideoPool()
+		AdmobLoader.checkPool(callback.adContext.adFormat)
 
 		//修改APP状态
 		AppStatus.isShowingAd = true

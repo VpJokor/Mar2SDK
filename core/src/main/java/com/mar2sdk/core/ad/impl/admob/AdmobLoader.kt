@@ -111,7 +111,7 @@ object AdmobLoader {
 		adContext: ScreenAdContext = defaultContext(AdFormat.OPEN, AdmobConfig.openID)
 	): AdLoadStatus = withContext(Dispatchers.Main.immediate) {
 		// 检查过期广告
-		checkOpenPool()
+		checkPool(adContext.adFormat)
 		// 有广告正在加载
 		if (isLoadingOpen) return@withContext AdLoadStatus.IS_LOADING
 		// 检查广告池是否满
@@ -127,7 +127,7 @@ object AdmobLoader {
 	internal suspend fun loadOpenResult(
 		adContext: ScreenAdContext = defaultContext(AdFormat.OPEN, AdmobConfig.openID)
 	): OpenLoadResult = loadResult(
-		checkPool = ::checkOpenPool,
+		checkPool = { checkPool(AdFormat.OPEN) },
 		currentLoad = { openLoadDeferred },
 		isPoolFull = { openPool.size >= AdmobConfig.openPoolSize },
 		poolFull = OpenLoadResult.PoolFull,
@@ -178,7 +178,7 @@ object AdmobLoader {
 		adContext: ScreenAdContext = defaultContext(AdFormat.INTER, AdmobConfig.interID)
 	): AdLoadStatus = withContext(Dispatchers.Main.immediate) {
 		// 检查过期广告
-		checkInterPool()
+		checkPool(adContext.adFormat)
 		// 有广告正在加载
 		if (isLoadingInter) return@withContext AdLoadStatus.IS_LOADING
 		// 检查广告池是否满
@@ -194,7 +194,7 @@ object AdmobLoader {
 	internal suspend fun loadInterResult(
 		adContext: ScreenAdContext = defaultContext(AdFormat.INTER, AdmobConfig.interID)
 	): InterLoadResult = loadResult(
-		checkPool = ::checkInterPool,
+		checkPool = { checkPool(AdFormat.INTER) },
 		currentLoad = { interLoadDeferred },
 		isPoolFull = { interPool.size >= AdmobConfig.interPoolSize },
 		poolFull = InterLoadResult.PoolFull,
@@ -245,7 +245,7 @@ object AdmobLoader {
 		adContext: ScreenAdContext = defaultContext(AdFormat.VIDEO, AdmobConfig.videoID)
 	): AdLoadStatus = withContext(Dispatchers.Main.immediate) {
 		// 检查过期广告
-		checkVideoPool()
+		checkPool(adContext.adFormat)
 		// 有广告正在加载
 		if (isLoadingVideo) return@withContext AdLoadStatus.IS_LOADING
 		// 检查广告池是否满
@@ -261,7 +261,7 @@ object AdmobLoader {
 	internal suspend fun loadVideoResult(
 		adContext: ScreenAdContext = defaultContext(AdFormat.VIDEO, AdmobConfig.videoID)
 	): VideoLoadResult = loadResult(
-		checkPool = ::checkVideoPool,
+		checkPool = { checkPool(AdFormat.VIDEO) },
 		currentLoad = { videoLoadDeferred },
 		isPoolFull = { videoPool.size >= AdmobConfig.videoPoolSize },
 		poolFull = VideoLoadResult.PoolFull,
@@ -350,19 +350,17 @@ object AdmobLoader {
 		}
 	}
 
-	// 检查并移除开屏广告池过期广告
-	fun checkOpenPool() {
-		checkPool(openPool) { elapsed -> elapsed > AdmobConfig.openTimeout }
-	}
-
-	// 检查并移除插屏广告池过期广告
-	fun checkInterPool() {
-		checkPool(interPool) { elapsed -> elapsed > AdmobConfig.interTimeout }
-	}
-
-	// 检查并移除视频广告池过期广告
-	fun checkVideoPool() {
-		checkPool(videoPool) { elapsed -> elapsed > AdmobConfig.videoTimeout }
+	// 检查并移除广告池过期广告
+	fun checkPool(adFormat: AdFormat) {
+		when(adFormat) {
+			// 检查并移除开屏广告池过期广告
+			AdFormat.OPEN -> checkPool(openPool) { elapsed -> elapsed > AdmobConfig.openTimeout }
+			// 检查并移除插屏广告池过期广告
+			AdFormat.INTER -> checkPool(interPool) { elapsed -> elapsed > AdmobConfig.interTimeout }
+			// 检查并移除视频广告池过期广告
+			AdFormat.VIDEO -> checkPool(videoPool) { elapsed -> elapsed > AdmobConfig.videoTimeout }
+			else -> checkPool(interPool) { elapsed -> elapsed > AdmobConfig.interTimeout }
+		}
 	}
 
 	private fun <T> checkPool(

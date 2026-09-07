@@ -91,7 +91,7 @@ object AdmobShower {
 			LogAdEvent.ad_occur,
 			mapOf(
 				LogAdParam.ad_platform to AdPlatform.ADMOB.name,
-				LogAdParam.ad_areakey to callback.areaKey,
+				LogAdParam.ad_areakey to callback.adContext.areaKey,
 				LogAdParam.ad_format to AdFormat.OPEN.name,
 				LogAdParam.ad_unit_name to AdmobConfig.openID,
 			)
@@ -127,7 +127,7 @@ object AdmobShower {
 				mapOf(
 					LogAdParam.ad_platform to AdPlatform.ADMOB.name,
 					LogAdParam.duration to (SystemClock.elapsedRealtime() - startShowTime),
-					LogAdParam.ad_areakey to callback.areaKey,
+					LogAdParam.ad_areakey to callback.adContext.areaKey,
 					LogAdParam.ad_format to AdFormat.OPEN.name,
 					LogAdParam.ad_source to (currentOpenAd?.responseInfo?.loadedAdapterResponseInfo?.adSourceName ?: LogAdParam.unknow),
 					LogAdParam.ad_unit_name to AdmobConfig.openID,
@@ -190,7 +190,7 @@ object AdmobShower {
 			// info: 处理收入打点
 			val revenue = adValue.valueMicros / 1_000_000.0
 			val revenueParams = mapOf(
-				LogAdParam.ad_areakey to callback.areaKey,
+				LogAdParam.ad_areakey to callback.adContext.areaKey,
 				FirebaseAnalytics.Param.AD_PLATFORM to AdPlatform.ADMOB.name,
 				FirebaseAnalytics.Param.AD_UNIT_NAME to AdmobConfig.openID,
 				FirebaseAnalytics.Param.AD_FORMAT to AdFormat.OPEN.name,
@@ -235,7 +235,7 @@ object AdmobShower {
 			val openAd = AdmobLoader.openPool.keys.firstOrNull() ?: when (
 				val loadResult = try {
 					withTimeoutOrNull(showMaxTime) {
-						AdmobLoader.loadOpenResult(areaKey = callback.areaKey)
+						AdmobLoader.loadOpenResult(areaKey = callback.adContext.areaKey)
 					}
 				} catch (e: CancellationException) {
 					throw e
@@ -280,7 +280,7 @@ object AdmobShower {
 			LogAdEvent.ad_occur,
 			mapOf(
 				LogAdParam.ad_platform to AdPlatform.ADMOB.name,
-				LogAdParam.ad_areakey to callback.areaKey,
+				LogAdParam.ad_areakey to callback.adContext.areaKey,
 				LogAdParam.ad_format to AdFormat.INTER.name,
 				LogAdParam.ad_unit_name to AdmobConfig.interID,
 			)
@@ -316,7 +316,7 @@ object AdmobShower {
 				mapOf(
 					LogAdParam.ad_platform to AdPlatform.ADMOB.name,
 					LogAdParam.duration to (SystemClock.elapsedRealtime() - startShowTime),
-					LogAdParam.ad_areakey to callback.areaKey,
+					LogAdParam.ad_areakey to callback.adContext.areaKey,
 					LogAdParam.ad_format to AdFormat.INTER.name,
 					LogAdParam.ad_source to (currentInterAd?.responseInfo?.loadedAdapterResponseInfo?.adSourceName ?: LogAdParam.unknow),
 					LogAdParam.ad_unit_name to AdmobConfig.interID,
@@ -379,7 +379,7 @@ object AdmobShower {
 			// info: 处理收入打点
 			val revenue = adValue.valueMicros / 1_000_000.0
 			val revenueParams = mapOf(
-				LogAdParam.ad_areakey to callback.areaKey,
+				LogAdParam.ad_areakey to callback.adContext.areaKey,
 				FirebaseAnalytics.Param.AD_PLATFORM to AdPlatform.ADMOB.name,
 				FirebaseAnalytics.Param.AD_UNIT_NAME to AdmobConfig.interID,
 				FirebaseAnalytics.Param.AD_FORMAT to AdFormat.INTER.name,
@@ -424,7 +424,7 @@ object AdmobShower {
 			val interAd = AdmobLoader.interPool.keys.firstOrNull() ?: when (
 				val loadResult = try {
 					withTimeoutOrNull(showMaxTime) {
-						AdmobLoader.loadInterResult(areaKey = callback.areaKey)
+						AdmobLoader.loadInterResult(areaKey = callback.adContext.areaKey)
 					}
 				} catch (e: CancellationException) {
 					throw e
@@ -469,7 +469,7 @@ object AdmobShower {
 			LogAdEvent.ad_occur,
 			mapOf(
 				LogAdParam.ad_platform to AdPlatform.ADMOB.name,
-				LogAdParam.ad_areakey to callback.areaKey,
+				LogAdParam.ad_areakey to callback.adContext.areaKey,
 				LogAdParam.ad_format to AdFormat.VIDEO.name,
 				LogAdParam.ad_unit_name to AdmobConfig.videoID,
 			)
@@ -505,7 +505,7 @@ object AdmobShower {
 				mapOf(
 					LogAdParam.ad_platform to AdPlatform.ADMOB.name,
 					LogAdParam.duration to (SystemClock.elapsedRealtime() - startShowTime),
-					LogAdParam.ad_areakey to callback.areaKey,
+					LogAdParam.ad_areakey to callback.adContext.areaKey,
 					LogAdParam.ad_format to AdFormat.VIDEO.name,
 					LogAdParam.ad_source to (currentVideoAd?.responseInfo?.loadedAdapterResponseInfo?.adSourceName ?: LogAdParam.unknow),
 					LogAdParam.ad_unit_name to AdmobConfig.videoID,
@@ -568,7 +568,7 @@ object AdmobShower {
 			// info: 处理收入打点
 			val revenue = adValue.valueMicros / 1_000_000.0
 			val revenueParams = mapOf(
-				LogAdParam.ad_areakey to callback.areaKey,
+				LogAdParam.ad_areakey to callback.adContext.areaKey,
 				FirebaseAnalytics.Param.AD_PLATFORM to AdPlatform.ADMOB.name,
 				FirebaseAnalytics.Param.AD_UNIT_NAME to AdmobConfig.videoID,
 				FirebaseAnalytics.Param.AD_FORMAT to AdFormat.VIDEO.name,
@@ -615,7 +615,7 @@ object AdmobShower {
 			val videoAd = AdmobLoader.videoPool.keys.firstOrNull() ?: when (
 				val loadResult = try {
 					withTimeoutOrNull(showMaxTime) {
-						AdmobLoader.loadVideoResult(areaKey = callback.areaKey)
+						AdmobLoader.loadVideoResult(areaKey = callback.adContext.areaKey)
 					}
 				} catch (e: CancellationException) {
 					throw e

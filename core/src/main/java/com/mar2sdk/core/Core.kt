@@ -59,8 +59,8 @@ object Core {
 		AppObs.init()
 	}
 
-	suspend fun showAd(activity: Activity, callback: ShowCallback, adFormat: AdFormat): AdShowStatus {
-		return when(adFormat) {
+	suspend fun showAd(activity: Activity, callback: ShowCallback): AdShowStatus {
+		return when(callback.adContext.adFormat) {
 			AdFormat.OPEN_INTER -> AdShower.showOpenInter(activity, callback)
 			AdFormat.INTER_VIDEO -> AdShower.showInterVideo(activity, callback)
 			AdFormat.OPEN -> AdShower.showOpen(activity, callback)

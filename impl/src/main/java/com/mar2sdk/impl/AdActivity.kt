@@ -16,7 +16,6 @@ import com.mar2sdk.core.AppMod
 import com.mar2sdk.core.Core
 import com.mar2sdk.core.ad.callback.ShowCallback
 import com.mar2sdk.core.ad.policy.ScreenAdContext
-import com.mar2sdk.core.ad.status.AdPlatform
 import com.mar2sdk.core.ad.status.ShowFailResult
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.launch
@@ -102,15 +101,13 @@ class AdActivity : AppCompatActivity() {
 		super.onDestroy()
 	}
 
-	private fun showRequestedAd(adContext: ScreenAdContext) {
+	private fun showRequestedAd(context: ScreenAdContext) {
 		val loading = findViewById<ProgressBar>(R.id.ad_loading)
 		if (Core.appMod == AppMod.DEBUG) {
-			Toast.makeText(Core.app, "展示广告 areaKey= $adContext", Toast.LENGTH_LONG).show()
+			Toast.makeText(Core.app, "展示广告 areaKey= $context", Toast.LENGTH_LONG).show()
 		}
 		val callback = object : ShowCallback {
-			override var areaKey = adContext.areaKey
-			override var adFormat = adContext.adFormat
-			override lateinit var adPlatform: AdPlatform
+			override val adContext = context
 
 			override fun showFailed(reason: ShowFailResult) = finish()
 			override fun onAdClosed() = finish()
@@ -123,12 +120,12 @@ class AdActivity : AppCompatActivity() {
 		}
 		lifecycleScope.launch {
 			try {
-				Core.showAd(this@AdActivity, callback, adContext.adFormat)
+				Core.showAd(this@AdActivity, callback)
 				loading.visibility = View.GONE
 			} catch (exception: CancellationException) {
 				throw exception
 			} catch (exception: Exception) {
-				Log.e(TAG, "Unexpected failure while showing ${adContext.areaKey} (request ${adContext.requestId})", exception)
+				Log.e(TAG, "Unexpected failure while showing ${context.areaKey} (request ${context.requestId})", exception)
 				finish()
 			}
 		}

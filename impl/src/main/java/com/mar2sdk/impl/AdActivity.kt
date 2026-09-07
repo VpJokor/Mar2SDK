@@ -14,6 +14,7 @@ import androidx.lifecycle.lifecycleScope
 import com.mar2sdk.core.AppMod
 import com.mar2sdk.core.Core
 import com.mar2sdk.core.ad.callback.ShowCallback
+import com.mar2sdk.core.ad.policy.ScreenAdContext
 import com.mar2sdk.core.ad.status.AdFormat
 import com.mar2sdk.core.ad.status.AdPlatform
 import com.mar2sdk.core.ad.status.ShowFailResult
@@ -35,8 +36,8 @@ class AdActivity : AppCompatActivity() {
 			return activity.takeUnless { it.isFinishing || it.isDestroyed }
 		}
 
-		/** 展示广告，返回是否成功启动广告页。 */
-		fun showAd(activity: Activity, adFormat: AdFormat = AdFormat.INTER_VIDEO, areaKey: String): Boolean {
+		// 展示广告，返回是否成功启动广告页。
+		fun showAd(activity: Activity, adFormat: AdFormat = AdFormat.INTER_VIDEO, adContext: ScreenAdContext): Boolean {
 			// TODO: 广告策略判断是否应该播放广告
 			return tryShowAd(activity, adFormat, areaKey)
 		}

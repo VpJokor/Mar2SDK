@@ -15,8 +15,8 @@ enum class ScreenAdTrigger {
 data class ScreenAdContext(
 	val requestId: String = UUID.randomUUID().toString(),
 	val areaKey: String,
-	val adFormat: AdFormat,
-	val adPlatform: AdPlatform,
+	var adFormat: AdFormat,
+	var adPlatform: AdPlatform,
 	val trigger: ScreenAdTrigger,
 	val fromRoute: String?,
 	val toRoute: String

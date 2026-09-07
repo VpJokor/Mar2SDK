@@ -263,10 +263,7 @@ object AdmobShower {
 
 	suspend fun showInter(activity: Activity, callback: ShowCallback): AdShowStatus = withContext(Dispatchers.Main.immediate) {
 		callback.adContext.adUnitId = AdmobConfig.interID
-		LogUtil.log(
-			LogAdEvent.ad_occur,
-			callback.adContext.toAdLogParams()
-		)
+		LogUtil.log(LogAdEvent.ad_occur, callback.adContext.toAdLogParams())
 		if (AppStatus.isShowingAd) {
 			Log.e(TAG, "showInter: AppStatus.isShowingAd")
 			callback.showFailed(ShowFailResult.OTHER_AD_IS_SHOWING)
@@ -441,10 +438,7 @@ object AdmobShower {
 
 	suspend fun showVideo(activity: Activity, callback: ShowCallback): AdShowStatus = withContext(Dispatchers.Main.immediate) {
 		callback.adContext.adUnitId = AdmobConfig.videoID
-		LogUtil.log(
-			LogAdEvent.ad_occur,
-			callback.adContext.toAdLogParams()
-		)
+		LogUtil.log(LogAdEvent.ad_occur, callback.adContext.toAdLogParams())
 		if (AppStatus.isShowingAd) {
 			Log.e(TAG, "showVideo: AppStatus.isShowingAd")
 			callback.showFailed(ShowFailResult.OTHER_AD_IS_SHOWING)

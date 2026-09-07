@@ -35,13 +35,9 @@ class AdActivity : AppCompatActivity() {
 			return activity.takeUnless { it.isFinishing || it.isDestroyed }
 		}
 
-
-		fun showing(): Boolean {
-			return launchPending.get() || activeActivity() != null
-		}
-
 		// 保留无返回值的公开入口，内部入口用于判断是否成功启动。
 		fun showAd(activity: Activity, adFormat: AdFormat = AdFormat.INTER_VIDEO, areaKey: String) {
+			// TODO: 广告策略判断是否应该播放广告
 			tryShowAd(activity, adFormat, areaKey)
 		}
 

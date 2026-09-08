@@ -45,7 +45,7 @@ class AppNotificationManager {
 	}
 
 	suspend fun addBatch(scene: String) {
-		// TODO: 没有延迟发送的立即调 sendBatch，有延迟发送的放到 waitBatchQueue 中
+		// TODO: 没有延迟（trigger.delay）发送的立即调 sendBatch，有延迟发送的放到 waitBatchQueue 中
 		waitBatchQueue.add(NotificationBatch(scene, System.currentTimeMillis()))
 	}
 
@@ -53,7 +53,18 @@ class AppNotificationManager {
 	suspend fun sendBatch(scene: String) {
 		if (!canSendBatch(scene)) return
 
-		// TODO: 给 sendingQueue 加通知
+		val trigger = NotificationConfig.triggers[scene] ?: return
+		if (trigger.count <= 0) return
+
+		// 批次中的通知按 5 秒间隔排队，首条通知应用场景配置的延迟。
+		repeat(trigger.count) { index ->
+			sendingQueue.add(
+				NotificationItem(
+					scene = scene,
+					timeAt = index.toLong() * 5_000L
+				)
+			)
+		}
 
 		LogUtil.log(LogNotifyEvent.notify_send_batch, mapOf(LogNotifyParam.isSuccess to true, LogNotifyParam.scene to scene))
 	}

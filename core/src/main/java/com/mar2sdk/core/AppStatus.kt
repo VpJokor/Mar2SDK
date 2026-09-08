@@ -59,7 +59,6 @@ object AppStatus {
 				if (event.isForeground) {
 					// INFO: 开屏填充广告池
 					startAdPreload()
-					// TODO: APP在前台不发通知且清空通知队列
 					AppNotificationManager.clears()
 				} else {
 					addNotificationBatch(NotificationTriggerKey.return_to_home)

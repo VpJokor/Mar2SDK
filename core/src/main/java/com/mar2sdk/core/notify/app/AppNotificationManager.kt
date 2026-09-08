@@ -5,6 +5,7 @@ import com.mar2sdk.core.AppMod
 import com.mar2sdk.core.AppStatus
 import com.mar2sdk.core.Core
 import com.mar2sdk.core.common.UserInfo
+import com.mar2sdk.core.common.status.UserType
 import com.mar2sdk.core.log.LogAppParam
 import com.mar2sdk.core.log.LogNotifyEvent
 import com.mar2sdk.core.log.LogNotifyParam
@@ -93,6 +94,11 @@ class AppNotificationManager {
 
 	// 通知发送限制
 	fun canSend(isBatch: Boolean) : Boolean {
+		if (Core.userType == UserType.RISK) {
+			if (Core.appMod == AppMod.DEBUG) {
+				Toast.makeText(Core.app, "风险用户不发通知", Toast.LENGTH_LONG).show()
+			}
+		}
 		if (!NotificationConfig.isSend) {
 			if (Core.appMod == AppMod.DEBUG) {
 				Toast.makeText(Core.app, "APP通知总开关没开不发通知", Toast.LENGTH_LONG).show()

@@ -17,6 +17,10 @@ class AppNotificationManager {
 		AppNotificationUtil.sendNotificationBatch(scene)
 	}
 
+	fun send() {
+
+	}
+
 	// TODO: 清理 waitBatchQueue 和 sendingQueue
 	fun clear() {
 

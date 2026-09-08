@@ -44,11 +44,18 @@ class AppNotificationManager {
 		clears()
 	}
 
+	suspend fun addBatch(scene: String) {
+		if (!canSendBatch(scene)) return
+		waitBatchQueue.add(NotificationBatch(scene, System.currentTimeMillis()))
+	}
+
 	// 发送一批通知
 	suspend fun sendBatch(scene: String) {
 		if (!canSendBatch(scene)) return
-		waitBatchQueue.add(NotificationBatch(scene, System.currentTimeMillis()))
-//		LogUtil.log(LogNotifyEvent.notify_send_batch, mapOf(LogNotifyParam.isSuccess to true, LogNotifyParam.scene to scene))
+
+		// TODO: 给 sendingQueue 加通知
+
+		LogUtil.log(LogNotifyEvent.notify_send_batch, mapOf(LogNotifyParam.isSuccess to true, LogNotifyParam.scene to scene))
 	}
 
 	// 清理 waitBatchQueue 和 sendingQueue
@@ -115,6 +122,34 @@ class AppNotificationManager {
 	//发送批次限制
 	suspend fun canSendBatch(scene: String) : Boolean {
 		if (!canSend(true)) return false
+		val currentTime = System.currentTimeMillis()
+		if (sendingQueue.isNotEmpty()) {
+			if (Core.appMod == AppMod.DEBUG) {
+				Toast.makeText(Core.app, "有通知正在发送，不发新批次通知", Toast.LENGTH_LONG).show()
+			}
+			LogUtil.log(
+				LogNotifyEvent.notify_send_batch,
+				mapOf(LogNotifyParam.isSuccess to false, LogAppParam.msg to "有通知正在发送，不发新批次通知",)
+			)
+			return false
+		}
+		//首次打开时间
+		val firstOpenTime = UserInfo.firstOpenTime
+		val trigger = NotificationConfig.triggers[scene]
+		if (trigger != null && currentTime - firstOpenTime < trigger.firstDelay.toLong() * 1000) {
+			if (Core.appMod == AppMod.DEBUG) {
+				Toast.makeText(Core.app, "${scene}, 首次打开时间小于场景通知首次发送延迟", Toast.LENGTH_LONG).show()
+			}
+			LogUtil.log(
+				LogNotifyEvent.notify_send_batch ,
+				mapOf(
+					LogNotifyParam.isSuccess to false,
+					LogNotifyParam.scene to scene,
+					LogAppParam.msg to "首次打开时间小于场景通知首次发送延迟",
+				)
+			)
+			return false
+		}
 		// 分页读取本地Log，只统计成功发送的通知
 		val sentLogs = mutableListOf<DBUtil.LocalLog>()
 		var beforeId = Long.MAX_VALUE
@@ -134,7 +169,6 @@ class AppNotificationManager {
 			}
 			beforeId = logs.last().id
 		}
-		val currentTime = System.currentTimeMillis()
 		val sentBatchLogs = sentLogs.filter { it.eventName == LogNotifyEvent.notify_send_batch }
 		val sentItemLogs = sentLogs.filter { it.eventName == LogNotifyEvent.notify_send_item }
 		// 上一次成功触发时间(查本地Log)
@@ -213,23 +247,6 @@ class AppNotificationManager {
 					LogNotifyParam.isSuccess to false,
 					LogNotifyParam.scene to scene,
 					LogAppParam.msg to "最近的1小时内发送条数达到发送限制",
-				)
-			)
-			return false
-		}
-		//首次打开时间
-		val firstOpenTime = UserInfo.firstOpenTime
-		val trigger = NotificationConfig.triggers[scene]
-		if (trigger != null && currentTime - firstOpenTime < trigger.firstDelay.toLong() * 1000) {
-			if (Core.appMod == AppMod.DEBUG) {
-				Toast.makeText(Core.app, "${scene}, 首次打开时间小于场景通知首次发送延迟", Toast.LENGTH_LONG).show()
-			}
-			LogUtil.log(
-				LogNotifyEvent.notify_send_batch ,
-				mapOf(
-					LogNotifyParam.isSuccess to false,
-					LogNotifyParam.scene to scene,
-					LogAppParam.msg to "首次打开时间小于场景通知首次发送延迟",
 				)
 			)
 			return false

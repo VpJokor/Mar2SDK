@@ -26,7 +26,7 @@ object IPUtil {
 		val result = runCatching {
 			val client = OkHttpClient()
 			val request = Request.Builder()
-				.url(PolicyConfig.serverUrl + PolicyConfig.ipInfoPath)
+				.url(CommonConfig.serverUrl + CommonConfig.ipInfoPath)
 				.get()
 				.build()
 

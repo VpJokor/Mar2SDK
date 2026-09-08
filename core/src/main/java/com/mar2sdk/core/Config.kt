@@ -9,7 +9,7 @@ import com.mar2sdk.core.ad.impl.unity.UnityConfig
 import com.mar2sdk.core.firebase.SingularConfig
 import com.mar2sdk.core.log.ThinkingConfig
 import com.mar2sdk.core.notify.NotificationConfig
-import com.mar2sdk.core.common.PolicyConfig
+import com.mar2sdk.core.common.CommonConfig
 import com.mar2sdk.core.common.UserInfo
 import com.mar2sdk.core.util.DBUtil
 import com.mar2sdk.core.util.PreferenceUtil
@@ -23,7 +23,7 @@ object Config {
 		PreferenceUtil.init()
 		DBUtil.init()
 		initUserInfo()
-		initPolicyConfig()
+		initCommonConfig()
 		initAdConfig()
 		initFirebaseConfig()
 		initSingularConfig()
@@ -35,8 +35,8 @@ object Config {
 		UserInfo.init()
 	}
 
-	fun initPolicyConfig() {
-		PolicyConfig.init()
+	fun initCommonConfig() {
+		CommonConfig.init()
 	}
 
 	fun initAdConfig() {

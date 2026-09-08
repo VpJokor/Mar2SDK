@@ -5,8 +5,8 @@ import com.mar2sdk.core.R
 import com.mar2sdk.core.util.PreferenceUtil
 import org.json.JSONObject
 
-//Policy的配置
-object PolicyConfig {
+// 通用配置
+object CommonConfig {
 	// 高ecpm阈值
 	var highEcpm = 10.0
 	// 服务端的Url
@@ -27,7 +27,7 @@ object PolicyConfig {
 
 	// 从打包资源读取默认配置。
 	fun loadConfigFromRaw() {
-		val config = Core.app.resources.openRawResource(R.raw.policy_config)
+		val config = Core.app.resources.openRawResource(R.raw.common_config)
 			.bufferedReader()
 			.use { JSONObject(it.readText()) }
 
@@ -54,7 +54,7 @@ object PolicyConfig {
 	}
 
 	// 把配置保存到本地 (Preference)。
-	fun savePolicyConfig() {
+	fun saveCommonConfig() {
 		with(PolicyKey) {
 			PreferenceUtil.commitDouble(KEY_HIGH_ECPM, highEcpm)
 			PreferenceUtil.commitString(KEY_SERVER_URL, serverUrl)

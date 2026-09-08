@@ -19,7 +19,7 @@ import com.mar2sdk.core.ad.AdConfig
 import com.mar2sdk.core.ad.impl.admob.AdmobConfig
 import com.mar2sdk.core.firebase.SingularConfig
 import com.mar2sdk.core.log.ThinkingConfig
-import com.mar2sdk.core.common.PolicyConfig
+import com.mar2sdk.core.common.CommonConfig
 import com.mar2sdk.core.common.UserInfo
 import com.mar2sdk.core.util.DBUtil
 import kotlinx.coroutines.launch
@@ -167,12 +167,12 @@ class InfoActivity : AppCompatActivity() {
 			.joinToString()
 			.ifEmpty { "无" }
 		val configValues: List<Pair<String, Any>> = listOf(
-			"高 ECPM 阈值" to PolicyConfig.highEcpm,
-			"策略服务地址" to PolicyConfig.serverUrl,
-			"A/B 测试名称" to PolicyConfig.ABTestName,
-			"Play Integrity ID" to PolicyConfig.PlayIntegrityID,
-			"Token 解析路径" to PolicyConfig.parseTokenPath,
-			"IP 信息路径" to PolicyConfig.ipInfoPath,
+			"高 ECPM 阈值" to CommonConfig.highEcpm,
+			"策略服务地址" to CommonConfig.serverUrl,
+			"A/B 测试名称" to CommonConfig.ABTestName,
+			"Play Integrity ID" to CommonConfig.PlayIntegrityID,
+			"Token 解析路径" to CommonConfig.parseTokenPath,
+			"IP 信息路径" to CommonConfig.ipInfoPath,
 			"默认广告平台" to AdConfig.defaultPlatform.name,
 			"启用广告平台" to activePlatforms,
 			"正式admob开屏" to AdmobConfig.releaseOpenID,

@@ -32,7 +32,7 @@ object PlayIntegrityUtil {
 	 * Google Cloud Project Number 由 SDK 配置提供；token 获取成功后异步发送给服务端。
 	 */
 	fun requestPlayIntegrity() {
-		val cloudProjectNumber = PolicyConfig.PlayIntegrityID
+		val cloudProjectNumber = CommonConfig.PlayIntegrityID
 		if (cloudProjectNumber <= 0L) {
 			Log.w(TAG, "requestPlayIntegrity: missing cloud project number")
 			return
@@ -96,7 +96,7 @@ object PlayIntegrityUtil {
 
 		val jsonBody = params.toString().toRequestBody(mediaType)
 		val request = Request.Builder()
-			.url(PolicyConfig.serverUrl + PolicyConfig.parseTokenPath)
+			.url(CommonConfig.serverUrl + CommonConfig.parseTokenPath)
 			.post(jsonBody)
 			.build()
 		try {

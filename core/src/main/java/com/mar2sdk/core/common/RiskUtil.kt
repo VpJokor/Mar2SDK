@@ -41,7 +41,7 @@ object RiskUtil {
 			UserInfo.ecpmType = EcpmType.ECPM_UNKNOW
 		} else if (UserInfo.firstAdRevenue == 0.0) {
 			UserInfo.ecpmType = EcpmType.ECPM_0
-		} else if (UserInfo.firstAdRevenue > PolicyConfig.highEcpm) {
+		} else if (UserInfo.firstAdRevenue > CommonConfig.highEcpm) {
 			UserInfo.ecpmType = EcpmType.ECPM_H
 		} else {
 			UserInfo.ecpmType = EcpmType.ECPM_COMMON

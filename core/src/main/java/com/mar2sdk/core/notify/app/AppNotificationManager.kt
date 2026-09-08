@@ -45,7 +45,8 @@ data class NotificationBatch(val scene: String, val timeAt: Long)
  */
 data class NotificationItem(val scene: String, val timeAt: Long)
 
-class AppNotificationManager {
+object AppNotificationManager {
+	const val TAG = "AppNotificationManager"
 
 	private val loopScope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
 	private var loopJob: Job? = null
@@ -433,7 +434,4 @@ class AppNotificationManager {
 		}
 	}
 
-	private companion object {
-		const val TAG = "AppNotificationManager"
-	}
 }

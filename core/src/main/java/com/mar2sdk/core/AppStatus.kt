@@ -36,8 +36,12 @@ object AppStatus {
 	val listener = AppObs.Listener{ event ->
 		Log.e(TAG, "AppStatus change: $event" )
 		when(event) {
-			// INFO: 开机完成后启动常驻通知
-			is AppObs.Event.BootCompleted -> startCommonServiceAfterBoot()
+			// INFO: 开机
+			is AppObs.Event.BootCompleted -> {
+				//启动常驻通知
+				startCommonServiceAfterBoot()
+
+			}
 			// INFO: 前后台切换
 			is AppObs.Event.ForegroundChanged -> {
 				if (event.isForeground) {

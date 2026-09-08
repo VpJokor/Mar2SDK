@@ -8,5 +8,7 @@ package com.mar2sdk.core.log
 object LogAppEvent {
 	const val app_foreground = "app_foreground"
 	const val app_background = "app_background"
+	// APP 从最近任务列表中移除。
+	const val app_exit = "app_exit"
 
 }

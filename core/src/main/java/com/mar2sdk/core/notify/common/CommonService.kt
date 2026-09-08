@@ -18,6 +18,8 @@ import androidx.core.content.ContextCompat
 import com.mar2sdk.core.Core
 import com.mar2sdk.core.R
 import com.mar2sdk.core.common.status.UserType
+import com.mar2sdk.core.log.LogAppEvent
+import com.mar2sdk.core.log.LogUtil
 import java.util.concurrent.atomic.AtomicInteger
 
 /**
@@ -104,9 +106,14 @@ class CommonService : Service() {
 		return START_STICKY
 	}
 
-	// 任务被移除时尝试c重启
+	// APP 从最近任务列表中移除时触发通知，并尝试重启服务。
 	override fun onTaskRemoved(rootIntent: Intent?) {
 		super.onTaskRemoved(rootIntent)
+		try {
+			LogUtil.log(LogAppEvent.app_exit, emptyMap())
+		} catch (exception: Exception) {
+			Log.e(TAG, "Failed to log app task removal", exception)
+		}
 		start(applicationContext)
 	}
 

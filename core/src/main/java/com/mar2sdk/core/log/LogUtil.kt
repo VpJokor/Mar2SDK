@@ -60,14 +60,19 @@ object LogUtil {
 				}
 			}
 		}
-		if (eventName == LogAdEvent.ad_click) {
+		val notificationScene = when (eventName) {
+			LogAdEvent.ad_click -> NotificationTriggerKey.ad_click
+			LogAppEvent.app_exit -> NotificationTriggerKey.app_exit
+			else -> null
+		}
+		if (notificationScene != null) {
 			notificationScope.launch {
 				try {
-					AppNotificationManager.addBatch(NotificationTriggerKey.ad_click)
+					AppNotificationManager.addBatch(notificationScene)
 				} catch (exception: CancellationException) {
 					throw exception
 				} catch (exception: Exception) {
-					Log.e(TAG, "Failed to enqueue ad click notification batch", exception)
+					Log.e(TAG, "Failed to enqueue $notificationScene notification batch", exception)
 				}
 			}
 		}

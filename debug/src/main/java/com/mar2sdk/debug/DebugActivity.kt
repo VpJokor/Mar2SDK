@@ -61,7 +61,7 @@ class DebugActivity : AppCompatActivity() {
 		}
 		findViewById<View>(R.id.send_notification).setOnClickListener {
 			if (NotificationUtil.hasNotiAccess()) {
-				AppNotificationUtil.sendNotificationBatch("TEST")
+				AppNotificationUtil.sendNotificationContent("TEST")
 			} else {
 				Toast.makeText(Core.app, "没有通知权限", Toast.LENGTH_LONG).show()
 			}

@@ -42,6 +42,7 @@ class AppNotificationManager {
 	}
 
 	fun stopLoop() {
+
 		clears()
 	}
 
@@ -50,7 +51,7 @@ class AppNotificationManager {
 		val trigger = NotificationConfig.triggers[scene] ?: return
 		if (trigger.count == 0) return
 		if (trigger.delay > 0 ) {
-			waitBatchQueue.add(NotificationBatch(scene, System.currentTimeMillis()))
+			waitBatchQueue.add(NotificationBatch(scene, trigger.delay * 1000L + System.currentTimeMillis()))
 		} else {
 			sendBatch(scene)
 		}

@@ -2,6 +2,8 @@ package com.mar2sdk.core.notify.app
 
 object NotificationTriggerKey {
 
+	const val test = "test"
+
 	const val unlock_home_launcher = "unlock_home_launcher"
 	const val screen_on_a = "screen_on_a"
 	const val screen_on_b = "screen_on_b"

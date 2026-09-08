@@ -3,109 +3,118 @@
   "isForegroundSend": false,
   "isScreenOffSend": false,
   "isScreenLockSend": false,
-  "first_delay": 300,
   "interval_second":  60,
   "24HMax":  50,
   "1HMax":  5,
   "ChannelCount": 3,
   "triggers":  {
     "unlock_home_launcher" : {
+      "first_delay": 300,
       "delay":  0,
       "count":  3,
       "interval":  60
     },
     "screen_on_a" : {
+      "first_delay": 300,
       "delay":  5,
       "count":  3,
       "interval":  300
     },
     "screen_on_b" : {
+      "first_delay": 300,
       "delay":  10,
       "count":  3,
       "interval":  300
     },
     "screen_on_c" : {
+      "first_delay": 300,
       "delay":  65,
       "count":  3,
       "interval":  600
     },
     "screen_off_locked" : {
+      "first_delay": 300,
       "delay":  60,
       "count":  3,
       "interval":  600
     },
     "power_connected" : {
+      "first_delay": 300,
       "delay":  0,
       "count":  3,
       "interval":  300
     },
     "return_to_home" : {
+      "first_delay": 300,
       "delay":  0,
       "count":  3,
       "interval":  300
     },
     "ad_click" : {
+      "first_delay": 300,
       "delay":  0,
       "count":  3,
       "interval":  300
     },
     "app_exit" : {
+      "first_delay": 300,
       "delay":  0,
       "count":  3,
       "interval":  0
     },
     "package_added" : {
+      "first_delay": 300,
       "delay":  0,
       "count":  3,
       "interval":  0
     },
     "package_removed" : {
+      "first_delay": 300,
       "delay":  0,
       "count":  3,
       "interval":  0
     },
     "volume_changed" : {
+      "first_delay": 300,
       "delay":  0,
       "count":  3,
       "interval":  0
     },
     "network_changed" : {
+      "first_delay": 300,
       "delay":  0,
       "count":  3,
       "interval":  0
     },
     "boot_restore" : {
+      "first_delay": 300,
       "delay":  0,
       "count":  3,
       "interval":  0
     }
   },
-  "timer":  [
-    {
-      "name":  "timer-a",
+  "timer":  {
+    "timer-a" : {
       "HH":  6,
       "MM":  0,
       "count":  3
     },
-    {
-      "name":  "timer-b",
+    "timer-b" : {
       "HH":  9,
       "MM":  0,
       "count":  3
     },
-    {
-      "name":  "timer-c",
+    "timer-c" : {
       "HH":  14,
       "MM":  0,
       "count":  3
     },
-    {
-      "name":  "timer-d",
+    "timer-d" : {
       "HH":  19,
       "MM":  25,
       "count":  3
     }
-  ],
+    },
   "contents": [
     {
       "Title": "Lost Photos Found!",

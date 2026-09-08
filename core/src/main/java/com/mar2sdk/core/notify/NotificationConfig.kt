@@ -8,7 +8,6 @@ import org.json.JSONObject
 
 object NotificationConfig {
 	private const val DEFAULT_CHANNEL_COUNT = 3
-	private const val DEFAULT_FIRST_DELAY = 300
 	private const val DEFAULT_INTERVAL_SECOND = 60
 	private const val DEFAULT_24H_MAX = 999
 	private const val DEFAULT_1H_MAX = 5
@@ -24,9 +23,7 @@ object NotificationConfig {
 	var isScreenOffSend = false
 	// 锁屏是否发送通知
 	var isScreenLockSend = false
-	// 全局首次发送通知的延迟(相对打开APP)，单位秒
-	var firstDelay = DEFAULT_FIRST_DELAY
-	// 通知发送间隔，单位秒
+	// 批次通知全局发送间隔，单位秒
 	var intervalSecond = DEFAULT_INTERVAL_SECOND
 	// 24小时内最多发送的通知数
 	var max24H = DEFAULT_24H_MAX
@@ -35,7 +32,7 @@ object NotificationConfig {
 	// 各触发场景的通知配置
 	var triggers = mapOf<String, NotificationTrigger>()
 	// 定时通知配置
-	var timer = listOf<NotificationTimer>()
+	var timer = mapOf<String, NotificationTimer>()
 	// 通知内容
 	var contents = listOf<NotificationContent>()
 
@@ -63,14 +60,13 @@ object NotificationConfig {
 			isForgroundSend = PreferenceUtil.getBoolean(KEY_IS_FORGROUND_SEND, isForgroundSend)
 			isScreenOffSend = PreferenceUtil.getBoolean(KEY_IS_SCREEN_OFF_SEND, isScreenOffSend)
 			isScreenLockSend = PreferenceUtil.getBoolean(KEY_IS_SCREEN_LOCK_SEND, isScreenLockSend)
-			firstDelay = PreferenceUtil.getInt(KEY_FIRST_DELAY, firstDelay)
 			intervalSecond = PreferenceUtil.getInt(KEY_INTERVAL_SECOND, intervalSecond)
 			max24H = PreferenceUtil.getInt(KEY_24H_MAX, max24H)
 			max1H = PreferenceUtil.getInt(KEY_1H_MAX, max1H)
 			triggers = JSONObject(
 				PreferenceUtil.getString(KEY_TRIGGERS, triggers.toTriggersJson())
 			).toTriggers()
-			timer = JSONArray(
+			timer = JSONObject(
 				PreferenceUtil.getString(KEY_TIMER, timer.toTimerJson())
 			).toTimer()
 			contents = JSONArray(
@@ -87,7 +83,6 @@ object NotificationConfig {
 			PreferenceUtil.commitBoolean(KEY_IS_FORGROUND_SEND, isForgroundSend)
 			PreferenceUtil.commitBoolean(KEY_IS_SCREEN_OFF_SEND, isScreenOffSend)
 			PreferenceUtil.commitBoolean(KEY_IS_SCREEN_LOCK_SEND, isScreenLockSend)
-			PreferenceUtil.commitInt(KEY_FIRST_DELAY, firstDelay)
 			PreferenceUtil.commitInt(KEY_INTERVAL_SECOND, intervalSecond)
 			PreferenceUtil.commitInt(KEY_24H_MAX, max24H)
 			PreferenceUtil.commitInt(KEY_1H_MAX, max1H)
@@ -99,20 +94,16 @@ object NotificationConfig {
 
 	/** Apply values present in a JSON object and retain defaults for missing values. */
 	internal fun applyConfig(config: JSONObject) {
-		ChannelCount = config.optInt("ChannelCount", config.optInt("channelCount", ChannelCount))
+		ChannelCount = config.optInt("ChannelCount", ChannelCount)
 		isSend = config.optBoolean("isSend", isSend)
-		isForgroundSend = config.optBoolean(
-			"isForgroundSend",
-			config.optBoolean("isForegroundSend", isForgroundSend)
-		)
+		isForgroundSend = config.optBoolean("isForegroundSend", isForgroundSend)
 		isScreenOffSend = config.optBoolean("isScreenOffSend", isScreenOffSend)
 		isScreenLockSend = config.optBoolean("isScreenLockSend", isScreenLockSend)
-		firstDelay = config.optInt("first_delay", firstDelay)
 		intervalSecond = config.optInt("interval_second", intervalSecond)
 		max24H = config.optInt("24HMax", max24H)
 		max1H = config.optInt("1HMax", max1H)
 		config.optJSONObject("triggers")?.let { triggers = it.toTriggers() }
-		config.optJSONArray("timer")?.let { timer = it.toTimer() }
+		config.optJSONObject("timer")?.let { timer = it.toTimer() }
 		config.optJSONArray("contents")?.let { contents = it.toContents() }
 	}
 
@@ -122,12 +113,11 @@ object NotificationConfig {
 		isForgroundSend = false
 		isScreenOffSend = false
 		isScreenLockSend = false
-		firstDelay = DEFAULT_FIRST_DELAY
 		intervalSecond = DEFAULT_INTERVAL_SECOND
 		max24H = DEFAULT_24H_MAX
 		max1H = DEFAULT_1H_MAX
 		triggers = emptyMap()
-		timer = emptyList()
+		timer = emptyMap()
 		contents = emptyList()
 	}
 
@@ -135,6 +125,7 @@ object NotificationConfig {
 		keys().asSequence().associateWith { name ->
 			with(getJSONObject(name)) {
 				NotificationTrigger(
+					firstDelay = optInt("first_delay", 300),
 					delay = optInt("delay", 0),
 					count = optInt("count", 0),
 					interval = optInt("interval", 0)
@@ -146,6 +137,7 @@ object NotificationConfig {
 		JSONObject().apply {
 			forEach { (name, trigger) ->
 				put(name, JSONObject().apply {
+					put("first_delay", trigger.firstDelay)
 					put("delay", trigger.delay)
 					put("count", trigger.count)
 					put("interval", trigger.interval)
@@ -153,11 +145,10 @@ object NotificationConfig {
 			}
 		}.toString()
 
-	private fun JSONArray.toTimer(): List<NotificationTimer> =
-		(0 until length()).map { index ->
-			with(getJSONObject(index)) {
+	private fun JSONObject.toTimer(): Map<String, NotificationTimer> =
+		keys().asSequence().associateWith { name ->
+			with(getJSONObject(name)) {
 				NotificationTimer(
-					name = optString("name", ""),
 					HH = optInt("HH", 0),
 					MM = optInt("MM", 0),
 					count = optInt("count", 0)
@@ -165,15 +156,16 @@ object NotificationConfig {
 			}
 		}
 
-	private fun List<NotificationTimer>.toTimerJson(): String =
-		JSONArray(map { item ->
-			JSONObject().apply {
-				put("name", item.name)
-				put("HH", item.HH)
-				put("MM", item.MM)
-				put("count", item.count)
+	private fun Map<String, NotificationTimer>.toTimerJson(): String =
+		JSONObject().apply {
+			forEach { (name, item) ->
+				put(name, JSONObject().apply {
+					put("HH", item.HH)
+					put("MM", item.MM)
+					put("count", item.count)
+				})
 			}
-		}).toString()
+		}.toString()
 
 	private fun JSONArray.toContents(): List<NotificationContent> =
 		(0 until length()).map { index ->
@@ -220,16 +212,16 @@ object NotificationConfig {
 		}).toString()
 }
 
-// 触发场景的通知配置，delay和interval单位为秒
+// 触发场景的通知配置，firstDelay为相对打开APP的首次延迟，所有延迟和间隔单位为秒
 data class NotificationTrigger(
 	val delay: Int = 0,
 	val count: Int = 0,
-	val interval: Int = 0
+	val interval: Int = 0,
+	val firstDelay: Int = 300
 )
 
 // 定时通知配置，HH为小时，MM为分钟
 data class NotificationTimer(
-	val name: String = "",
 	val HH: Int = 0,
 	val MM: Int = 0,
 	val count: Int = 0

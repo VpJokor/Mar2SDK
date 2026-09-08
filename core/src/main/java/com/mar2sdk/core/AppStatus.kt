@@ -115,6 +115,7 @@ object AppStatus {
 				if (event.state.validated && event.state.connected) {
 					addNotificationBatch(NotificationTriggerKey.power_connected)
 				}
+				addNotificationBatch(NotificationTriggerKey.network_changed)
 			}
 		}
 

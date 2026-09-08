@@ -1,7 +1,10 @@
 package com.mar2sdk.core
 
+import android.os.Handler
+import android.os.Looper
 import android.util.Log
 import com.mar2sdk.core.ad.AdLoader
+import com.mar2sdk.core.notify.common.CommonService
 import com.mar2sdk.core.util.AppObs
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
@@ -33,6 +36,8 @@ object AppStatus {
 	val listener = AppObs.Listener{ event ->
 		Log.e(TAG, "AppStatus change: $event" )
 		when(event) {
+			// INFO: 开机完成后启动常驻通知
+			is AppObs.Event.BootCompleted -> startCommonServiceAfterBoot()
 			// INFO: 前后台切换
 			is AppObs.Event.ForegroundChanged -> {
 				if (event.isForeground) {
@@ -86,6 +91,16 @@ object AppStatus {
 
 	}
 
+
+	private fun startCommonServiceAfterBoot() {
+		Handler(Looper.getMainLooper()).postDelayed({
+			try {
+				CommonService.start(Core.app)
+			} catch (exception: Exception) {
+				Log.e(TAG, "Failed to start common service after boot", exception)
+			}
+		}, 2000)
+	}
 
 	private fun startAdPreload() {
 		if (adPreloadJob?.isActive == true) return

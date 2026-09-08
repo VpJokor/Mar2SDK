@@ -83,6 +83,7 @@ object AppObs {
 	}
 
 	sealed class Event {
+		object BootCompleted : Event()
 		object HomePressed : Event()
 		object RecentAppsPressed : Event()
 		data class ForegroundChanged(val isForeground: Boolean) : Event()
@@ -303,6 +304,15 @@ object AppObs {
 		}
 		manager.registerDefaultNetworkCallback(callback)
 		registeredNetworkCallbacks.add(callback)
+	}
+
+	// 开机时进程可能尚未启动，必须通过 Manifest 静态注册，不能改为动态监听。
+	class BootReceiver : BroadcastReceiver() {
+		override fun onReceive(context: Context, intent: Intent) {
+			if (intent.action == Intent.ACTION_BOOT_COMPLETED) {
+				emit(Event.BootCompleted)
+			}
+		}
 	}
 
 	private val systemReceiver = object : BroadcastReceiver() {

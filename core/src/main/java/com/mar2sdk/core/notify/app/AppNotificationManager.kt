@@ -62,7 +62,7 @@ class AppNotificationManager {
 		LogUtil.log(LogNotifyEvent.clear_notifications, mapOf())
 	}
 
-	fun send(scene: String) {
+	suspend fun send(scene: String) {
 		if (!canSendItem(scene)) return
 		AppNotificationUtil.sendNotificationContent(scene)
 	}
@@ -270,12 +270,60 @@ class AppNotificationManager {
 		return true
 	}
 
-	fun canSendItem(scene: String) : Boolean {
+	suspend fun canSendItem(scene: String) : Boolean {
 		if (!canSend(false)) return false
+		// 分页读取本地Log，只统计成功发送的通知
+		val sentItemLogs = mutableListOf<DBUtil.LocalLog>()
+		var beforeId = Long.MAX_VALUE
+		while (true) {
+			val logs = DBUtil.queryLogs(limit = 500, beforeId = beforeId)
+			if (logs.isEmpty()) break
+			for (log in logs) {
+				if (log.eventName != LogNotifyEvent.notify_send_item) continue
+				val params = try {
+					JSONObject(log.paramsJson)
+				} catch (e: JSONException) {
+					continue
+				}
+				if (params.optBoolean(LogNotifyParam.isSuccess)) {
+					sentItemLogs.add(log)
+				}
+			}
+			beforeId = logs.last().id
+		}
+		val currentTime = System.currentTimeMillis()
 		// 最近的24小时内发送了几条
-		val _24HSentItemCount = 0
+		val _24HSentItemCount = sentItemLogs.count { it.eventTimeMillis in (currentTime - 24 * 60 * 60 * 1000L)..currentTime }
+		if (_24HSentItemCount >= NotificationConfig.max24HItem) {
+			if (Core.appMod == AppMod.DEBUG) {
+				Toast.makeText(Core.app, "${scene}, 最近的24小时内发送条数达到发送限制", Toast.LENGTH_LONG).show()
+			}
+			LogUtil.log(
+				LogNotifyEvent.notify_send_item ,
+				mapOf(
+					LogNotifyParam.isSuccess to false,
+					LogNotifyParam.scene to scene,
+					LogAppParam.msg to "最近的24小时内发送条数达到发送限制",
+				)
+			)
+			return false
+		}
 		// 最近的1小时内发送了几条
-		val _1HSentItemCount = 0
+		val _1HSentItemCount = sentItemLogs.count { it.eventTimeMillis in (currentTime - 60 * 60 * 1000L)..currentTime }
+		if (_1HSentItemCount >= NotificationConfig.max1HItem) {
+			if (Core.appMod == AppMod.DEBUG) {
+				Toast.makeText(Core.app, "${scene}, 最近的1小时内发送条数达到发送限制", Toast.LENGTH_LONG).show()
+			}
+			LogUtil.log(
+				LogNotifyEvent.notify_send_item ,
+				mapOf(
+					LogNotifyParam.isSuccess to false,
+					LogNotifyParam.scene to scene,
+					LogAppParam.msg to "最近的1小时内发送条数达到发送限制",
+				)
+			)
+			return false
+		}
 
 		return true
 	}

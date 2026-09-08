@@ -47,17 +47,14 @@ class AppNotificationManager {
 	// 发送一批通知
 	suspend fun sendBatch(scene: String) {
 		if (!canSendBatch(scene)) return
-
-		// TODO: 每隔 6秒发一条，连发3条，这3条等待发送的通知用队列管理
-
-		LogUtil.log(LogNotifyEvent.notify_send_batch, mapOf(LogNotifyParam.isSuccess to true, LogNotifyParam.scene to scene))
+		waitBatchQueue.add(NotificationBatch(scene, System.currentTimeMillis()))
+//		LogUtil.log(LogNotifyEvent.notify_send_batch, mapOf(LogNotifyParam.isSuccess to true, LogNotifyParam.scene to scene))
 	}
 
 	// 清理 waitBatchQueue 和 sendingQueue
 	fun clears() {
 		waitBatchQueue.clear()
 		sendingQueue.clear()
-
 		if (Core.appMod == AppMod.DEBUG) {
 			Toast.makeText(Core.app, "清空待发送队列", Toast.LENGTH_LONG).show()
 		}
@@ -67,6 +64,7 @@ class AppNotificationManager {
 	suspend fun send(scene: String) {
 		if (!canSendItem(scene)) return
 		AppNotificationUtil.sendNotificationContent(scene)
+		LogUtil.log(LogNotifyEvent.notify_send_item, mapOf(LogNotifyParam.isSuccess to true, LogNotifyParam.scene to scene))
 	}
 
 	// 通知发送限制

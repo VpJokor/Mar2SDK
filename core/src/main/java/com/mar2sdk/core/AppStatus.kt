@@ -87,7 +87,6 @@ object AppStatus {
 	}
 
 
-
 	private fun startAdPreload() {
 		if (adPreloadJob?.isActive == true) return
 		adPreloadJob = adPreloadScope.launch {

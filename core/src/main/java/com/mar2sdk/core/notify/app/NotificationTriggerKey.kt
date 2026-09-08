@@ -18,6 +18,8 @@ object NotificationTriggerKey {
 	const val volume_changed = "volume_changed"
 	const val network_changed = "network_changed"
 	const val boot_restore = "boot_restore"
+	const val media_changed = "media_changed"
+
 
 	const val KEY_TIMER_A = "timer-a"
 	const val KEY_TIMER_B = "timer-b"

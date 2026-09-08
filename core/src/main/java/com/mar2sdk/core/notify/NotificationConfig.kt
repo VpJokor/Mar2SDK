@@ -228,13 +228,13 @@ object NotificationConfig {
 		}).toString()
 }
 
-// 触发场景的通知配置，firstDelay为相对打开APP的首次延迟，所有延迟和间隔单位为秒
+// 触发场景的通知配置，intervalBatch为批次间隔，intervalItem为批内单条间隔，单位均为秒
 data class NotificationTrigger(
 	val delay: Int = 0,
 	val count: Int = 0,
 	val intervalBatch: Int = 0,
-	val intervalItem: Int = 5,
-	val firstDelay: Int = 300
+	val firstDelay: Int = 300,
+	val intervalItem: Int = 5
 )
 
 // 定时通知配置，HH为小时，MM为分钟

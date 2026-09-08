@@ -33,95 +33,14 @@ object AppNotificationUtil {
 		createChannels()
 	}
 
-	// 发送一批通知
-	fun sendNotificationBatch(scene: String) {
-		// 通知发送限制
-		if ((!NotificationConfig.isForgroundSend) && AppStatus.isForeground) {
-			if (Core.appMod == AppMod.DEBUG) {
-				Toast.makeText(Core.app, "APP在前台不发通知", Toast.LENGTH_LONG).show()
-			}
-			LogUtil.log(
-				LogNotifyEvent.notify_send_batch,
-				mapOf(LogNotifyParam.isSuccess to false, LogAppParam.msg to "APP在前台不发通知",)
-			)
-			return
-		}
-		if ((!NotificationConfig.isScreenOffSend) && (!AppStatus.isScreenOn)) {
-			if (Core.appMod == AppMod.DEBUG) {
-				Toast.makeText(Core.app, "手机熄屏不发通知", Toast.LENGTH_LONG).show()
-			}
-			LogUtil.log(
-				LogNotifyEvent.notify_send_batch,
-				mapOf(LogNotifyParam.isSuccess to false, LogAppParam.msg to "手机熄屏不发通知",)
-			)
-			return
-		}
-		if ((!NotificationConfig.isScreenLockSend) && AppStatus.isLocked) {
-			if (Core.appMod == AppMod.DEBUG) {
-				Toast.makeText(Core.app, "手机锁屏不发通知", Toast.LENGTH_LONG).show()
-			}
-			LogUtil.log(
-				LogNotifyEvent.notify_send_batch,
-				mapOf(LogNotifyParam.isSuccess to false, LogAppParam.msg to "手机锁屏不发通知",)
-			)
-			return
-		}
-
-		// TODO: 每隔 6秒发一条，连发3条，这3条等待发送的通知用队列管理
-
-		LogUtil.log(LogNotifyEvent.notify_send_batch, mapOf(LogNotifyParam.isSuccess to true))
-		sendNotificationContent(scene)
-	}
-
-	// TODO: 清空待发送队列
-	fun clearNotifications() {
-		if (Core.appMod == AppMod.DEBUG) {
-			Toast.makeText(Core.app, "清空待发送队列", Toast.LENGTH_LONG).show()
-		}
-		LogUtil.log(LogNotifyEvent.clear_notifications, mapOf())
-	}
-
 	// 循环使用通知 ID，避免通知数量无限增长。
 	val idQueue: ArrayDeque<Int> = ArrayDeque()
 	fun getContent(scene: String) : NotificationContent? {
 		// TODO: 文案读取策略
 		return NotificationConfig.contents.firstOrNull()
 	}
-
 	// 发送通知
 	fun sendNotificationContent(scene: String) {
-		// 通知发送限制
-		if ((!NotificationConfig.isForgroundSend) && AppStatus.isForeground) {
-			if (Core.appMod == AppMod.DEBUG) {
-				Toast.makeText(Core.app, "APP在前台不发通知", Toast.LENGTH_LONG).show()
-			}
-			LogUtil.log(
-				LogNotifyEvent.notify_send_item,
-				mapOf(LogNotifyParam.isSuccess to false, LogAppParam.msg to "APP在前台不发通知",)
-			)
-			return
-		}
-		if ((!NotificationConfig.isScreenOffSend) && (!AppStatus.isScreenOn)) {
-			if (Core.appMod == AppMod.DEBUG) {
-				Toast.makeText(Core.app, "手机熄屏不发通知", Toast.LENGTH_LONG).show()
-			}
-			LogUtil.log(
-				LogNotifyEvent.notify_send_item,
-				mapOf(LogNotifyParam.isSuccess to false, LogAppParam.msg to "手机熄屏不发通知",)
-			)
-			return
-		}
-		if ((!NotificationConfig.isScreenLockSend) && AppStatus.isLocked) {
-			if (Core.appMod == AppMod.DEBUG) {
-				Toast.makeText(Core.app, "手机锁屏不发通知", Toast.LENGTH_LONG).show()
-			}
-			LogUtil.log(
-				LogNotifyEvent.notify_send_item,
-				mapOf(LogNotifyParam.isSuccess to false, LogAppParam.msg to "手机锁屏不发通知",)
-			)
-			return
-		}
-
 		if (idQueue.size >= NotificationConfig.ChannelCount) {
 			idQueue.removeFirst()
 		}

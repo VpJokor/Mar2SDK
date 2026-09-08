@@ -31,10 +31,10 @@ data class NotificationItem(val scene: String, val timeAt: Long)
 class AppNotificationManager {
 
 	// 通知触发场景的批次等待队列
-	val waitBatchQueue = listOf<NotificationBatch>()
+	val waitBatchQueue = mutableListOf<NotificationBatch>()
 
 	// 正在发送通知的等待队列
-	val sendingQueue = listOf<NotificationItem>()
+	val sendingQueue = mutableListOf<NotificationItem>()
 
 	fun startLoop() {
 
@@ -53,8 +53,10 @@ class AppNotificationManager {
 		LogUtil.log(LogNotifyEvent.notify_send_batch, mapOf(LogNotifyParam.isSuccess to true, LogNotifyParam.scene to scene))
 	}
 
-	// TODO: 清理 waitBatchQueue 和 sendingQueue
+	// 清理 waitBatchQueue 和 sendingQueue
 	fun clears() {
+		waitBatchQueue.clear()
+		sendingQueue.clear()
 
 		if (Core.appMod == AppMod.DEBUG) {
 			Toast.makeText(Core.app, "清空待发送队列", Toast.LENGTH_LONG).show()
@@ -68,10 +70,6 @@ class AppNotificationManager {
 	}
 
 	// 通知发送限制
-	//	"isSend": false,
-	//	"isForegroundSend": false,
-	//	"isScreenOffSend": false,
-	//	"isScreenLockSend": false,
 	fun canSend(isBatch: Boolean) : Boolean {
 		if (!NotificationConfig.isSend) {
 			if (Core.appMod == AppMod.DEBUG) {
@@ -117,16 +115,6 @@ class AppNotificationManager {
 	}
 
 	//发送批次限制
-	//	"interval_second":  60,
-	//  "24HMaxBatch":  50,
-	//  "1HMaxBatch":  5,
-	//  "24HMaxItem":  50,
-	//  "1HMaxItem":  5,
-	//
-	//  "first_delay": 300,
-	//  "delay":  0,
-	//  "count":  3,
-	//  "interval":  60
 	suspend fun canSendBatch(scene: String) : Boolean {
 		if (!canSend(true)) return false
 		// 分页读取本地Log，只统计成功发送的通知

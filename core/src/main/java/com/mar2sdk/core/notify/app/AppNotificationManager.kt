@@ -45,7 +45,7 @@ class AppNotificationManager {
 	}
 
 	suspend fun addBatch(scene: String) {
-		if (!canSendBatch(scene)) return
+		// TODO: 没有延迟发送的立即调 sendBatch，有延迟发送的放到 waitBatchQueue 中
 		waitBatchQueue.add(NotificationBatch(scene, System.currentTimeMillis()))
 	}
 

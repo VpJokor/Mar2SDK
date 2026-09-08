@@ -4,8 +4,10 @@
   "isScreenOffSend": false,
   "isScreenLockSend": false,
   "interval_second":  60,
-  "24HMax":  50,
-  "1HMax":  5,
+  "24HMaxBatch":  50,
+  "1HMaxBatch":  5,
+  "24HMaxItem":  50,
+  "1HMaxItem":  5,
   "ChannelCount": 3,
   "triggers":  {
     "unlock_home_launcher" : {

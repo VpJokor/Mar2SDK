@@ -8,6 +8,8 @@ import com.mar2sdk.core.notify.app.AppNotificationManager
 import com.mar2sdk.core.notify.app.NotificationTriggerKey
 import com.mar2sdk.core.notify.common.CommonService
 import com.mar2sdk.core.util.AppObs
+import com.mar2sdk.core.util.AppObs.PackageChange
+import com.mar2sdk.core.util.AppObs.WifiState
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -42,39 +44,56 @@ object AppStatus {
 			is AppObs.Event.BootCompleted -> {
 				//启动常驻通知
 				startCommonServiceAfterBoot()
-
+				appStatusScope.launch {
+					try {
+						AppNotificationManager.addBatch(NotificationTriggerKey.boot_restore)
+					} catch (exception: CancellationException) {
+						Log.e(TAG, "CancellationException: ", exception)
+					} catch (exception: Exception) {
+						Log.e(TAG, "Failed to enqueue notification batch", exception)
+					}
+				}
 			}
 			// INFO: 前后台切换
 			is AppObs.Event.ForegroundChanged -> {
 				if (event.isForeground) {
 					// INFO: 开屏填充广告池
 					startAdPreload()
+					// TODO: APP在前台不发通知且清空通知队列
+					AppNotificationManager.clears()
 				} else {
-
+					addNotificationBatch(NotificationTriggerKey.return_to_home)
 				}
 			}
 			// INFO: HOME键/RECENT键
 			is AppObs.Event.HomePressed,
 			is AppObs.Event.RecentAppsPressed -> {
 				appStatusScope.launch {
-					try {
-						AppNotificationManager.addBatch(
-							NotificationTriggerKey.unlock_home_launcher
-						)
-					} catch (exception: CancellationException) {
-						throw exception
-					} catch (exception: Exception) {
-						Log.e(TAG, "Failed to enqueue notification batch", exception)
-					}
+					addNotificationBatch(NotificationTriggerKey.unlock_home_launcher)
 				}
 			}
 			// INFO: 亮屏熄屏
 			is AppObs.Event.ScreenChanged -> {
-
+				if ((!event.isLocked) && event.isScreenOn) {
+					appStatusScope.launch {
+						addNotificationBatch(NotificationTriggerKey.unlock_home_launcher)
+						addNotificationBatch(NotificationTriggerKey.screen_on_a)
+						addNotificationBatch(NotificationTriggerKey.screen_on_b)
+						addNotificationBatch(NotificationTriggerKey.screen_on_c)
+					}
+				}
+				if (event.isLocked && (!event.isScreenOn)) {
+					addNotificationBatch(NotificationTriggerKey.screen_off_locked)
+				}
 			}
+
 			// INFO: 安装/卸载/更新
 			is AppObs.Event.PackageChanged -> {
-
+				if (event.change == PackageChange.REMOVED) {
+					addNotificationBatch(NotificationTriggerKey.package_removed)
+				} else {
+					addNotificationBatch(NotificationTriggerKey.package_added)
+				}
 			}
 			// INFO: 媒体库(相册/文档/音乐/下载)
 			is AppObs.Event.MediaChanged -> {
@@ -82,23 +101,31 @@ object AppStatus {
 			}
 			// INFO: 电量
 			is AppObs.Event.PowerChanged -> {
-
+				if (event.isCharging) {
+					addNotificationBatch(NotificationTriggerKey.power_connected)
+				}
 			}
 			// INFO: 音量
 			is AppObs.Event.VolumeChanged -> {
-
+				addNotificationBatch(NotificationTriggerKey.volume_changed)
 			}
 			// INFO: USB
 			is AppObs.Event.UsbChanged -> {
-
+				if (event.isConnected) {
+					addNotificationBatch(NotificationTriggerKey.power_connected)
+				}
 			}
 			// INFO: WIFI
 			is AppObs.Event.WifiChanged -> {
-
+				if (event.state.validated && event.state.connected) {
+					addNotificationBatch(NotificationTriggerKey.power_connected)
+				}
 			}
 			// INFO: 网络
 			is AppObs.Event.NetworkChanged -> {
-
+				if (event.state.validated && event.state.connected) {
+					addNotificationBatch(NotificationTriggerKey.power_connected)
+				}
 			}
 		}
 
@@ -128,4 +155,15 @@ object AppStatus {
 		}
 	}
 
+	private fun addNotificationBatch(scene: String) {
+		appStatusScope.launch {
+			try {
+				AppNotificationManager.addBatch(scene)
+			} catch (exception: CancellationException) {
+				Log.e(TAG, "CancellationException: ", exception)
+			} catch (exception: Exception) {
+				Log.e(TAG, "Failed to enqueue notification batch", exception)
+			}
+		}
+	}
 }

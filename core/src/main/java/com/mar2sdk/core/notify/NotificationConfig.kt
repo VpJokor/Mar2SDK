@@ -8,9 +8,7 @@ import org.json.JSONObject
 
 object NotificationConfig {
 	private const val DEFAULT_CHANNEL_COUNT = 3
-	private val DEFAULT_CONTENTS = listOf(
-		NotificationContent(listOf(), "Title", "Content", "Button", "", "Route")
-	)
+
 
 	// APP通知的通道数
 	var ChannelCount = DEFAULT_CHANNEL_COUNT
@@ -21,8 +19,6 @@ object NotificationConfig {
 	// 锁屏是否发送通知
 	var isScreenLockSend = false
 
-	// 通知文案
-	var contents = DEFAULT_CONTENTS
 
 	fun init() {
 		loadConfigFromRaw()
@@ -47,11 +43,6 @@ object NotificationConfig {
 			isScreenOffSend = PreferenceUtil.getBoolean(KEY_IS_SCREEN_OFF_SEND, isScreenOffSend)
 			isScreenLockSend = PreferenceUtil.getBoolean(KEY_IS_SCREEN_LOCK_SEND, isScreenLockSend)
 
-			val contentsJson = PreferenceUtil.getString(KEY_CONTENTS, "")
-			if (contentsJson.isNotBlank()) {
-				contents = runCatching { parseNotificationContents(contentsJson) }
-					.getOrDefault(contents)
-			}
 		}
 	}
 
@@ -61,7 +52,6 @@ object NotificationConfig {
 			PreferenceUtil.commitBoolean(KEY_IS_FORGROUND_SEND, isForgroundSend)
 			PreferenceUtil.commitBoolean(KEY_IS_SCREEN_OFF_SEND, isScreenOffSend)
 			PreferenceUtil.commitBoolean(KEY_IS_SCREEN_LOCK_SEND, isScreenLockSend)
-			PreferenceUtil.commitString(KEY_CONTENTS, serializeNotificationContents(contents))
 		}
 	}
 
@@ -75,16 +65,6 @@ object NotificationConfig {
 		isScreenOffSend = config.optBoolean("isScreenOffSend", isScreenOffSend)
 		isScreenLockSend = config.optBoolean("isScreenLockSend", isScreenLockSend)
 
-		val contentsValue = config.opt("contents") ?: config.opt("notification_content")
-		val contentsJson = when (contentsValue) {
-			is JSONArray -> contentsValue.toString()
-			is String -> contentsValue
-			else -> null
-		}
-		if (!contentsJson.isNullOrBlank()) {
-			contents = runCatching { parseNotificationContents(contentsJson) }
-				.getOrDefault(contents)
-		}
 	}
 
 	private fun resetToDefaults() {
@@ -92,7 +72,6 @@ object NotificationConfig {
 		isForgroundSend = false
 		isScreenOffSend = false
 		isScreenLockSend = false
-		contents = DEFAULT_CONTENTS
 	}
 
 }

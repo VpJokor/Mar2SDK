@@ -8,8 +8,12 @@ class AppNotificationManager {
 	// 正在发送通知的等待队列
 	val sendingQueue = listOf<String>()
 
+	fun startLoop() {
 
-	fun loop() {
+	}
+
+	fun stopLoop() {
+		// TODO: 清理 waitBatchQueue 和 sendingQueue
 
 	}
 
@@ -18,11 +22,6 @@ class AppNotificationManager {
 	}
 
 	fun send() {
-
-	}
-
-	// TODO: 清理 waitBatchQueue 和 sendingQueue
-	fun clear() {
 
 	}
 

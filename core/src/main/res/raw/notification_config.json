@@ -1,8 +1,108 @@
 {
-  "ChannelCount": 3,
-  "isForgroundSend": false,
+  "isSend": false,
+  "isForegroundSend": false,
   "isScreenOffSend": false,
   "isScreenLockSend": false,
+  "first_delay": 300,
+  "interval_second":  60,
+  "24HMax":  50,
+  "1HMax":  5,
+  "ChannelCount": 3,
+  "triggers":  [
+    {
+      "id":  "1",
+      "name":  "screen_unlock",
+      "delay":  0,
+      "count":  10,
+      "interval":  60
+    },
+    {
+      "id":  "2",
+      "name":  "press_key_home",
+      "delay":  0,
+      "count":  10,
+      "interval":  300
+    },
+    {
+      "id":  "3",
+      "name":  "battery_change",
+      "delay":  0,
+      "count":  10,
+      "interval":  300
+    },
+    {
+      "id":  "4",
+      "name":  "install_app",
+      "delay":  0,
+      "count":  10,
+      "interval":  600
+    },
+    {
+      "id":  "5",
+      "name":  "uninstall_app",
+      "delay":  0,
+      "count":  10,
+      "interval":  600
+    },
+    {
+      "id":  "7",
+      "name":  "return_home",
+      "delay":  0,
+      "count":  10,
+      "interval":  300
+    },
+    {
+      "id":  "8",
+      "name":  "recent_apps",
+      "delay":  0,
+      "count":  10,
+      "interval":  300
+    },
+    {
+      "id":  "9",
+      "name":  "volume_changed",
+      "delay":  0,
+      "count":  10,
+      "interval":  300
+    },
+    {
+      "id":  "6",
+      "name":  "screen_on",
+      "delay":  0,
+      "count":  10,
+      "interval":  0
+    }
+  ],
+  "timer":  [
+    {
+      "id":  "timer-a",
+      "name":  "timer-a",
+      "HH":  6,
+      "MM":  0,
+      "count":  10
+    },
+    {
+      "id":  "timer-b",
+      "name":  "timer-b",
+      "HH":  9,
+      "MM":  0,
+      "count":  10
+    },
+    {
+      "id":  "timer-c",
+      "name":  "timer-c",
+      "HH":  14,
+      "MM":  0,
+      "count":  10
+    },
+    {
+      "id":  "timer-d",
+      "name":  "timer-d",
+      "HH":  19,
+      "MM":  25,
+      "count":  10
+    }
+  ],
   "contents": [
     {
       "Title": "Lost Photos Found!",

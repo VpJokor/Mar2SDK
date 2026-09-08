@@ -1,6 +1,10 @@
 package com.mar2sdk.core.notify.app
 
+import android.os.Looper
+import android.os.SystemClock
+import android.util.Log
 import android.widget.Toast
+import androidx.annotation.MainThread
 import com.mar2sdk.core.AppMod
 import com.mar2sdk.core.AppStatus
 import com.mar2sdk.core.Core
@@ -12,64 +16,121 @@ import com.mar2sdk.core.log.LogNotifyParam
 import com.mar2sdk.core.log.LogUtil
 import com.mar2sdk.core.notify.NotificationConfig
 import com.mar2sdk.core.util.DBUtil
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.currentCoroutineContext
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.ensureActive
+import kotlinx.coroutines.isActive
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import kotlinx.coroutines.yield
 import org.json.JSONException
 import org.json.JSONObject
 
 /**
  * 通知触发场景的批次等待队列 的 通知批次
  * scene 触发场景
- * timeAt 触发时间
+ * timeAt 到期时间，基于 SystemClock.elapsedRealtime()，单位毫秒
  */
 data class NotificationBatch(val scene: String, val timeAt: Long)
 
 /**
  * 正在发送通知的等待队列 的 通知项
  * scene 触发场景
- * timeAt 触发时间
+ * timeAt 到期时间，基于 SystemClock.elapsedRealtime()，单位毫秒
  */
 data class NotificationItem(val scene: String, val timeAt: Long)
 
 class AppNotificationManager {
 
+	private val loopScope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
+	private var loopJob: Job? = null
+
 	// 通知触发场景的批次等待队列
-	val waitBatchQueue = mutableListOf<NotificationBatch>()
+	private val waitBatchQueue = mutableListOf<NotificationBatch>()
 
 	// 正在发送通知的等待队列
-	val sendingQueue = mutableListOf<NotificationItem>()
+	private val sendingQueue = mutableListOf<NotificationItem>()
 
+	/** 启动进程内的通知循环；重复启动不会创建额外任务。 */
+	@MainThread
 	fun startLoop() {
-
+		checkMainThread()
+		if (loopJob?.isActive == true) return
+		loopJob = loopScope.launch {
+			while (isActive) {
+				try {
+					processDueQueues()
+				} catch (exception: CancellationException) {
+					throw exception
+				} catch (exception: Exception) {
+					Log.e(TAG, "Failed to process notification queue", exception)
+				}
+				delay(1_000L)
+			}
+		}
 	}
 
+	/** 取消当前循环并丢弃待发任务；之后仍可重新启动。 */
+	@MainThread
 	fun stopLoop() {
-
+		checkMainThread()
+		loopJob?.cancel()
+		loopJob = null
 		clears()
 	}
 
-	suspend fun addBatch(scene: String) {
-		// INFO: 没有延迟（trigger.delay）发送的立即调 sendBatch，有延迟发送的放到 waitBatchQueue 中
-		val trigger = NotificationConfig.triggers[scene] ?: return
-		if (trigger.count == 0) return
-		if (trigger.delay > 0 ) {
-			waitBatchQueue.add(NotificationBatch(scene, trigger.delay * 1000L + System.currentTimeMillis()))
-		} else {
-			sendBatch(scene)
+	/** 零延迟批次也只入队，所有发送检查和发送操作都由循环串行执行。 */
+	suspend fun addBatch(scene: String): Unit = withContext(Dispatchers.Main.immediate) {
+		val trigger = NotificationConfig.triggers[scene] ?: return@withContext
+		if (trigger.count <= 0) return@withContext
+		waitBatchQueue.add(
+			NotificationBatch(scene, SystemClock.elapsedRealtime() + trigger.delay.coerceAtLeast(0) * 1_000L)
+		)
+	}
+
+	private suspend fun processDueQueues() {
+		while (true) {
+			currentCoroutineContext().ensureActive()
+			val now = SystemClock.elapsedRealtime()
+			val batch = waitBatchQueue.minByOrNull { it.timeAt }
+			val item = sendingQueue.minByOrNull { it.timeAt }
+			// 两个队列按到期时间合并处理；同一时刻先检查批次，保留忙时拒绝新批次的规则。
+			when {
+				batch != null && batch.timeAt <= now && (item == null || batch.timeAt <= item.timeAt) -> {
+					waitBatchQueue.remove(batch)
+					sendBatch(batch.scene)
+				}
+				item != null && item.timeAt <= now -> {
+					sendingQueue.remove(item)
+					send(item.scene)
+				}
+				else -> return
+			}
+			// 即使检查没有挂起，也让主线程有机会处理停止或新增批次。
+			yield()
 		}
 	}
 
 	// 发送一批通知
-	suspend fun sendBatch(scene: String) {
+	private suspend fun sendBatch(scene: String) {
 		if (!canSendBatch(scene)) return
+		currentCoroutineContext().ensureActive()
 
 		val trigger = NotificationConfig.triggers[scene] ?: return
 		if (trigger.count <= 0) return
 
 		// 批次中的通知按场景配置的单条间隔排队。
+		val baseTime = SystemClock.elapsedRealtime()
 		repeat(trigger.count) { index ->
 			sendingQueue.add(
 				NotificationItem(
 					scene = scene,
-					timeAt = index.toLong() * trigger.intervalItem * 1_000L
+					timeAt = baseTime + index.toLong() * trigger.intervalItem.coerceAtLeast(0) * 1_000L
 				)
 			)
 		}
@@ -77,24 +138,33 @@ class AppNotificationManager {
 		LogUtil.log(LogNotifyEvent.notify_send_batch, mapOf(LogNotifyParam.isSuccess to true, LogNotifyParam.scene to scene))
 	}
 
-	// 清理 waitBatchQueue 和 sendingQueue
+	/** 清空待发任务，并取消尚未完成的检查；已运行的循环会继续等待新任务。 */
+	@MainThread
 	fun clears() {
+		checkMainThread()
+		val restartLoop = loopJob?.isActive == true
+		loopJob?.cancel()
+		loopJob = null
 		waitBatchQueue.clear()
 		sendingQueue.clear()
 		if (Core.appMod == AppMod.DEBUG) {
 			Toast.makeText(Core.app, "清空待发送队列", Toast.LENGTH_LONG).show()
 		}
 		LogUtil.log(LogNotifyEvent.clear_notifications, mapOf())
+		if (restartLoop) startLoop()
 	}
 
-	suspend fun send(scene: String) {
+	private suspend fun send(scene: String) {
 		if (!canSendItem(scene)) return
+		currentCoroutineContext().ensureActive()
 		AppNotificationUtil.sendNotificationContent(scene)
 		LogUtil.log(LogNotifyEvent.notify_send_item, mapOf(LogNotifyParam.isSuccess to true, LogNotifyParam.scene to scene))
 	}
 
 	// 通知发送限制
+	@MainThread
 	fun canSend(isBatch: Boolean) : Boolean {
+		checkMainThread()
 		if (Core.userType == UserType.RISK) {
 			if (Core.appMod == AppMod.DEBUG) {
 				Toast.makeText(Core.app, "风险用户不发通知", Toast.LENGTH_LONG).show()
@@ -144,6 +214,7 @@ class AppNotificationManager {
 	}
 
 	//发送批次限制
+	@MainThread
 	suspend fun canSendBatch(scene: String) : Boolean {
 		if (!canSend(true)) return false
 		val currentTime = System.currentTimeMillis()
@@ -297,6 +368,7 @@ class AppNotificationManager {
 		return true
 	}
 
+	@MainThread
 	suspend fun canSendItem(scene: String) : Boolean {
 		if (!canSend(false)) return false
 		// 分页读取本地Log，只统计成功发送的通知
@@ -355,4 +427,13 @@ class AppNotificationManager {
 		return true
 	}
 
+	private fun checkMainThread() {
+		check(Looper.myLooper() == Looper.getMainLooper()) {
+			"AppNotificationManager must be accessed on the main thread"
+		}
+	}
+
+	private companion object {
+		const val TAG = "AppNotificationManager"
+	}
 }

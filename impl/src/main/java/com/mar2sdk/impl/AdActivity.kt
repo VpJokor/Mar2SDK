@@ -104,7 +104,7 @@ class AdActivity : AppCompatActivity() {
 	private fun showRequestedAd(context: ScreenAdContext) {
 		val loading = findViewById<ProgressBar>(R.id.ad_loading)
 		if (Core.appMod == AppMod.DEBUG) {
-			Toast.makeText(Core.app, "展示广告 areaKey= $context", Toast.LENGTH_LONG).show()
+			Toast.makeText(Core.app, "展示广告 areaKey= ${context.areaKey}", Toast.LENGTH_LONG).show()
 		}
 		val callback = object : ShowCallback {
 			override val adContext = context

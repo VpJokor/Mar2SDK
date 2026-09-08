@@ -11,9 +11,16 @@ import com.mar2sdk.core.ad.status.AdFormat
 import com.mar2sdk.core.firebase.SingularConfig
 import com.mar2sdk.core.common.RiskUtil
 import com.mar2sdk.core.common.UserInfo
+import com.mar2sdk.core.notify.app.AppNotificationManager
+import com.mar2sdk.core.notify.app.NotificationTriggerKey
 import com.mar2sdk.core.util.DBUtil
 import com.singular.sdk.Singular
 import com.singular.sdk.SingularAdData
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.launch
 import org.json.JSONObject
 
 /**
@@ -21,10 +28,13 @@ import org.json.JSONObject
  */
 object LogUtil {
 	private const val TAG = "LogUtil"
+	private val notificationScope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
+
 	fun log(eventName: String, params: Map<String, Any>) {
 		if (Core.appMod == AppMod.DEBUG || Core.appMod == AppMod.TEST || Core.appMod == AppMod.PRE_RELEASE) {
 			Log.e(TAG, "log: $eventName ${formatParams(params)}")
 		}
+		spUse(eventName, params)
 		try {
 			logFirebase(eventName, params)
 		} catch (exception: Exception) {
@@ -33,6 +43,9 @@ object LogUtil {
 		logThinking(eventName, params)
 		logLocal(eventName, params)
 		logNet(eventName, params)
+	}
+
+	fun spUse(eventName: String, params: Map<String, Any>) {
 		if (eventName == LogAdEvent.ad_revenue) {
 			if (
 				(params[FirebaseAnalytics.Param.AD_FORMAT] as? String).equals(AdFormat.OPEN.name) ||
@@ -44,6 +57,17 @@ object LogUtil {
 					ThinkingUtil.setUserOnceAttr("firstAdRevenue", UserInfo.firstAdRevenue.toString())
 					UserInfo.saveUserInfo()
 					RiskUtil.judgeRisk()
+				}
+			}
+		}
+		if (eventName == LogAdEvent.ad_click) {
+			notificationScope.launch {
+				try {
+					AppNotificationManager.addBatch(NotificationTriggerKey.ad_click)
+				} catch (exception: CancellationException) {
+					throw exception
+				} catch (exception: Exception) {
+					Log.e(TAG, "Failed to enqueue ad click notification batch", exception)
 				}
 			}
 		}

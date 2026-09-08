@@ -9,8 +9,10 @@ import org.json.JSONObject
 object NotificationConfig {
 	private const val DEFAULT_CHANNEL_COUNT = 3
 	private const val DEFAULT_INTERVAL_SECOND = 60
-	private const val DEFAULT_24H_MAX = 999
-	private const val DEFAULT_1H_MAX = 5
+	private const val DEFAULT_24H_MAX_BATCH = 50
+	private const val DEFAULT_1H_MAX_BATCH = 5
+	private const val DEFAULT_24H_MAX_ITEM = 50
+	private const val DEFAULT_1H_MAX_ITEM = 5
 
 
 	// APP通知的通道数
@@ -25,10 +27,14 @@ object NotificationConfig {
 	var isScreenLockSend = false
 	// 批次通知全局发送间隔，单位秒
 	var intervalSecond = DEFAULT_INTERVAL_SECOND
-	// 24小时内最多发送的通知数
-	var max24H = DEFAULT_24H_MAX
-	// 1小时内最多发送的通知数
-	var max1H = DEFAULT_1H_MAX
+	// 24小时内最多发送的通知批次数
+	var max24HBatch = DEFAULT_24H_MAX_BATCH
+	// 1小时内最多发送的通知批次数
+	var max1HBatch = DEFAULT_1H_MAX_BATCH
+	// 24小时内最多发送的通知条数
+	var max24HItem = DEFAULT_24H_MAX_ITEM
+	// 1小时内最多发送的通知条数
+	var max1HItem = DEFAULT_1H_MAX_ITEM
 	// 各触发场景的通知配置
 	var triggers = mapOf<String, NotificationTrigger>()
 	// 定时通知配置
@@ -61,8 +67,10 @@ object NotificationConfig {
 			isScreenOffSend = PreferenceUtil.getBoolean(KEY_IS_SCREEN_OFF_SEND, isScreenOffSend)
 			isScreenLockSend = PreferenceUtil.getBoolean(KEY_IS_SCREEN_LOCK_SEND, isScreenLockSend)
 			intervalSecond = PreferenceUtil.getInt(KEY_INTERVAL_SECOND, intervalSecond)
-			max24H = PreferenceUtil.getInt(KEY_24H_MAX, max24H)
-			max1H = PreferenceUtil.getInt(KEY_1H_MAX, max1H)
+			max24HBatch = PreferenceUtil.getInt(KEY_24H_MAX_BATCH, max24HBatch)
+			max1HBatch = PreferenceUtil.getInt(KEY_1H_MAX_BATCH, max1HBatch)
+			max24HItem = PreferenceUtil.getInt(KEY_24H_MAX_ITEM, max24HItem)
+			max1HItem = PreferenceUtil.getInt(KEY_1H_MAX_ITEM, max1HItem)
 			triggers = JSONObject(
 				PreferenceUtil.getString(KEY_TRIGGERS, triggers.toTriggersJson())
 			).toTriggers()
@@ -84,8 +92,10 @@ object NotificationConfig {
 			PreferenceUtil.commitBoolean(KEY_IS_SCREEN_OFF_SEND, isScreenOffSend)
 			PreferenceUtil.commitBoolean(KEY_IS_SCREEN_LOCK_SEND, isScreenLockSend)
 			PreferenceUtil.commitInt(KEY_INTERVAL_SECOND, intervalSecond)
-			PreferenceUtil.commitInt(KEY_24H_MAX, max24H)
-			PreferenceUtil.commitInt(KEY_1H_MAX, max1H)
+			PreferenceUtil.commitInt(KEY_24H_MAX_BATCH, max24HBatch)
+			PreferenceUtil.commitInt(KEY_1H_MAX_BATCH, max1HBatch)
+			PreferenceUtil.commitInt(KEY_24H_MAX_ITEM, max24HItem)
+			PreferenceUtil.commitInt(KEY_1H_MAX_ITEM, max1HItem)
 			PreferenceUtil.commitString(KEY_TRIGGERS, triggers.toTriggersJson())
 			PreferenceUtil.commitString(KEY_TIMER, timer.toTimerJson())
 			PreferenceUtil.commitString(KEY_CONTENTS, contents.toContentsJson())
@@ -100,8 +110,10 @@ object NotificationConfig {
 		isScreenOffSend = config.optBoolean("isScreenOffSend", isScreenOffSend)
 		isScreenLockSend = config.optBoolean("isScreenLockSend", isScreenLockSend)
 		intervalSecond = config.optInt("interval_second", intervalSecond)
-		max24H = config.optInt("24HMax", max24H)
-		max1H = config.optInt("1HMax", max1H)
+		max24HBatch = config.optInt("24HMaxBatch", max24HBatch)
+		max1HBatch = config.optInt("1HMaxBatch", max1HBatch)
+		max24HItem = config.optInt("24HMaxItem", max24HItem)
+		max1HItem = config.optInt("1HMaxItem", max1HItem)
 		config.optJSONObject("triggers")?.let { triggers = it.toTriggers() }
 		config.optJSONObject("timer")?.let { timer = it.toTimer() }
 		config.optJSONArray("contents")?.let { contents = it.toContents() }
@@ -114,8 +126,10 @@ object NotificationConfig {
 		isScreenOffSend = false
 		isScreenLockSend = false
 		intervalSecond = DEFAULT_INTERVAL_SECOND
-		max24H = DEFAULT_24H_MAX
-		max1H = DEFAULT_1H_MAX
+		max24HBatch = DEFAULT_24H_MAX_BATCH
+		max1HBatch = DEFAULT_1H_MAX_BATCH
+		max24HItem = DEFAULT_24H_MAX_ITEM
+		max1HItem = DEFAULT_1H_MAX_ITEM
 		triggers = emptyMap()
 		timer = emptyMap()
 		contents = emptyList()

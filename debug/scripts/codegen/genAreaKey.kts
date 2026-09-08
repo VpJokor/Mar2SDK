@@ -18,6 +18,17 @@ import kotlin.system.exitProcess
  *
  * 用法：
  *   kotlin debug/scripts/codegen/genAreaKey.kts [项目根目录] [--dry-run|--check]
+ *
+ * 在项目根目录的 PowerShell 终端中执行（kotlin 命令需在 PATH 中）：
+ *
+ * 生成或更新 AreaKeys.kt：
+ *   kotlin .\debug\scripts\codegen\genAreaKey.kts
+ *
+ * 只检查生成结果是否为最新，不写入文件：
+ *   kotlin .\debug\scripts\codegen\genAreaKey.kts --check
+ *
+ * 预览生成内容，不写入文件：
+ *   kotlin .\debug\scripts\codegen\genAreaKey.kts --dry-run
  */
 
 private val AREA_KEY_SUFFIXES = listOf("start", "back", "leave")

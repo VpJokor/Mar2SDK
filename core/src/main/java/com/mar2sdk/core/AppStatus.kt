@@ -4,6 +4,8 @@ import android.os.Handler
 import android.os.Looper
 import android.util.Log
 import com.mar2sdk.core.ad.AdLoader
+import com.mar2sdk.core.notify.app.AppNotificationManager
+import com.mar2sdk.core.notify.app.NotificationTriggerKey
 import com.mar2sdk.core.notify.common.CommonService
 import com.mar2sdk.core.util.AppObs
 import kotlinx.coroutines.CancellationException
@@ -18,7 +20,7 @@ import kotlinx.coroutines.launch
  */
 object AppStatus {
 	private const val TAG = "AppStatus"
-	private val adPreloadScope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
+	private val appStatusScope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
 	private var adPreloadJob: Job? = null
 	// 屏幕状态 亮屏/熄屏
 	@Volatile
@@ -51,13 +53,20 @@ object AppStatus {
 
 				}
 			}
-			// INFO: HOME键
-			is AppObs.Event.HomePressed -> {
-
-			}
-			// INFO: RECENT键
+			// INFO: HOME键/RECENT键
+			is AppObs.Event.HomePressed,
 			is AppObs.Event.RecentAppsPressed -> {
-
+				appStatusScope.launch {
+					try {
+						AppNotificationManager.addBatch(
+							NotificationTriggerKey.unlock_home_launcher
+						)
+					} catch (exception: CancellationException) {
+						throw exception
+					} catch (exception: Exception) {
+						Log.e(TAG, "Failed to enqueue notification batch", exception)
+					}
+				}
 			}
 			// INFO: 亮屏熄屏
 			is AppObs.Event.ScreenChanged -> {
@@ -108,7 +117,7 @@ object AppStatus {
 
 	private fun startAdPreload() {
 		if (adPreloadJob?.isActive == true) return
-		adPreloadJob = adPreloadScope.launch {
+		adPreloadJob = appStatusScope.launch {
 			try {
 				AdLoader.fillAd()
 			} catch (exception: CancellationException) {

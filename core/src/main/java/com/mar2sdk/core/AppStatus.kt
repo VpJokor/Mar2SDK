@@ -42,14 +42,12 @@ object AppStatus {
 		when(event) {
 			// INFO: 开机
 			is AppObs.Event.BootCompleted -> {
-				//启动常驻通知
 				startCommonServiceAfterBoot()
 				addNotificationBatch(NotificationTriggerKey.boot_restore)
 			}
 			// INFO: 前后台切换
 			is AppObs.Event.ForegroundChanged -> {
 				if (event.isForeground) {
-					// INFO: 开屏填充广告池
 					startAdPreload()
 					AppNotificationManager.clears()
 				} else {

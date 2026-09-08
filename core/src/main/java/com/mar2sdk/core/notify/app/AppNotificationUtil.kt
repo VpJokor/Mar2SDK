@@ -87,6 +87,7 @@ object AppNotificationUtil {
 		// TODO: 文案读取策略
 		return NotificationConfig.contents.firstOrNull()
 	}
+
 	// 发送通知
 	fun sendNotificationContent(scene: String) {
 		// 通知发送限制

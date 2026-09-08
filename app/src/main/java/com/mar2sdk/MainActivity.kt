@@ -27,6 +27,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.mar2sdk.debug.DebugActivity
 import com.mar2sdk.impl.BaseActivity
+import com.mar2sdk.impl.ObserveScreenAdRoutes
 import com.mar2sdk.impl.SplashScreen
 import com.mar2sdk.impl.contentComposable
 import com.mar2sdk.impl.rememberNavigateWithAd
@@ -44,6 +45,7 @@ class MainActivity : BaseActivity() {
 		enableEdgeToEdge()
 		setContent {
 			val navController = rememberNavController()
+			ObserveScreenAdRoutes(navController)
 
 			MaterialTheme {
 				NavHost(
@@ -72,28 +74,24 @@ class MainActivity : BaseActivity() {
 						SplashScreen()
 					}
 					contentComposable(Routes.CONTENT_1) {
-						val navigateWithAd = rememberNavigateWithAd()
+						val navigateWithAd = rememberNavigateWithAd(navController)
 						ContentScreen1(
 							onNextClick = {
-								navigateWithAd {
-									navController.navigate(Routes.CONTENT_2) {
-										launchSingleTop = true
-									}
+								navigateWithAd(Routes.CONTENT_2) {
+									launchSingleTop = true
 								}
 							}
 						)
 					}
 					contentComposable(Routes.CONTENT_2) {
-						val navigateWithAd = rememberNavigateWithAd()
+						val navigateWithAd = rememberNavigateWithAd(navController)
 						ContentScreen2(
 							onPreviousClick = {
-								navigateWithAd {
-									navController.navigate(Routes.CONTENT_1) {
-										popUpTo(Routes.CONTENT_2) {
-											inclusive = true
-										}
-										launchSingleTop = true
+								navigateWithAd(Routes.CONTENT_1) {
+									popUpTo(Routes.CONTENT_2) {
+										inclusive = true
 									}
+									launchSingleTop = true
 								}
 							}
 						)

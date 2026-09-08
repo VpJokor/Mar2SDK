@@ -19,19 +19,20 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.LifecycleOwner
 import androidx.navigation.NavBackStackEntry
+import androidx.navigation.NavController
 import androidx.navigation.NavGraphBuilder
+import androidx.navigation.NavOptionsBuilder
 import androidx.navigation.compose.composable
 import com.mar2sdk.core.ad.AdConfig
 import com.mar2sdk.core.ad.policy.ScreenAdContext
-import com.mar2sdk.core.ad.policy.ScreenAdTrigger
 import com.mar2sdk.core.ad.status.AdFormat
 
 /** 当前导航页面名称。 */
 val LocalScreenName = compositionLocalOf { "UnknownScreen" }
 val LocalNavBackStackEntry = compositionLocalOf<NavBackStackEntry?> { null }
 
-private val LocalNavigateWithAd = compositionLocalOf<(() -> Unit) -> Unit> {
-	{ navigation -> navigation() }
+private val LocalNavigateWithAd = compositionLocalOf<(String, () -> Unit) -> Unit> {
+	{ _, navigation -> navigation() }
 }
 
 private const val HAS_ENTERED_KEY = "base_screen_has_entered"
@@ -39,11 +40,30 @@ private const val HAS_ENTERED_KEY = "base_screen_has_entered"
 /**
  * 返回一个跳转包装器：先展示当前页面的 `${screenName}_to` 广告，广告页结束后再执行跳转。
  * 如果广告无法启动，则立即继续跳转。
+ * 调用时传入目标路由：`navigateWithAd(toRoute) { navigation() }`。
  */
 @Composable
-fun rememberNavigateWithAd(): ((() -> Unit) -> Unit) = LocalNavigateWithAd.current
+fun rememberNavigateWithAd(): (toRoute: String, navigation: () -> Unit) -> Unit = LocalNavigateWithAd.current
 
-/** 注册带页面广告的导航 destination。 */
+/** 在广告结束后使用相同的目标路由和指定配置执行导航。 */
+@Composable
+fun rememberNavigateWithAd(
+	navController: NavController
+): (toRoute: String, builder: NavOptionsBuilder.() -> Unit) -> Unit {
+	val navigateWithAd = rememberNavigateWithAd()
+	return remember(navController, navigateWithAd) {
+		{ toRoute: String, builder: NavOptionsBuilder.() -> Unit ->
+			navigateWithAd(toRoute) {
+				navController.navigate(toRoute, builder)
+			}
+		}
+	}
+}
+
+/**
+ * 注册带页面广告的导航 destination。
+ * 在 NavHost 前调用 [ObserveScreenAdRoutes]，以记录进入和返回时的来源路由。
+ */
 fun NavGraphBuilder.contentComposable(
 	route: String,
 	content: @Composable () -> Unit
@@ -71,32 +91,27 @@ fun BaseScreen(content: @Composable () -> Unit) {
 	val adsEnabled = !LocalInspectionMode.current
 	val standaloneHasEntered = rememberSaveable(screenName) { mutableStateOf(false) }
 	val session = remember(backStackEntry, screenName) { ScreenAdSession(screenName) }
-	val launchAd = remember(activity, adsEnabled, screenName) {
-		{ areaKey: String ->
+	val launchAd = remember(activity, adsEnabled) {
+		{ request: ScreenAdRequest ->
 			adsEnabled && activity?.let {
-				val trigger = when (areaKey) {
-					"${screenName}_start" -> ScreenAdTrigger.ENTER
-					"${screenName}_back" -> ScreenAdTrigger.RETURN
-					"${screenName}_to" -> ScreenAdTrigger.LEAVE
-					else -> ScreenAdTrigger.UNKNOW
-				}
 				AdActivity.showAd(
 					it,
 					ScreenAdContext(
-						areaKey = areaKey,
+						areaKey = request.areaKey,
 						adFormat = AdFormat.INTER,
 						adPlatform = AdConfig.defaultPlatform,
-						trigger = trigger,
-						fromRoute = if (trigger == ScreenAdTrigger.LEAVE) screenName else "",
-						toRoute = if (trigger == ScreenAdTrigger.ENTER || trigger == ScreenAdTrigger.RETURN) screenName else ""
+						trigger = request.trigger,
+						fromRoute = request.fromRoute,
+						toRoute = request.toRoute
 					)
 				)
 			} == true
 		}
 	}
 	val navigateWithAd = remember(session, launchAd) {
-		{ navigation: () -> Unit ->
-			session.navigateAfterAd(launchAd, navigation)
+		{ toRoute: String, navigation: () -> Unit ->
+			require(toRoute.isNotBlank()) { "The ad navigation target route must not be blank" }
+			session.navigateAfterAd(toRoute, launchAd, navigation)
 		}
 	}
 
@@ -117,7 +132,9 @@ fun BaseScreen(content: @Composable () -> Unit) {
 									backStackEntry.savedStateHandle[HAS_ENTERED_KEY] = true
 								}
 							},
-							launchAd = launchAd
+							launchAd = launchAd,
+							fromRoute = backStackEntry?.savedStateHandle
+								?.get<String>(SCREEN_AD_FROM_ROUTE_KEY).orEmpty()
 						)
 					}
 					Lifecycle.Event.ON_PAUSE,

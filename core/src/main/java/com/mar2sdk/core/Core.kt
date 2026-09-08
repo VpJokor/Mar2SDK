@@ -16,6 +16,7 @@ import com.mar2sdk.core.notify.app.AppNotificationUtil
 import com.mar2sdk.core.common.RiskUtil
 import com.mar2sdk.core.common.TestMod
 import com.mar2sdk.core.common.status.UserType
+import com.mar2sdk.core.notify.app.AppNotificationManager
 import com.mar2sdk.core.util.AppObs
 
 enum class AppMod {
@@ -55,6 +56,7 @@ object Core {
 		ThinkingUtil.setUserOnceAttr("appMod", Core.appMod.name)
 		// APP通知初始化
 		AppNotificationUtil.init()
+		AppNotificationManager.startLoop()
 		// 开始监听手机状态
 		AppObs.init()
 	}

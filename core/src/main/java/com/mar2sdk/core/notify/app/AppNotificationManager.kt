@@ -125,7 +125,7 @@ class AppNotificationManager {
 	//  "interval":  60
 	fun canSendBatch(scene: String) : Boolean {
 		if (!canSend(true)) return false
-		// TODO : 上一次成功触发时间
+		// TODO : 上一次成功触发时间(查本地Log)
 		val lastSendBatchTime = 0L
 		if (System.currentTimeMillis() - lastSendBatchTime < (NotificationConfig.intervalSecond) * 1000) {
 			if (Core.appMod == AppMod.DEBUG) {
@@ -141,7 +141,7 @@ class AppNotificationManager {
 			)
 			return false
 		}
-		// TODO : 最近的24小时内发送了几批
+		// TODO : 最近的24小时内发送了几批(查本地Log)
 		val _24HSentBatchCount = 0
 		if (_24HSentBatchCount >= NotificationConfig.max24HBatch) {
 			if (Core.appMod == AppMod.DEBUG) {

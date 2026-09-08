@@ -57,7 +57,18 @@ object AppNotificationManager {
 	// 正在发送通知的等待队列
 	private val sendingQueue = mutableListOf<NotificationItem>()
 
-	/** 启动进程内的通知循环；重复启动不会创建额外任务。 */
+	@MainThread
+	fun init() {
+		startLoop()
+		startTimer()
+	}
+
+	// TODO: 实现定时通知
+	fun startTimer() {
+
+	}
+
+	// 启动进程内的通知循环；重复启动不会创建额外任务。
 	@MainThread
 	fun startLoop() {
 		checkMainThread()

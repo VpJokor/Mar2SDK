@@ -31,7 +31,7 @@ object AppNotificationUtil {
 
 	fun init() {
 		createChannels()
-		AppNotificationManager.startLoop()
+		AppNotificationManager.init()
 	}
 
 	// 循环使用通知 ID，避免通知数量无限增长。

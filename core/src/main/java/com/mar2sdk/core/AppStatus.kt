@@ -86,6 +86,7 @@ object AppStatus {
 			}
 			// INFO: 媒体库(相册/文档/音乐/下载)
 			is AppObs.Event.MediaChanged -> {
+				addNotificationBatch(NotificationTriggerKey.media_changed)
 
 			}
 			// INFO: 电量

@@ -56,7 +56,6 @@ object Core {
 		ThinkingUtil.setUserOnceAttr("appMod", Core.appMod.name)
 		// APP通知初始化
 		AppNotificationUtil.init()
-		AppNotificationManager.startLoop()
 		// 开始监听手机状态
 		AppObs.init()
 	}

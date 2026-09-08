@@ -8,99 +8,102 @@
   "24HMax":  50,
   "1HMax":  5,
   "ChannelCount": 3,
-  "triggers":  [
-    {
-      "id":  "1",
-      "name":  "screen_unlock",
+  "triggers":  {
+    "unlock_home_launcher" : {
       "delay":  0,
-      "count":  10,
+      "count":  3,
       "interval":  60
     },
-    {
-      "id":  "2",
-      "name":  "press_key_home",
-      "delay":  0,
-      "count":  10,
+    "screen_on_a" : {
+      "delay":  5,
+      "count":  3,
       "interval":  300
     },
-    {
-      "id":  "3",
-      "name":  "battery_change",
-      "delay":  0,
-      "count":  10,
+    "screen_on_b" : {
+      "delay":  10,
+      "count":  3,
       "interval":  300
     },
-    {
-      "id":  "4",
-      "name":  "install_app",
-      "delay":  0,
-      "count":  10,
+    "screen_on_c" : {
+      "delay":  65,
+      "count":  3,
       "interval":  600
     },
-    {
-      "id":  "5",
-      "name":  "uninstall_app",
-      "delay":  0,
-      "count":  10,
+    "screen_off_locked" : {
+      "delay":  60,
+      "count":  3,
       "interval":  600
     },
-    {
-      "id":  "7",
-      "name":  "return_home",
+    "power_connected" : {
       "delay":  0,
-      "count":  10,
+      "count":  3,
       "interval":  300
     },
-    {
-      "id":  "8",
-      "name":  "recent_apps",
+    "return_to_home" : {
       "delay":  0,
-      "count":  10,
+      "count":  3,
       "interval":  300
     },
-    {
-      "id":  "9",
-      "name":  "volume_changed",
+    "ad_click" : {
       "delay":  0,
-      "count":  10,
+      "count":  3,
       "interval":  300
     },
-    {
-      "id":  "6",
-      "name":  "screen_on",
+    "app_exit" : {
       "delay":  0,
-      "count":  10,
+      "count":  3,
+      "interval":  0
+    },
+    "package_added" : {
+      "delay":  0,
+      "count":  3,
+      "interval":  0
+    },
+    "package_removed" : {
+      "delay":  0,
+      "count":  3,
+      "interval":  0
+    },
+    "volume_changed" : {
+      "delay":  0,
+      "count":  3,
+      "interval":  0
+    },
+    "network_changed" : {
+      "delay":  0,
+      "count":  3,
+      "interval":  0
+    },
+    "boot_restore" : {
+      "delay":  0,
+      "count":  3,
       "interval":  0
     }
-  ],
+  },
   "timer":  [
     {
-      "id":  "timer-a",
       "name":  "timer-a",
       "HH":  6,
       "MM":  0,
-      "count":  10
+      "count":  3
     },
     {
-      "id":  "timer-b",
       "name":  "timer-b",
       "HH":  9,
       "MM":  0,
-      "count":  10
+      "count":  3
     },
     {
-      "id":  "timer-c",
       "name":  "timer-c",
       "HH":  14,
       "MM":  0,
-      "count":  10
+      "count":  3
     },
     {
-      "id":  "timer-d",
       "name":  "timer-d",
       "HH":  19,
       "MM":  25,
-      "count":  10
+      "count":  3
     }
   ],
   "contents": [

@@ -142,7 +142,8 @@ object NotificationConfig {
 					firstDelay = optInt("first_delay", 300),
 					delay = optInt("delay", 0),
 					count = optInt("count", 0),
-					interval = optInt("interval", 0)
+					intervalBatch = optInt("interval_batch", 0),
+					intervalItem = optInt("interval_item", 5)
 				)
 			}
 		}
@@ -154,7 +155,8 @@ object NotificationConfig {
 					put("first_delay", trigger.firstDelay)
 					put("delay", trigger.delay)
 					put("count", trigger.count)
-					put("interval", trigger.interval)
+					put("interval_batch", trigger.intervalBatch)
+					put("interval_item", trigger.intervalItem)
 				})
 			}
 		}.toString()
@@ -230,7 +232,8 @@ object NotificationConfig {
 data class NotificationTrigger(
 	val delay: Int = 0,
 	val count: Int = 0,
-	val interval: Int = 0,
+	val intervalBatch: Int = 0,
+	val intervalItem: Int = 5,
 	val firstDelay: Int = 300
 )
 

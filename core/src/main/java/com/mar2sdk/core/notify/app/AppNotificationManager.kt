@@ -61,12 +61,12 @@ class AppNotificationManager {
 		val trigger = NotificationConfig.triggers[scene] ?: return
 		if (trigger.count <= 0) return
 
-		// 批次中的通知按 5 秒间隔排队，首条通知应用场景配置的延迟。
+		// 批次中的通知按场景配置的单条间隔排队。
 		repeat(trigger.count) { index ->
 			sendingQueue.add(
 				NotificationItem(
 					scene = scene,
-					timeAt = index.toLong() * 5_000L
+					timeAt = index.toLong() * trigger.intervalItem * 1_000L
 				)
 			)
 		}
@@ -271,7 +271,7 @@ class AppNotificationManager {
 		val lastSceneSendBatchTime = sentBatchLogs.filter {
 			JSONObject(it.paramsJson).optString(LogNotifyParam.scene) == scene
 		}.maxOfOrNull { it.eventTimeMillis } ?: 0L
-		if (trigger != null && lastSceneSendBatchTime > 0L && currentTime - lastSceneSendBatchTime < trigger.interval.toLong() * 1000) {
+		if (trigger != null && lastSceneSendBatchTime > 0L && currentTime - lastSceneSendBatchTime < trigger.intervalBatch.toLong() * 1000) {
 			if (Core.appMod == AppMod.DEBUG) {
 				Toast.makeText(Core.app, "${scene}, 触发时间小于场景通知发送间隔", Toast.LENGTH_LONG).show()
 			}

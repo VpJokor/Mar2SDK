@@ -47,6 +47,7 @@ class AppNotificationManager {
 	suspend fun addBatch(scene: String) {
 		// INFO: 没有延迟（trigger.delay）发送的立即调 sendBatch，有延迟发送的放到 waitBatchQueue 中
 		val trigger = NotificationConfig.triggers[scene] ?: return
+		if (trigger.count == 0) return
 		if (trigger.delay > 0 ) {
 			waitBatchQueue.add(NotificationBatch(scene, System.currentTimeMillis()))
 		} else {

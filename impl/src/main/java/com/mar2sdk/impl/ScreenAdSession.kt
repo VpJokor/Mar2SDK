@@ -139,7 +139,7 @@ internal class ScreenAdSession(private val screenName: String) {
 	private fun launchNavigationAdOrRun(launchAd: (ScreenAdRequest) -> Boolean) {
 		val navigation = pendingNavigation ?: return
 		val request = ScreenAdRequest(
-			areaKey = "${screenName}_to",
+			areaKey = "${screenName}_leave",
 			trigger = ScreenAdTrigger.LEAVE,
 			fromRoute = screenName,
 			toRoute = navigation.toRoute

@@ -38,7 +38,7 @@ private val LocalNavigateWithAd = compositionLocalOf<(String, () -> Unit) -> Uni
 private const val HAS_ENTERED_KEY = "base_screen_has_entered"
 
 /**
- * 返回一个跳转包装器：先展示当前页面的 `${screenName}_to` 广告，广告页结束后再执行跳转。
+ * 返回一个跳转包装器：先展示当前页面的 `${screenName}_leave` 广告，广告页结束后再执行跳转。
  * 如果广告无法启动，则立即继续跳转。
  * 调用时传入目标路由：`navigateWithAd(toRoute) { navigation() }`。
  */

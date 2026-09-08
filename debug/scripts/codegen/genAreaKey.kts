@@ -13,14 +13,14 @@ import kotlin.system.exitProcess
  * 根据 app 和 impl 模块中内容页已有代码，生成 impl 模块中对应的 AreaKeys.kt 文件。
  * app 模块为业务代码，页面随时会增加和减少。
  *
- * 内容页以 contentComposable(route) 为准。每个静态 route 会生成 start、back、to
+ * 内容页以 contentComposable(route) 为准。每个静态 route 会生成 start、back、leave
  * 三个广告点位；直接字符串和字符串 const val 均可作为 route。
  *
  * 用法：
  *   kotlin debug/scripts/codegen/genAreaKey.kts [项目根目录] [--dry-run|--check]
  */
 
-private val AREA_KEY_SUFFIXES = listOf("start", "back", "to")
+private val AREA_KEY_SUFFIXES = listOf("start", "back", "leave")
 private val CONTENT_COMPOSABLE = Regex("""\bcontentComposable\s*\(""")
 private val STRING_CONST = Regex(
 	"""\bconst\s+val\s+([A-Za-z_][A-Za-z0-9_]*)(?:\s*:\s*(?:kotlin\s*\.\s*)?String)?\s*="""

@@ -44,15 +44,7 @@ object AppStatus {
 			is AppObs.Event.BootCompleted -> {
 				//启动常驻通知
 				startCommonServiceAfterBoot()
-				appStatusScope.launch {
-					try {
-						AppNotificationManager.addBatch(NotificationTriggerKey.boot_restore)
-					} catch (exception: CancellationException) {
-						Log.e(TAG, "CancellationException: ", exception)
-					} catch (exception: Exception) {
-						Log.e(TAG, "Failed to enqueue notification batch", exception)
-					}
-				}
+				addNotificationBatch(NotificationTriggerKey.boot_restore)
 			}
 			// INFO: 前后台切换
 			is AppObs.Event.ForegroundChanged -> {

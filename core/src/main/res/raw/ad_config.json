@@ -13,6 +13,7 @@
       "1HMax":  4,
       "24HMax":  20,
       "interval":  30,
+      "format": "INTER_VIDEO",
       "fromRoutes": ["*"],
       "toRoutes": ["*"]
     },
@@ -21,6 +22,7 @@
       "1HMax":  4,
       "24HMax":  20,
       "interval":  30,
+      "format": "INTER_VIDEO",
       "fromRoutes": ["*"],
       "toRoutes": ["*"]
     },
@@ -29,6 +31,7 @@
       "1HMax":  4,
       "24HMax":  20,
       "interval":  30,
+      "format": "INTER_VIDEO",
       "fromRoutes": ["*"],
       "toRoutes": ["*"]
     },
@@ -37,6 +40,7 @@
       "1HMax":  4,
       "24HMax":  20,
       "interval":  30,
+      "format": "INTER_VIDEO",
       "fromRoutes": ["*"],
       "toRoutes": ["*"]
     },
@@ -45,6 +49,7 @@
       "1HMax":  4,
       "24HMax":  20,
       "interval":  30,
+      "format": "INTER_VIDEO",
       "fromRoutes": ["*"],
       "toRoutes": ["*"]
     },
@@ -53,6 +58,7 @@
       "1HMax":  4,
       "24HMax":  20,
       "interval":  30,
+      "format": "INTER_VIDEO",
       "fromRoutes": ["*"],
       "toRoutes": ["*"]
     }

@@ -52,10 +52,9 @@ object AdmobConfig {
 			releaseOpenID = getString("releaseOpenID")
 			releaseInterID = getString("releaseInterID")
 			releaseVideoID = getString("releaseVideoID")
-			// 超时配置兼容旧版 raw 文件，缺少字段时沿用代码默认值。
-			openTimeout = optDouble("openTimeout", openTimeout)
-			interTimeout = optLong("interTimeout", interTimeout)
-			videoTimeout = optLong("videoTimeout", videoTimeout)
+			openTimeout = getDouble("openTimeout")
+			interTimeout = getLong("interTimeout")
+			videoTimeout = getLong("videoTimeout")
 			openPoolSize = getInt("openPoolSize")
 			interPoolSize = getInt("interPoolSize")
 			videoPoolSize = getInt("videoPoolSize")

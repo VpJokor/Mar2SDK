@@ -13,7 +13,7 @@
       "1HMax":  4,
       "24HMax":  20,
       "interval":  30,
-      "format": "INTER_VIDEO",
+      "format": "OPEN",
       "fromRoutes": ["*"],
       "toRoutes": ["*"]
     },
@@ -22,7 +22,7 @@
       "1HMax":  4,
       "24HMax":  20,
       "interval":  30,
-      "format": "INTER_VIDEO",
+      "format": "INTER",
       "fromRoutes": ["*"],
       "toRoutes": ["*"]
     },
@@ -31,7 +31,7 @@
       "1HMax":  4,
       "24HMax":  20,
       "interval":  30,
-      "format": "INTER_VIDEO",
+      "format": "VIDEO",
       "fromRoutes": ["*"],
       "toRoutes": ["*"]
     },

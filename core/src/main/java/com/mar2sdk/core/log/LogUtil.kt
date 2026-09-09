@@ -34,7 +34,11 @@ object LogUtil {
 		if (Core.appMod == AppMod.DEBUG || Core.appMod == AppMod.TEST || Core.appMod == AppMod.PRE_RELEASE) {
 			Log.e(TAG, "log: $eventName ${formatParams(params)}")
 		}
-		spUse(eventName, params)
+		try {
+			spUse(eventName, params)
+		} catch (exception: Exception) {
+			Log.e(TAG, "spUse error", exception)
+		}
 		try {
 			logFirebase(eventName, params)
 		} catch (exception: Exception) {

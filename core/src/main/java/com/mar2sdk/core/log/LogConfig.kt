@@ -6,7 +6,7 @@ import com.mar2sdk.core.util.PreferenceUtil
 import org.json.JSONArray
 import org.json.JSONObject
 
-/** Controls which events are sent to each logging backend. */
+// 控制各日志渠道上报哪些事件。
 object LogConfig {
 	var fbEvents = listOf<String>()
 	var localEvents = listOf<String>()
@@ -18,7 +18,7 @@ object LogConfig {
 		loadConfigFromPreference()
 	}
 
-	/** Loads the default routing rules packaged with the SDK. */
+	// 读取 SDK 打包资源中的默认上报规则。
 	fun loadConfigFromRaw() {
 		val config = Core.app.resources.openRawResource(R.raw.log_config)
 			.bufferedReader()
@@ -32,7 +32,7 @@ object LogConfig {
 		}
 	}
 
-	/** Loads saved routing rules, retaining packaged values for missing keys. */
+	// 读取已保存的上报规则，未保存的字段沿用打包资源中的值。
 	fun loadConfigFromPreference() {
 		with(LogKey) {
 			fbEvents = readEvents(KEY_FB_EVENTS, fbEvents)
@@ -42,7 +42,7 @@ object LogConfig {
 		}
 	}
 
-	/** Saves the current routing rules to local preferences. */
+	// 将当前上报规则保存到本地 Preference。
 	fun saveLogConfig() {
 		with(LogKey) {
 			PreferenceUtil.commitString(KEY_FB_EVENTS, fbEvents.toJson())
@@ -52,7 +52,7 @@ object LogConfig {
 		}
 	}
 
-	/** Returns whether an event is enabled; `*` enables every event. */
+	// 判断事件是否启用；`*` 表示启用全部事件。
 	fun isEnabled(events: Collection<String>, eventName: String): Boolean =
 		"*" in events || eventName in events
 

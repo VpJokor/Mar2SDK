@@ -1,6 +1,6 @@
 package com.mar2sdk.core.log
 
-/** SharedPreferences keys for log routing configuration. */
+// 日志上报渠道配置对应的 SharedPreferences 键。
 object LogKey {
 	const val KEY_FB_EVENTS = "mar2sdk.log_config.fbEvents"
 	const val KEY_LOCAL_EVENTS = "mar2sdk.log_config.localEvents"

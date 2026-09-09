@@ -21,6 +21,8 @@ import com.mar2sdk.core.firebase.SingularConfig
 import com.mar2sdk.core.log.ThinkingConfig
 import com.mar2sdk.core.common.CommonConfig
 import com.mar2sdk.core.common.UserInfo
+import com.mar2sdk.core.notify.NotificationConfig
+import com.mar2sdk.core.notify.NotificationContent
 import com.mar2sdk.core.util.DBUtil
 import kotlinx.coroutines.launch
 import java.time.Instant
@@ -86,6 +88,7 @@ class InfoActivity : AppCompatActivity() {
 			"log" -> loadLogs()
 			"user" -> loadUserInfo()
 			"config" -> loadConfig()
+			CONTENT_LABEL -> loadContent()
 			else -> infoAdapter.submitItems(
 				listOf(InfoItem(title = "暂无信息", content = "未知的信息类型：$label")),
 			)
@@ -200,6 +203,45 @@ class InfoActivity : AppCompatActivity() {
 		)
 	}
 
+	private fun loadContent() {
+		val contents = NotificationConfig.contents
+		if (contents.isEmpty()) {
+			infoAdapter.submitItems(
+				listOf(InfoItem(title = "暂无文案", content = "当前没有可用的通知文案")),
+			)
+			return
+		}
+
+		infoAdapter.submitItems(contents.mapIndexed { index, content ->
+			InfoItem(
+				title = content.Title.ifBlank { "文案 #${index + 1}" },
+				content = formatContent(content),
+				showFullContent = true,
+				useContentLayout = true,
+			)
+		})
+	}
+
+	private fun formatContent(content: NotificationContent): String = buildString {
+		val localizedContents = content.Languages.toSortedMap()
+		appendLine("正文：${content.Content}")
+		appendLine("按钮：${content.Button}")
+		appendLine("场景：${content.Scenes.joinToString().ifBlank { "无" }}")
+		appendLine("路由：${content.Route.ifBlank { "无" }}")
+		if (localizedContents.isEmpty()) {
+			append("多语言：无")
+		} else {
+			appendLine("多语言：")
+			localizedContents.entries.forEachIndexed { index, (language, localized) ->
+				appendLine("[$language]")
+				appendLine("标题：${localized.title}")
+				appendLine("正文：${localized.content}")
+				append("按钮：${localized.button}")
+				if (index < localizedContents.size - 1) appendLine()
+			}
+		}
+	}
+
 	private fun formatMinutes(milliseconds: Number): String =
 		String.format(Locale.ROOT, "%.2f", milliseconds.toDouble() / MILLIS_PER_MINUTE)
 			.trimEnd('0')
@@ -210,6 +252,7 @@ class InfoActivity : AppCompatActivity() {
 		val title: String,
 		val content: String,
 		val showFullContent: Boolean = false,
+		val useContentLayout: Boolean = false,
 	)
 
 	private class InfoAdapter(
@@ -217,11 +260,24 @@ class InfoActivity : AppCompatActivity() {
 	) : RecyclerView.Adapter<InfoAdapter.InfoViewHolder>() {
 		private val items = mutableListOf<InfoItem>()
 
+		private companion object {
+			const val VIEW_TYPE_DEFAULT = 0
+			const val VIEW_TYPE_CONTENT = 1
+		}
+
 		override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): InfoViewHolder {
+			val layout = if (viewType == VIEW_TYPE_CONTENT) {
+				R.layout.activity_info_content_item
+			} else {
+				R.layout.activity_info_item
+			}
 			val itemView = LayoutInflater.from(parent.context)
-				.inflate(R.layout.activity_info_item, parent, false)
+				.inflate(layout, parent, false)
 			return InfoViewHolder(itemView, onItemClick)
 		}
+
+		override fun getItemViewType(position: Int): Int =
+			if (items[position].useContentLayout) VIEW_TYPE_CONTENT else VIEW_TYPE_DEFAULT
 
 		override fun onBindViewHolder(holder: InfoViewHolder, position: Int) {
 			holder.bind(items[position])
@@ -263,6 +319,7 @@ class InfoActivity : AppCompatActivity() {
 	companion object {
 		private const val EXTRA_LABEL = "label"
 		private const val LOG_LABEL = "log"
+		private const val CONTENT_LABEL = "content"
 		private const val LOG_DISPLAY_LIMIT = 100
 		private const val MILLIS_PER_MINUTE = 60_000.0
 		private val LOG_TIME_FORMATTER = DateTimeFormatter

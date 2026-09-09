@@ -72,7 +72,13 @@ class InfoActivity : AppCompatActivity() {
 			if (item.time.isNotBlank()) {
 				add(getString(R.string.info_detail_time, item.time))
 			}
-			add(getString(R.string.info_detail_content, item.content))
+			add(
+				if (item.useContentLayout) {
+					item.content
+				} else {
+					getString(R.string.info_detail_content, item.content)
+				},
+			)
 		}.joinToString(separator = "\n\n")
 		val dialog = AlertDialog.Builder(this)
 			.setTitle(R.string.info_details)

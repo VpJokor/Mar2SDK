@@ -108,21 +108,28 @@ class DebugActivity : AppCompatActivity() {
 		}
 
 		findViewById<View>(R.id.test_open).setOnClickListener {
-			showTestAd(AdFormat.OPEN)
+			showTestAd(AreaKeys.KEY_TEST_OPEN, AdFormat.OPEN)
 		}
 		findViewById<View>(R.id.test_inter).setOnClickListener {
-			showTestAd(AdFormat.INTER)
+			showTestAd(AreaKeys.KEY_TEST_INTER, AdFormat.INTER)
 		}
 		findViewById<View>(R.id.test_video).setOnClickListener {
-			showTestAd(AdFormat.VIDEO)
+			showTestAd(AreaKeys.KEY_TEST_VIDEO, AdFormat.VIDEO)
 		}
+		findViewById<View>(R.id.test_open_inter).setOnClickListener {
+			showTestAd(AreaKeys.KEY_TEST_OPEN_INTER, AdFormat.VIDEO)
+		}
+		findViewById<View>(R.id.test_inter_video).setOnClickListener {
+			showTestAd(AreaKeys.KEY_TEST_INTER_VIDEO, AdFormat.VIDEO)
+		}
+
 	}
 
-	private fun showTestAd(adFormat: AdFormat) {
+	private fun showTestAd(area: String, adFormat: AdFormat) {
 		AdActivity.showAd(
 			this,
 			ScreenAdContext(
-				areaKey = AreaKeys.KEY_TEST,
+				areaKey = area,
 				adFormat = adFormat,
 				adPlatform = AdConfig.defaultPlatform,
 				trigger = ScreenAdTrigger.UNKNOW

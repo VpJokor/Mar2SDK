@@ -1,6 +1,6 @@
 {
   "defaultPlatform": "ADMOB",
-  "activePlatforms": ["TRADPLUS"],
+  "activePlatforms": ["TRADPLUS","TOPON"],
   "showMaxTime": 10000,
   "showMinTime": 500,
   "isOpen": true,

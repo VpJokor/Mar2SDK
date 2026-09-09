@@ -15,6 +15,7 @@ import androidx.lifecycle.lifecycleScope
 import com.mar2sdk.core.AppMod
 import com.mar2sdk.core.Core
 import com.mar2sdk.core.ad.callback.ShowCallback
+import com.mar2sdk.core.ad.policy.AdPolicy
 import com.mar2sdk.core.ad.policy.ScreenAdContext
 import com.mar2sdk.core.ad.status.ShowFailResult
 import kotlinx.coroutines.CancellationException
@@ -38,7 +39,8 @@ class AdActivity : AppCompatActivity() {
 
 		// 展示广告，返回是否成功启动广告页。
 		fun showAd(activity: Activity, adContext: ScreenAdContext): Boolean {
-			// TODO: 广告策略判断是否应该播放广告
+			// INFO: 广告策略判断是否应该播放广告
+			if (!AdPolicy.canShowAd(adContext)) return false
 			return tryShowAd(activity, adContext)
 		}
 

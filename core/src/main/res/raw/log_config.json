@@ -1,4 +1,6 @@
 {
+  "fbEvents": ["*"],
+  "localEvents": ["*"],
   "thEvents": ["eventA","eventB","eventC"],
   "netEvents": ["eventA","eventB","eventC"]
 }

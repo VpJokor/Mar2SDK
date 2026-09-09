@@ -39,14 +39,16 @@ object LogUtil {
 		} catch (exception: Exception) {
 			Log.e(TAG, "spUse error", exception)
 		}
-		try {
-			logFirebase(eventName, params)
-		} catch (exception: Exception) {
-			Log.e(TAG, "logFirebase error", exception)
+		if (LogConfig.isEnabled(LogConfig.fbEvents, eventName)) {
+			try {
+				logFirebase(eventName, params)
+			} catch (exception: Exception) {
+				Log.e(TAG, "logFirebase error", exception)
+			}
 		}
-		logThinking(eventName, params)
-		logLocal(eventName, params)
-		logNet(eventName, params)
+		if (LogConfig.isEnabled(LogConfig.thEvents, eventName)) logThinking(eventName, params)
+		if (LogConfig.isEnabled(LogConfig.localEvents, eventName)) logLocal(eventName, params)
+		if (LogConfig.isEnabled(LogConfig.netEvents, eventName)) logNet(eventName, params)
 	}
 
 	fun spUse(eventName: String, params: Map<String, Any>) {

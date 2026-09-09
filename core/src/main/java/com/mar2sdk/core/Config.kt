@@ -8,6 +8,7 @@ import com.mar2sdk.core.ad.impl.tradplus.TradplusConfig
 import com.mar2sdk.core.ad.impl.unity.UnityConfig
 import com.mar2sdk.core.firebase.SingularConfig
 import com.mar2sdk.core.log.ThinkingConfig
+import com.mar2sdk.core.log.LogConfig
 import com.mar2sdk.core.notify.NotificationConfig
 import com.mar2sdk.core.common.CommonConfig
 import com.mar2sdk.core.common.UserInfo
@@ -22,6 +23,7 @@ object Config {
 	fun initConfig() {
 		PreferenceUtil.init()
 		DBUtil.init()
+		initLogConfig()
 		initUserInfo()
 		initCommonConfig()
 		initAdConfig()
@@ -58,6 +60,10 @@ object Config {
 
 	fun initThinkingConfig() {
 		ThinkingConfig.init()
+	}
+
+	fun initLogConfig() {
+		LogConfig.init()
 	}
 
 	fun initNotificationConfig() {

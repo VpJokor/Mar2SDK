@@ -6,6 +6,7 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.TextView
+import android.widget.Toast
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
@@ -23,6 +24,7 @@ import com.mar2sdk.core.common.CommonConfig
 import com.mar2sdk.core.common.UserInfo
 import com.mar2sdk.core.notify.NotificationConfig
 import com.mar2sdk.core.notify.NotificationContent
+import com.mar2sdk.core.notify.NotificationUtil
 import com.mar2sdk.core.util.DBUtil
 import kotlinx.coroutines.launch
 import java.time.Instant
@@ -48,7 +50,16 @@ class InfoActivity : AppCompatActivity() {
 		}
 
 		label = intent.getStringExtra(EXTRA_LABEL).orEmpty()
-		findViewById<TextView>(R.id.title).text = label
+		val isNotificationPolicy = label.equals(NOTIFICATION_POLICY_LABEL, ignoreCase = true)
+		findViewById<TextView>(R.id.title).text =
+			if (isNotificationPolicy) getString(R.string.notification_policy) else label
+		findViewById<View>(R.id.refresh_btn).apply {
+			visibility = if (isNotificationPolicy) View.VISIBLE else View.GONE
+			setOnClickListener {
+				getData()
+				Toast.makeText(this@InfoActivity, R.string.notification_policy_refreshed, Toast.LENGTH_SHORT).show()
+			}
+		}
 		findViewById<View>(R.id.clear_logs).apply {
 			visibility = if (label.equals(LOG_LABEL, ignoreCase = true)) View.VISIBLE else View.GONE
 			setOnClickListener { confirmClearLogs() }
@@ -95,6 +106,7 @@ class InfoActivity : AppCompatActivity() {
 			"user" -> loadUserInfo()
 			"config" -> loadConfig()
 			CONTENT_LABEL -> loadContent()
+			NOTIFICATION_POLICY_LABEL -> loadNotificationPolicy()
 			else -> infoAdapter.submitItems(
 				listOf(InfoItem(title = "暂无信息", content = "未知的信息类型：$label")),
 			)
@@ -208,6 +220,56 @@ class InfoActivity : AppCompatActivity() {
 			},
 		)
 	}
+
+	private fun loadNotificationPolicy() {
+		val policyValues = buildList {
+			add("发送开关" to buildString {
+				appendLine("总开关：${formatSwitch(NotificationConfig.isSend)}")
+				appendLine("前台发送：${formatSwitch(NotificationConfig.isForgroundSend)}")
+				appendLine("熄屏发送：${formatSwitch(NotificationConfig.isScreenOffSend)}")
+				appendLine("锁屏发送：${formatSwitch(NotificationConfig.isScreenLockSend)}")
+				appendLine("通知通道数：${NotificationConfig.ChannelCount}")
+				append("系统通知权限：${if (NotificationUtil.hasNotiAccess()) "已授权" else "未授权"}")
+			})
+			add("发送限制" to buildString {
+				appendLine("批次全局间隔：${NotificationConfig.intervalSecond} 秒")
+				appendLine("1 小时最多批次：${NotificationConfig.max1HBatch} 批")
+				appendLine("24 小时最多批次：${NotificationConfig.max24HBatch} 批")
+				appendLine("1 小时最多通知：${NotificationConfig.max1HItem} 条")
+				append("24 小时最多通知：${NotificationConfig.max24HItem} 条")
+			})
+
+			val triggers = NotificationConfig.triggers.toSortedMap()
+			if (triggers.isEmpty()) {
+				add("触发场景" to "暂无触发场景策略")
+			} else {
+				triggers.forEach { (scene, trigger) ->
+					add("触发场景：$scene" to buildString {
+						appendLine("首次延迟：${trigger.firstDelay} 秒")
+						appendLine("触发后延迟：${trigger.delay} 秒")
+						appendLine("每批通知条数：${trigger.count} 条")
+						appendLine("场景批次间隔：${trigger.intervalBatch} 秒")
+						append("批内单条间隔：${trigger.intervalItem} 秒")
+					})
+				}
+			}
+
+			val timers = NotificationConfig.timer.toSortedMap()
+			if (timers.isEmpty()) {
+				add("定时通知" to "暂无定时通知策略")
+			} else {
+				timers.forEach { (scene, timer) ->
+					val time = String.format(Locale.ROOT, "%02d:%02d", timer.HH, timer.MM)
+					add("定时通知：$scene" to "发送时间：$time\n通知条数：${timer.count} 条")
+				}
+			}
+		}
+		infoAdapter.submitItems(policyValues.map { (title, content) ->
+			InfoItem(title = title, content = content, showFullContent = true, useContentLayout = true)
+		})
+	}
+
+	private fun formatSwitch(enabled: Boolean): String = if (enabled) "开启" else "关闭"
 
 	private fun loadContent() {
 		val contents = NotificationConfig.contents
@@ -323,6 +385,7 @@ class InfoActivity : AppCompatActivity() {
 	}
 
 	companion object {
+		const val NOTIFICATION_POLICY_LABEL = "notification_policy"
 		private const val EXTRA_LABEL = "label"
 		private const val LOG_LABEL = "log"
 		private const val CONTENT_LABEL = "content"

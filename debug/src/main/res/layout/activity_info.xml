@@ -19,6 +19,7 @@
             android:textStyle="bold"
             android:textColor="@android:color/black"
             android:gravity="center"
+            android:paddingHorizontal="48dp"
             android:layout_width="match_parent"
             android:layout_height="48dp"/>
         <ImageView
@@ -27,6 +28,18 @@
             android:padding="10dp"
             android:layout_width="48dp"
             android:layout_height="48dp"/>
+        <ImageButton
+            android:id="@+id/refresh_btn"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:layout_gravity="end"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:contentDescription="@string/refresh_notification_policy"
+            android:padding="12dp"
+            android:scaleType="centerInside"
+            android:src="@drawable/refresh"
+            android:tooltipText="@string/refresh_notification_policy"
+            android:visibility="gone" />
         <ImageButton
             android:id="@+id/clear_logs"
             android:layout_width="48dp"

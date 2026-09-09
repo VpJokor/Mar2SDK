@@ -42,6 +42,8 @@ object AdConfig {
 	var max1H = 50
 	// 24小时内最大展示数
 	var max24H = 50
+	// 全局广告两次展示之间的最短间隔，单位秒
+	var interval = 0
 	// 广告位的具体配置
 	var adUnits = mapOf<String, AdUnitConfig>()
 
@@ -65,6 +67,7 @@ object AdConfig {
 			showMod = optInt("showMod", showMod)
 			max1H = optInt("1HMax", max1H)
 			max24H = optInt("24HMax", max24H)
+			interval = optInt("interval", interval)
 			adUnits = optJSONObject("ad_units")?.toAdUnits() ?: adUnits
 		}
 	}
@@ -84,6 +87,7 @@ object AdConfig {
 			showMod = PreferenceUtil.getInt(KEY_SHOW_MOD, showMod)
 			max1H = PreferenceUtil.getInt(KEY_1H_MAX, max1H)
 			max24H = PreferenceUtil.getInt(KEY_24H_MAX, max24H)
+			interval = PreferenceUtil.getInt(KEY_INTERVAL, interval)
 			adUnits = JSONObject(
 				PreferenceUtil.getString(KEY_AD_UNITS, adUnits.toJson())
 			).toAdUnits()
@@ -101,6 +105,7 @@ object AdConfig {
 			PreferenceUtil.commitInt(KEY_SHOW_MOD, showMod)
 			PreferenceUtil.commitInt(KEY_1H_MAX, max1H)
 			PreferenceUtil.commitInt(KEY_24H_MAX, max24H)
+			PreferenceUtil.commitInt(KEY_INTERVAL, interval)
 			PreferenceUtil.commitString(KEY_AD_UNITS, adUnits.toJson())
 		}
 	}

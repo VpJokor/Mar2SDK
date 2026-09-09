@@ -22,6 +22,12 @@ object AdPolicy {
 	fun isShowMax(): Boolean {
 		val now = System.currentTimeMillis()
 		val logs = queryAdImpressionLogs()
+		val lastShowTime = logs
+			.filter { it.eventTimeMillis <= now }
+			.maxOfOrNull { it.eventTimeMillis } ?: 0L
+		if (lastShowTime > 0L && now - lastShowTime < AdConfig.interval.coerceAtLeast(0).toLong() * 1000L) {
+			return false
+		}
 		val showCount1H = logs.count { it.eventTimeMillis in (now - HOUR_MILLIS)..now }
 		val showCount24H = logs.count { it.eventTimeMillis in (now - DAY_MILLIS)..now }
 		return showCount1H < AdConfig.max1H && showCount24H < AdConfig.max24H

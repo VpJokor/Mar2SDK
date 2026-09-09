@@ -2,5 +2,6 @@
   "defaultPlatform": "ADMOB",
   "activePlatforms": ["TRADPLUS"],
   "showMaxTime": 10000,
-  "showMinTime": 500
+  "showMinTime": 500,
+  "isOpen": true
 }

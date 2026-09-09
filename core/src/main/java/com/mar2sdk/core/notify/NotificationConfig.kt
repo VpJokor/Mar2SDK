@@ -2,11 +2,17 @@ package com.mar2sdk.core.notify
 
 import com.mar2sdk.core.Core
 import com.mar2sdk.core.R
+import com.mar2sdk.core.notify.app.NotificationAlarmScheduler
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.launch
 import com.mar2sdk.core.util.PreferenceUtil
 import org.json.JSONArray
 import org.json.JSONObject
 
 object NotificationConfig {
+	private val timerScope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
 	private const val DEFAULT_CHANNEL_COUNT = 3
 	private const val DEFAULT_INTERVAL_SECOND = 60
 	private const val DEFAULT_24H_MAX_BATCH = 50
@@ -100,6 +106,7 @@ object NotificationConfig {
 			PreferenceUtil.commitString(KEY_TIMER, timer.toTimerJson())
 			PreferenceUtil.commitString(KEY_CONTENTS, contents.toContentsJson())
 		}
+		timerScope.launch { NotificationAlarmScheduler.refresh() }
 	}
 
 	/** Apply values present in a JSON object and retain defaults for missing values. */

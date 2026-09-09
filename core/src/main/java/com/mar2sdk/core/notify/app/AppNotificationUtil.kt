@@ -8,16 +8,9 @@ import android.content.Context
 import android.content.Intent
 import android.util.Log
 import android.widget.RemoteViews
-import android.widget.Toast
 import androidx.core.app.NotificationCompat
-import com.mar2sdk.core.AppMod
-import com.mar2sdk.core.AppStatus
 import com.mar2sdk.core.Core
 import com.mar2sdk.core.R
-import com.mar2sdk.core.log.LogAppParam
-import com.mar2sdk.core.log.LogNotifyEvent
-import com.mar2sdk.core.log.LogNotifyParam
-import com.mar2sdk.core.log.LogUtil
 import com.mar2sdk.core.notify.NotificationConfig
 import com.mar2sdk.core.notify.NotificationContent
 import java.util.concurrent.atomic.AtomicInteger
@@ -132,7 +125,7 @@ object AppNotificationUtil {
 	private fun getChannelDES(index: Int) = "$CHANNEL_DES_PREFIX$index"
 
 	// 创建APP通知的通道
-	private fun createChannels() {
+	internal fun createChannels() {
 		val notificationManager = Core.app.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
 		for (index in 1..NotificationConfig.ChannelCount) {
 			val groupId = getChannelGroupId(index)

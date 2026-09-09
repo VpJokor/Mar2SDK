@@ -26,6 +26,8 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.yield
 import org.json.JSONException
@@ -50,6 +52,7 @@ object AppNotificationManager {
 
 	private val loopScope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
 	private var loopJob: Job? = null
+	private val sendMutex = Mutex()
 
 	// 通知触发场景的批次等待队列
 	private val waitBatchQueue = mutableListOf<NotificationBatch>()
@@ -63,9 +66,11 @@ object AppNotificationManager {
 		startTimer()
 	}
 
-	// TODO: 实现定时通知
+	// 将定时通知交给系统，即使进程退出也能触发；省电模式下可能延迟。
+	@MainThread
 	fun startTimer() {
-
+		checkMainThread()
+		NotificationAlarmScheduler.start()
 	}
 
 	// 启动进程内的通知循环；重复启动不会创建额外任务。
@@ -87,10 +92,11 @@ object AppNotificationManager {
 		}
 	}
 
-	/** 取消当前循环并丢弃待发任务；之后仍可重新启动。 */
+	/** 取消发送循环和定时器并丢弃待发任务；调用 init 可重新启动两者。 */
 	@MainThread
 	fun stopLoop() {
 		checkMainThread()
+		NotificationAlarmScheduler.stop()
 		loopJob?.cancel()
 		loopJob = null
 		clears()
@@ -166,8 +172,14 @@ object AppNotificationManager {
 		if (restartLoop) startLoop()
 	}
 
-	private suspend fun send(scene: String) {
-		if (!canSendItem(scene)) return
+	@MainThread
+	internal suspend fun sendTimerItem(scene: String) {
+		checkMainThread()
+		send(scene)
+	}
+
+	private suspend fun send(scene: String) = sendMutex.withLock {
+		if (!canSendItem(scene)) return@withLock
 		currentCoroutineContext().ensureActive()
 		AppNotificationUtil.sendNotificationContent(scene)
 		LogUtil.log(LogNotifyEvent.notify_send_item, mapOf(LogNotifyParam.isSuccess to true, LogNotifyParam.scene to scene))

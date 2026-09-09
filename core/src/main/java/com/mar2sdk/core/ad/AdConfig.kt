@@ -75,9 +75,8 @@ object AdConfig {
 			showMaxTime = PreferenceUtil.getLong(KEY_SHOW_MAX_TIME, showMaxTime)
 			showMinTime = PreferenceUtil.getLong(KEY_SHOW_MIN_TIME, showMinTime)
 			showMod = PreferenceUtil.getInt(KEY_SHOW_MOD, showMod)
-			val legacyMaxCount = PreferenceUtil.getInt(KEY_SHOW_MAX_COUNT, max1H)
-			max1H = PreferenceUtil.getInt(KEY_1H_MAX, legacyMaxCount)
-			max24H = PreferenceUtil.getInt(KEY_24H_MAX, legacyMaxCount)
+			max1H = PreferenceUtil.getInt(KEY_1H_MAX, max1H)
+			max24H = PreferenceUtil.getInt(KEY_24H_MAX, max24H)
 			adUnits = JSONObject(
 				PreferenceUtil.getString(KEY_AD_UNITS, adUnits.toJson())
 			).toAdUnits()
@@ -112,8 +111,8 @@ object AdConfig {
 			getJSONObject(key).let { config ->
 				AdUnitConfig(
 					config.optInt("rate"),
-					config.optInt("1HMax", config.optInt("max_per_hour")),
-					config.optInt("24HMax", config.optInt("max_per_day")),
+					config.optInt("1HMax"),
+					config.optInt("24HMax"),
 					config.optInt("interval_seconds")
 				)
 			}

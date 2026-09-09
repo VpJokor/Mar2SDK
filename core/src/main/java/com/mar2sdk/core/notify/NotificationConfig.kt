@@ -62,11 +62,11 @@ object NotificationConfig {
 			.use { JSONObject(it.readText()) }
 		val contentConfig = Core.app.resources.openRawResource(R.raw.notification_content)
 			.bufferedReader()
-			.use { JSONObject(it.readText()) }
+			.use { JSONObject(it.readText()).getJSONArray("contents") }
 
 		resetToDefaults()
 		applyConfig(config)
-		contents = contentConfig.optJSONArray("contents")?.toContents() ?: emptyList()
+		contents = contentConfig.toContents()
 	}
 
 	// 从本地读取配置，未保存的配置项沿用打包资源中的值。

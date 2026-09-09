@@ -3,6 +3,7 @@ package com.mar2sdk.core.ad
 import com.mar2sdk.core.Core
 import com.mar2sdk.core.R
 import com.mar2sdk.core.ad.status.AdPlatform
+import com.mar2sdk.core.ad.status.AdFormat
 import com.mar2sdk.core.util.PreferenceUtil
 import org.json.JSONArray
 import org.json.JSONObject
@@ -14,6 +15,7 @@ object AdConfig {
 	// max1H：每小时最大展示数
 	// max24H：滚动24小时最大展示数
 	// interval：与上次展示的时间间隔，单位秒
+	// format：广告展示类型
 	// fromRoutes：允许展示广告的来源路由
 	// toRoutes：允许展示广告的目标路由
 	data class AdUnitConfig(
@@ -21,6 +23,7 @@ object AdConfig {
 		val max1H: Int,
 		val max24H: Int,
 		val interval: Int,
+		val format: AdFormat,
 		val fromRoutes: List<String>,
 		val toRoutes: List<String>
 	)
@@ -118,6 +121,7 @@ object AdConfig {
 					config.optInt("1HMax"),
 					config.optInt("24HMax"),
 					config.optInt("interval"),
+					AdFormat.valueOf(config.getString("format")),
 					config.optJSONArray("fromRoutes")?.toStringList() ?: emptyList(),
 					config.optJSONArray("toRoutes")?.toStringList() ?: emptyList()
 				)
@@ -135,6 +139,7 @@ object AdConfig {
 					put("1HMax", config.max1H)
 					put("24HMax", config.max24H)
 					put("interval", config.interval)
+					put("format", config.format.name)
 					put("fromRoutes", JSONArray(config.fromRoutes))
 					put("toRoutes", JSONArray(config.toRoutes))
 				})

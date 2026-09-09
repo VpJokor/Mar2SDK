@@ -10,6 +10,7 @@ import org.json.JSONObject
 // 广告配置
 object AdConfig {
 
+	// rate: 广告展示概率，maxPerHour：每小时最大展示数，maxPerDay：滚动24小时最大展示数，intervalSeconds：与上次展示的时间间隔
 	data class AdUnitConfig(
 		val rate: Int,
 		val maxPerHour: Int,
@@ -19,12 +20,15 @@ object AdConfig {
 
 	var defaultPlatform = AdPlatform.ADMOB
 	var activePlatforms = mutableSetOf<AdPlatform>()
+	// 全局广告总开关
 	var isOpen = true
 	// 广告展示超时时间，单位毫秒
 	var showMaxTime = 10 * 1000L
 	// 广告展示前最小等待时间，单位毫秒
 	var showMinTime = 500L
+	// 广告展示模式
 	var showMod = 555
+	// 广告最大展示条数
 	var showMaxCount = 50
 	// 广告位的具体配置
 	var adUnits = mapOf<String, AdUnitConfig>()

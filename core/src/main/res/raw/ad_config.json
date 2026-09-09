@@ -13,48 +13,48 @@
       "1HMax":  4,
       "24HMax":  20,
       "interval":  30,
-      "fromRoutes": ["RouteA", "RouteB", "RouteC"],
-      "toRoutes": ["RouteA", "RouteB", "RouteC"]
+      "fromRoutes": ["*"],
+      "toRoutes": ["*"]
     },
     "content1_back" : {
       "rate":  1.0,
       "1HMax":  4,
       "24HMax":  20,
       "interval":  30,
-      "fromRoutes": ["RouteA", "RouteB", "RouteC"],
-      "toRoutes": ["RouteA", "RouteB", "RouteC"]
+      "fromRoutes": ["*"],
+      "toRoutes": ["*"]
     },
     "content1_leave" : {
       "rate":  1.0,
       "1HMax":  4,
       "24HMax":  20,
       "interval":  30,
-      "fromRoutes": ["RouteA", "RouteB", "RouteC"],
-      "toRoutes": ["RouteA", "RouteB", "RouteC"]
+      "fromRoutes": ["*"],
+      "toRoutes": ["*"]
     },
     "content2_start" : {
       "rate":  1.0,
       "1HMax":  4,
       "24HMax":  20,
       "interval":  30,
-      "fromRoutes": ["RouteA", "RouteB", "RouteC"],
-      "toRoutes": ["RouteA", "RouteB", "RouteC"]
+      "fromRoutes": ["*"],
+      "toRoutes": ["*"]
     },
     "content2_back" : {
       "rate":  1.0,
       "1HMax":  4,
       "24HMax":  20,
       "interval":  30,
-      "fromRoutes": ["RouteA", "RouteB", "RouteC"],
-      "toRoutes": ["RouteA", "RouteB", "RouteC"]
+      "fromRoutes": ["*"],
+      "toRoutes": ["*"]
     },
     "content2_leave" : {
       "rate":  1.0,
       "1HMax":  4,
       "24HMax":  20,
       "interval":  30,
-      "fromRoutes": ["RouteA", "RouteB", "RouteC"],
-      "toRoutes": ["RouteA", "RouteB", "RouteC"]
+      "fromRoutes": ["*"],
+      "toRoutes": ["*"]
     }
   }
 }

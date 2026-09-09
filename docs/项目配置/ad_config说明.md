@@ -14,11 +14,12 @@
 | `showMod` | 整数 | 预留的广告展示模式标识，示例为 `555`；当前代码仅读取和保存该值，尚未据此选择展示行为。 |
 | `1HMax` | 整数 | 全局滚动 1 小时内允许展示的广告数量上限。达到上限后暂停展示。 |
 | `24HMax` | 整数 | 全局滚动 24 小时内允许展示的广告数量上限。达到上限后暂停展示。 |
+| `interval` | 整数 | 全局两次广告展示之间的最短间隔，单位为秒；不同广告点位之间也会执行此限制。 |
 | `ad_units` | 对象 | 广告点位配置集合。对象键是业务调用时使用的 `areaKey`（例如 `content1_start`）。 |
 
-`defaultPlatform` 和 `activePlatforms` 是资源 JSON 的必填字段。其他顶层标量字段首次加载时的缺省值为：`isOpen=true`、`showMaxTime=10000`、`showMinTime=500`、`showMod=555`、`1HMax=50`、`24HMax=50`。
+`defaultPlatform` 和 `activePlatforms` 是资源 JSON 的必填字段。其他顶层标量字段首次加载时的缺省值为：`isOpen=true`、`showMaxTime=10000`、`showMinTime=500`、`showMod=555`、`1HMax=50`、`24HMax=50`、`interval=0`。
 
-`showMaxTime` 建议大于 `0`，`showMinTime`、各次数上限及点位 `interval` 应设置为非负数。全局上限和点位上限会同时检查，任一上限达到后都不会展示广告；上限为 `0` 表示不允许展示。次数与最近一次展示时间依据本地 `ad_impression` 日志计算。
+`showMaxTime` 建议大于 `0`，`showMinTime`、各次数上限及两个层级的 `interval` 应设置为非负数。全局间隔和点位间隔会同时检查，任一间隔未满足时都不会展示广告；间隔为 `0` 表示不增加时间限制。次数与最近一次展示时间依据本地 `ad_impression` 日志计算。
 
 ## `ad_units` 点位字段
 
@@ -52,6 +53,7 @@
   "showMod": 555,
   "1HMax": 50,
   "24HMax": 50,
+  "interval": 30,
   "ad_units": {
     "content1_start": {
       "rate": 1.0,

@@ -37,8 +37,12 @@ object AdPolicy {
 		//路由判断
 		if (!config.fromRoutes.contains(adContext.fromRoute)) return false
 		if (!config.toRoutes.contains(adContext.toRoute)) return false
-		// TODO: 概率判断
+		// 概率判断
+		val random = Math.random()
+		if (random < (config.rate)) return false
 
 		return true
 	}
+
+
 }

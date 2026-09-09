@@ -14,7 +14,7 @@ object AdPolicy {
 	}
 
 	fun isShowMax() : Boolean {
-		// TODO: 获取1小时和24小时内的广告展示次数
+		// TODO: 获取1小时和24小时内的广告(通过日志查询)展示次数
 		val _1HShow = 0
 		val _24HShow = 0
 		if (_1HShow >= AdConfig.max1H) return false
@@ -35,8 +35,8 @@ object AdPolicy {
 		if (_24HShow > max24H) return false
 		if ((System.currentTimeMillis() - lastShowTime) < config.interval * 1000L) return false
 		//路由判断
-		if (!config.fromRoutes.contains(adContext.fromRoute)) return false
-		if (!config.toRoutes.contains(adContext.toRoute)) return false
+		if (!config.fromRoutes.contains(adContext.fromRoute) && !config.fromRoutes.contains("*")) return false
+		if (!config.toRoutes.contains(adContext.toRoute) && !config.toRoutes.contains("*")) return false
 		// 概率判断
 		val random = Math.random()
 		if (random < (config.rate)) return false

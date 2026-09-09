@@ -11,13 +11,13 @@ import org.json.JSONObject
 object AdConfig {
 
 	// rate: 广告展示概率
-	// maxPerHour：每小时最大展示数
-	// maxPerDay：滚动24小时最大展示数
+	// max1H：每小时最大展示数
+	// max24H：滚动24小时最大展示数
 	// intervalSeconds：与上次展示的时间间隔
 	data class AdUnitConfig(
 		val rate: Int,
-		val maxPerHour: Int,
-		val maxPerDay: Int,
+		val max1H: Int,
+		val max24H: Int,
 		val intervalSeconds: Int
 	)
 
@@ -31,8 +31,10 @@ object AdConfig {
 	var showMinTime = 500L
 	// 广告展示模式
 	var showMod = 555
-	// 广告最大展示条数
-	var showMaxCount = 50
+	// 1小时内最大展示数
+	var max1H = 50
+	// 24小时内最大展示数
+	var max24H = 50
 	// 广告位的具体配置
 	var adUnits = mapOf<String, AdUnitConfig>()
 
@@ -54,7 +56,8 @@ object AdConfig {
 			showMaxTime = optLong("showMaxTime", showMaxTime)
 			showMinTime = optLong("showMinTime", showMinTime)
 			showMod = optInt("showMod", showMod)
-			showMaxCount = optInt("showMaxCount", showMaxCount)
+			max1H = optInt("1HMax", max1H)
+			max24H = optInt("24HMax", max24H)
 			adUnits = optJSONObject("ad_units")?.toAdUnits() ?: adUnits
 		}
 	}
@@ -72,7 +75,9 @@ object AdConfig {
 			showMaxTime = PreferenceUtil.getLong(KEY_SHOW_MAX_TIME, showMaxTime)
 			showMinTime = PreferenceUtil.getLong(KEY_SHOW_MIN_TIME, showMinTime)
 			showMod = PreferenceUtil.getInt(KEY_SHOW_MOD, showMod)
-			showMaxCount = PreferenceUtil.getInt(KEY_SHOW_MAX_COUNT, showMaxCount)
+			val legacyMaxCount = PreferenceUtil.getInt(KEY_SHOW_MAX_COUNT, max1H)
+			max1H = PreferenceUtil.getInt(KEY_1H_MAX, legacyMaxCount)
+			max24H = PreferenceUtil.getInt(KEY_24H_MAX, legacyMaxCount)
 			adUnits = JSONObject(
 				PreferenceUtil.getString(KEY_AD_UNITS, adUnits.toJson())
 			).toAdUnits()
@@ -88,7 +93,8 @@ object AdConfig {
 			PreferenceUtil.commitLong(KEY_SHOW_MAX_TIME, showMaxTime)
 			PreferenceUtil.commitLong(KEY_SHOW_MIN_TIME, showMinTime)
 			PreferenceUtil.commitInt(KEY_SHOW_MOD, showMod)
-			PreferenceUtil.commitInt(KEY_SHOW_MAX_COUNT, showMaxCount)
+			PreferenceUtil.commitInt(KEY_1H_MAX, max1H)
+			PreferenceUtil.commitInt(KEY_24H_MAX, max24H)
 			PreferenceUtil.commitString(KEY_AD_UNITS, adUnits.toJson())
 		}
 	}
@@ -106,8 +112,8 @@ object AdConfig {
 			getJSONObject(key).let { config ->
 				AdUnitConfig(
 					config.optInt("rate"),
-					config.optInt("max_per_hour"),
-					config.optInt("max_per_day"),
+					config.optInt("1HMax", config.optInt("max_per_hour")),
+					config.optInt("24HMax", config.optInt("max_per_day")),
 					config.optInt("interval_seconds")
 				)
 			}
@@ -118,8 +124,8 @@ object AdConfig {
 			forEach { (key, config) ->
 				put(key, JSONObject().apply {
 					put("rate", config.rate)
-					put("max_per_hour", config.maxPerHour)
-					put("max_per_day", config.maxPerDay)
+					put("1HMax", config.max1H)
+					put("24HMax", config.max24H)
 					put("interval_seconds", config.intervalSeconds)
 				})
 			}

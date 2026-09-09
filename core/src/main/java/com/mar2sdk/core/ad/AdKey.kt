@@ -8,6 +8,8 @@ object AdKey {
 	const val KEY_SHOW_MAX_TIME = "mar2sdk.ad_config.showMaxTime"
 	const val KEY_SHOW_MIN_TIME = "mar2sdk.ad_config.showMinTime"
 	const val KEY_SHOW_MOD = "mar2sdk.ad_config.showMod"
+	const val KEY_1H_MAX = "mar2sdk.ad_config.1HMax"
+	const val KEY_24H_MAX = "mar2sdk.ad_config.24HMax"
 	const val KEY_SHOW_MAX_COUNT = "mar2sdk.ad_config.showMaxCount"
 	const val KEY_AD_UNITS = "mar2sdk.ad_config.adUnits"
 }

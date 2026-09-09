@@ -1,6 +1,6 @@
 # `notification_config.json` 配置说明
 
-`notification_config.json` 是 SDK 的应用通知策略配置文件。默认配置位于 `core/src/main/res/raw/notification_config.json`，本文同目录的 [notification_config.json](notification_config.json) 为可参考和维护的示例。SDK 初始化时先读取打包资源，再读取本地 `Preference` 中已保存的值；本地已保存的字段会覆盖资源文件中的同名字段，修改资源文件后需要重新打包应用才能生效。
+`notification_config.json` 是 SDK 的应用通知策略配置文件，通知文案单独保存在 `notification_content.json` 中。两份默认配置均位于 `core/src/main/res/raw/`，本文同目录的 [notification_config.json](notification_config.json) 和 [notification_content.json](notification_content.json) 为可参考和维护的示例。SDK 初始化时先读取这两份打包资源，再读取本地 `Preference` 中已保存的值；本地已保存的字段会覆盖资源文件中的同名字段，修改资源文件后需要重新打包应用才能生效。
 
 ## 顶层字段
 
@@ -18,7 +18,6 @@
 | `ChannelCount` | 整数 | `3` | 创建的 Android 通知通道数量，同时用于循环分配通知 ID。 |
 | `triggers` | 对象 | `{}` | 事件触发的通知批次配置，键为场景名称。 |
 | `timer` | 对象 | `{}` | 定时通知配置，键为场景名称。 |
-| `contents` | 数组 | `[]` | 通知文案和点击跳转信息。 |
 
 发送上限按本地日志中标记成功的批次或条目统计，时间窗口为滚动的最近 1 小时或 24 小时。`interval_second`、各时间窗口上限以及场景的 `interval_batch` 任一条件未满足时，事件批次会被跳过。建议将数量和间隔设置为非负值；次数上限设为 `0` 会阻止对应发送。当前发送器内置 4 个通知图标，`ChannelCount` 请设置为 `1`–`4`。
 
@@ -54,9 +53,9 @@ SDK 内置并在业务代码中使用的场景名包括：
 
 例如，`"timer-a": {"HH": 6, "MM": 0, "count": 3}` 表示每天计划在 06:00:00、06:00:05、06:00:10 各发送一条通知。无效的时间值会被调度器忽略。定时通知通过系统闹钟调度，省电模式下可能延迟；发送时仍检查总开关、前台/屏幕状态及全局条数上限，但不经过事件批次的间隔和批次数限制。
 
-## `contents` 通知内容
+## `notification_content.json` 通知内容
 
-数组中的每个对象代表一组通知文案：
+该文件的顶层字段 `contents` 是数组，默认值为 `[]`。数组中的每个对象代表一组通知文案，包含标题、正文、按钮文字、适用场景、点击跳转信息和多语言内容：
 
 | 字段 | 类型 | 说明 |
 | --- | --- | --- |
@@ -72,6 +71,8 @@ SDK 内置并在业务代码中使用的场景名包括：
 当前发送器固定读取 `contents` 的第一条，并使用其中的 `Title`、`Content` 和 `Button`。`Scenes`、`Languages` 和 `styles` 已支持解析与保存，但当前尚未用于筛选文案、切换语言或选择通知布局。启用通知时至少配置一条内容；`Route` 随通知点击传给宿主应用，由宿主导航层处理。
 
 ## 示例
+
+通知策略（`notification_config.json`）：
 
 ```json
 {
@@ -97,7 +98,14 @@ SDK 内置并在业务代码中使用的场景名包括：
   },
   "timer": {
     "morning": {"HH": 8, "MM": 30, "count": 1, "styles": [1]}
-  },
+  }
+}
+```
+
+通知文案（`notification_content.json`）：
+
+```json
+{
   "contents": [
     {
       "Title": "Lost Photos Found!",
@@ -113,4 +121,4 @@ SDK 内置并在业务代码中使用的场景名包括：
 }
 ```
 
-打包 JSON 中省略的顶层字段使用代码默认值，本地 `Preference` 中未保存的字段沿用打包资源的值。`triggers`、`timer` 和 `contents` 按集合整体读取；显式设置 `"triggers": {}`、`"timer": {}` 或 `"contents": []` 会清空对应集合。业务修改 `NotificationConfig` 后调用 `saveNotificationConfig()` 会保存配置并刷新定时任务，重新启动应用也会读取已保存的值。
+打包 JSON 中省略的顶层字段使用代码默认值，本地 `Preference` 中未保存的字段沿用打包资源的值。`notification_config.json` 中的 `triggers`、`timer` 和 `notification_content.json` 中的 `contents` 按集合整体读取；在对应文件中显式设置 `"triggers": {}`、`"timer": {}` 或 `"contents": []` 会清空对应集合。业务仍通过 `NotificationConfig.contents` 访问文案，修改 `NotificationConfig` 后调用 `saveNotificationConfig()` 会保存策略和文案并刷新定时任务，重新启动应用也会读取已保存的值。

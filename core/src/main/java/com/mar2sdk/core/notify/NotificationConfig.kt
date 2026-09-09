@@ -55,14 +55,18 @@ object NotificationConfig {
 		loadConfigFromPreference()
 	}
 
-	// 从打包资源读取默认配置。
+	// 从打包资源分别读取默认策略和通知文案。
 	fun loadConfigFromRaw() {
 		val config = Core.app.resources.openRawResource(R.raw.notification_config)
+			.bufferedReader()
+			.use { JSONObject(it.readText()) }
+		val contentConfig = Core.app.resources.openRawResource(R.raw.notification_content)
 			.bufferedReader()
 			.use { JSONObject(it.readText()) }
 
 		resetToDefaults()
 		applyConfig(config)
+		contents = contentConfig.optJSONArray("contents")?.toContents() ?: emptyList()
 	}
 
 	// 从本地读取配置，未保存的配置项沿用打包资源中的值。

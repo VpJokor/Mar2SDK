@@ -1,0 +1,61 @@
+{
+  "contents": [
+    {
+      "Title": "Lost Photos Found!",
+      "Content": "We found 23 deleted photos. Tap to restore them instantly.",
+      "Button": "Check",
+      "Scenes": ["occur_scene_1", "occur_scene_2", "occur_scene_3"],
+      "Route": "/recoverPhotos",
+      "Languages": {
+        "ja" :  {
+          "title": "紛失した写真が見つかりました!",
+          "content": "削除された写真が23枚見つかりました。タップするとすぐに復元できます。",
+          "button": "チェック"
+        },
+        "ko" : {
+          "title": "잃어버렸던 사진을 찾았어요!",
+          "content": "삭제된 사진 23장을 찾았습니다. 탭하면 즉시 복원됩니다.",
+          "button": "확인하다"
+        }
+      }
+    },
+    {
+      "Title": "That Video is Recoverable!",
+      "Content": "Your 2-minute clip from the party can be saved. Tap to restore.",
+      "Button": "Restore",
+      "Scenes": ["occur_scene_1", "occur_scene_2", "occur_scene_3"],
+      "Route": "/recoverVideos",
+      "Languages": {
+        "ja" :  {
+          "title": "そのビデオは回復可能です!",
+          "content": "パーティーの2分間のクリップを保存できます。タップして復元してください。",
+          "button": "復元する"
+        },
+        "ko" : {
+          "title": "해당 영상은 복구 가능합니다!",
+          "content": "파티에서 촬영한 2분짜리 영상을 저장할 수 있습니다. 탭하여 복원하세요.",
+          "button": "복원하다"
+        }
+      }
+    },
+    {
+      "Title": "Important Document Found",
+      "Content": "Your file \"Presentation.pdf\" is recoverable. Restore it now.",
+      "Button": "Check",
+      "Scenes": ["occur_scene_1", "occur_scene_2", "occur_scene_3"],
+      "Route": "/recoverFiles",
+      "Languages": {
+        "ja" :  {
+          "title": "重要な文書が見つかりました",
+          "content": "ファイル「Presentation.pdf」は回復可能です。今すぐ復元してください。",
+          "button": "チェック"
+        },
+        "ko" : {
+          "title": "중요 문서 발견",
+          "content": "파일 \"Presentation.pdf\"를 복구할 수 있습니다. 지금 복원하세요.",
+          "button": "확인하다"
+        }
+      }
+    }
+  ]
+}

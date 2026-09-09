@@ -10,4 +10,7 @@
     <string name="notification_policy">通知策略</string>
     <string name="refresh_notification_policy">刷新通知策略</string>
     <string name="notification_policy_refreshed">通知策略已刷新</string>
+    <string name="ad_policy">广告策略</string>
+    <string name="refresh_ad_policy">刷新广告策略</string>
+    <string name="ad_policy_refreshed">广告策略已刷新</string>
 </resources>

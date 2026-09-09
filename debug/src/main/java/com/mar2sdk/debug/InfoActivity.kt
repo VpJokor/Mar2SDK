@@ -17,6 +17,7 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.mar2sdk.core.Core
 import com.mar2sdk.core.ad.AdConfig
+import com.mar2sdk.core.ad.status.AdPlatform
 import com.mar2sdk.core.ad.impl.admob.AdmobConfig
 import com.mar2sdk.core.firebase.SingularConfig
 import com.mar2sdk.core.log.ThinkingConfig
@@ -50,14 +51,27 @@ class InfoActivity : AppCompatActivity() {
 		}
 
 		label = intent.getStringExtra(EXTRA_LABEL).orEmpty()
+		val isAdPolicy = label.equals(AD_POLICY_LABEL, ignoreCase = true)
 		val isNotificationPolicy = label.equals(NOTIFICATION_POLICY_LABEL, ignoreCase = true)
 		findViewById<TextView>(R.id.title).text =
-			if (isNotificationPolicy) getString(R.string.notification_policy) else label
+			when {
+				isAdPolicy -> getString(R.string.ad_policy)
+				isNotificationPolicy -> getString(R.string.notification_policy)
+				else -> label
+			}
 		findViewById<View>(R.id.refresh_btn).apply {
-			visibility = if (isNotificationPolicy) View.VISIBLE else View.GONE
+			visibility = if (isAdPolicy || isNotificationPolicy) View.VISIBLE else View.GONE
+			contentDescription = getString(
+				if (isAdPolicy) R.string.refresh_ad_policy else R.string.refresh_notification_policy,
+			)
+			tooltipText = contentDescription
 			setOnClickListener {
 				getData()
-				Toast.makeText(this@InfoActivity, R.string.notification_policy_refreshed, Toast.LENGTH_SHORT).show()
+				Toast.makeText(
+					this@InfoActivity,
+					if (isAdPolicy) R.string.ad_policy_refreshed else R.string.notification_policy_refreshed,
+					Toast.LENGTH_SHORT,
+				).show()
 			}
 		}
 		findViewById<View>(R.id.clear_logs).apply {
@@ -106,6 +120,7 @@ class InfoActivity : AppCompatActivity() {
 			"user" -> loadUserInfo()
 			"config" -> loadConfig()
 			CONTENT_LABEL -> loadContent()
+			AD_POLICY_LABEL -> loadAdPolicy()
 			NOTIFICATION_POLICY_LABEL -> loadNotificationPolicy()
 			else -> infoAdapter.submitItems(
 				listOf(InfoItem(title = "暂无信息", content = "未知的信息类型：$label")),
@@ -274,7 +289,49 @@ class InfoActivity : AppCompatActivity() {
 		})
 	}
 
+	private fun loadAdPolicy() {
+		val policyValues = buildList {
+			add("广告开关" to buildString {
+				appendLine("总开关：${formatSwitch(AdConfig.isOpen)}")
+				appendLine("默认平台：${AdConfig.defaultPlatform.name}")
+				append("启用平台：${formatPlatforms(AdConfig.activePlatforms)}")
+			})
+			add("展示限制" to buildString {
+				appendLine("展示超时：${AdConfig.showMaxTime} 毫秒")
+				appendLine("展示前最小等待：${AdConfig.showMinTime} 毫秒")
+				appendLine("展示模式：${AdConfig.showMod}")
+				appendLine("1 小时最多展示：${AdConfig.max1H} 次")
+				append("24 小时最多展示：${AdConfig.max24H} 次")
+			})
+
+			val adUnits = AdConfig.adUnits.toSortedMap()
+			if (adUnits.isEmpty()) {
+				add("广告位" to "暂无广告位策略")
+			} else {
+				adUnits.forEach { (areaKey, config) ->
+					add("广告位：$areaKey" to buildString {
+						appendLine("展示概率：${config.rate}")
+						appendLine("每小时最多展示：${config.max1H} 次")
+						appendLine("24 小时最多展示：${config.max24H} 次")
+						appendLine("展示间隔：${config.interval} 秒")
+						appendLine("广告类型：${config.format.name}")
+						appendLine("来源路由：${formatRoutes(config.fromRoutes)}")
+						append("目标路由：${formatRoutes(config.toRoutes)}")
+					})
+				}
+			}
+		}
+		infoAdapter.submitItems(policyValues.map { (title, content) ->
+			InfoItem(title = title, content = content, showFullContent = true, useContentLayout = true)
+		})
+	}
+
 	private fun formatSwitch(enabled: Boolean): String = if (enabled) "开启" else "关闭"
+
+	private fun formatPlatforms(platforms: Set<AdPlatform>): String =
+		platforms.map { it.name }.sorted().joinToString().ifEmpty { "无" }
+
+	private fun formatRoutes(routes: List<String>): String = routes.joinToString().ifEmpty { "无" }
 
 	private fun formatStyles(styles: List<Int>): String = styles.joinToString().ifEmpty { "无" }
 
@@ -392,6 +449,7 @@ class InfoActivity : AppCompatActivity() {
 	}
 
 	companion object {
+		const val AD_POLICY_LABEL = "ad_policy"
 		const val NOTIFICATION_POLICY_LABEL = "notification_policy"
 		private const val EXTRA_LABEL = "label"
 		private const val LOG_LABEL = "log"

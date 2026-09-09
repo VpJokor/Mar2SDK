@@ -4,8 +4,44 @@
   "showMaxTime": 10000,
   "showMinTime": 500,
   "isOpen": true,
+  "showMod": 555,
   "showMaxCount": 50,
   "ad_units": {
-
+    "content1_start" : {
+      "rate":  1,
+      "max_per_hour":  4,
+      "max_per_day":  20,
+      "interval_seconds":  30
+    },
+    "content1_back" : {
+      "rate":  1,
+      "max_per_hour":  4,
+      "max_per_day":  20,
+      "interval_seconds":  30
+    },
+    "content1_leave" : {
+      "rate":  1,
+      "max_per_hour":  4,
+      "max_per_day":  20,
+      "interval_seconds":  30
+    },
+    "content2_start" : {
+      "rate":  1,
+      "max_per_hour":  4,
+      "max_per_day":  20,
+      "interval_seconds":  30
+    },
+    "content2_back" : {
+      "rate":  1,
+      "max_per_hour":  4,
+      "max_per_day":  20,
+      "interval_seconds":  30
+    },
+    "content2_leave" : {
+      "rate":  1,
+      "max_per_hour":  4,
+      "max_per_day":  20,
+      "interval_seconds":  30
+    }
   }
 }

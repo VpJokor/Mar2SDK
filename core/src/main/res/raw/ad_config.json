@@ -3,5 +3,9 @@
   "activePlatforms": ["TRADPLUS"],
   "showMaxTime": 10000,
   "showMinTime": 500,
-  "isOpen": true
+  "isOpen": true,
+  "showMaxCount": 50,
+  "ad_units": {
+
+  }
 }

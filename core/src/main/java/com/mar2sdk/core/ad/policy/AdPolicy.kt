@@ -1,5 +1,6 @@
 package com.mar2sdk.core.ad.policy
 
+import android.util.Log
 import com.mar2sdk.core.ad.AdConfig
 import com.mar2sdk.core.log.LogAdEvent
 import com.mar2sdk.core.log.LogAdParam
@@ -8,6 +9,8 @@ import kotlinx.coroutines.runBlocking
 import org.json.JSONObject
 
 object AdPolicy {
+
+	private const val TAG = "AdPolicy"
 
 	fun canShowAd(adContext: ScreenAdContext): Boolean {
 		if (!AdConfig.isOpen) return false
@@ -27,6 +30,7 @@ object AdPolicy {
 	// 判断广告点位配置是否允许展示广告。
 	fun isShow(adContext: ScreenAdContext): Boolean {
 		val config = AdConfig.adUnits[adContext.areaKey] ?: return false
+		Log.e(TAG, "isShow: areaKey = ${adContext.areaKey}, config = $config")
 		val now = System.currentTimeMillis()
 		val areaLogs = queryAdImpressionLogs().filter { log ->
 			try {

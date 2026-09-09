@@ -49,7 +49,7 @@ object AdmobShower {
 	}
 
 	/**
-	 *  广告展示(开屏 & 插屏比价)
+	 *  广告展示(开屏 & 插屏)
 	 *  限制：
 	 *  1. 整个APP只允许同时展示1个全屏广告(开屏/插屏/视频)，使用 AppStatus.isShowingAd 控制
 	 *  1.1 如果其他广告正在展示或者正在等待加载完展示则返回 AdShowStatus.OTHER_AD_IS_SHOWING

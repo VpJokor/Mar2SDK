@@ -248,6 +248,7 @@ class InfoActivity : AppCompatActivity() {
 						appendLine("首次延迟：${trigger.firstDelay} 秒")
 						appendLine("触发后延迟：${trigger.delay} 秒")
 						appendLine("每批通知条数：${trigger.count} 条")
+						appendLine("通知样式配置：${formatStyles(trigger.styles)}")
 						appendLine("场景批次间隔：${trigger.intervalBatch} 秒")
 						append("批内单条间隔：${trigger.intervalItem} 秒")
 					})
@@ -260,7 +261,11 @@ class InfoActivity : AppCompatActivity() {
 			} else {
 				timers.forEach { (scene, timer) ->
 					val time = String.format(Locale.ROOT, "%02d:%02d", timer.HH, timer.MM)
-					add("定时通知：$scene" to "发送时间：$time\n通知条数：${timer.count} 条")
+					add("定时通知：$scene" to buildString {
+						appendLine("发送时间：$time")
+						appendLine("通知条数：${timer.count} 条")
+						append("通知样式配置：${formatStyles(timer.styles)}")
+					})
 				}
 			}
 		}
@@ -270,6 +275,8 @@ class InfoActivity : AppCompatActivity() {
 	}
 
 	private fun formatSwitch(enabled: Boolean): String = if (enabled) "开启" else "关闭"
+
+	private fun formatStyles(styles: List<Int>): String = styles.joinToString().ifEmpty { "无" }
 
 	private fun loadContent() {
 		val contents = NotificationConfig.contents

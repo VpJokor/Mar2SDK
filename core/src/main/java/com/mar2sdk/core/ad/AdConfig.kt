@@ -10,7 +10,10 @@ import org.json.JSONObject
 // 广告配置
 object AdConfig {
 
-	// rate: 广告展示概率，maxPerHour：每小时最大展示数，maxPerDay：滚动24小时最大展示数，intervalSeconds：与上次展示的时间间隔
+	// rate: 广告展示概率
+	// maxPerHour：每小时最大展示数
+	// maxPerDay：滚动24小时最大展示数
+	// intervalSeconds：与上次展示的时间间隔
 	data class AdUnitConfig(
 		val rate: Int,
 		val maxPerHour: Int,

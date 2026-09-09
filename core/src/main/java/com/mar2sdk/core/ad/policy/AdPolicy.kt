@@ -47,7 +47,7 @@ object AdPolicy {
 		if (!config.toRoutes.contains(adContext.toRoute) && !config.toRoutes.contains("*")) return false
 		// rate 表示广告展示概率，1.0 表示始终展示。
 		if (Math.random() >= config.rate) return false
-
+		adContext.adFormat = config.format
 		return true
 	}
 

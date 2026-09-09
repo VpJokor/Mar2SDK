@@ -19,6 +19,7 @@ object NotificationConfig {
 	private const val DEFAULT_1H_MAX_BATCH = 5
 	private const val DEFAULT_24H_MAX_ITEM = 50
 	private const val DEFAULT_1H_MAX_ITEM = 5
+	private val DEFAULT_STYLES = listOf(1, 2, 3, 4)
 
 
 	// APP通知的通道数
@@ -149,6 +150,7 @@ object NotificationConfig {
 					firstDelay = optInt("first_delay", 300),
 					delay = optInt("delay", 0),
 					count = optInt("count", 0),
+					styles = optJSONArray("styles")?.toIntList() ?: DEFAULT_STYLES,
 					intervalBatch = optInt("interval_batch", 0),
 					intervalItem = optInt("interval_item", 5)
 				)
@@ -162,6 +164,7 @@ object NotificationConfig {
 					put("first_delay", trigger.firstDelay)
 					put("delay", trigger.delay)
 					put("count", trigger.count)
+					put("styles", JSONArray(trigger.styles))
 					put("interval_batch", trigger.intervalBatch)
 					put("interval_item", trigger.intervalItem)
 				})
@@ -174,7 +177,8 @@ object NotificationConfig {
 				NotificationTimer(
 					HH = optInt("HH", 0),
 					MM = optInt("MM", 0),
-					count = optInt("count", 0)
+					count = optInt("count", 0),
+					styles = optJSONArray("styles")?.toIntList() ?: DEFAULT_STYLES
 				)
 			}
 		}
@@ -186,6 +190,7 @@ object NotificationConfig {
 					put("HH", item.HH)
 					put("MM", item.MM)
 					put("count", item.count)
+					put("styles", JSONArray(item.styles))
 				})
 			}
 		}.toString()
@@ -233,22 +238,27 @@ object NotificationConfig {
 				})
 			}
 		}).toString()
+
+	private fun JSONArray.toIntList(): List<Int> =
+		(0 until length()).map { index -> getInt(index) }
 }
 
-// 触发场景的通知配置，intervalBatch为批次间隔，intervalItem为批内单条间隔，单位均为秒
+// 触发场景的通知配置，styles为可用通知样式，intervalBatch为批次间隔，intervalItem为批内单条间隔，单位均为秒
 data class NotificationTrigger(
 	val delay: Int = 0,
 	val count: Int = 0,
 	val intervalBatch: Int = 0,
 	val firstDelay: Int = 300,
-	val intervalItem: Int = 5
+	val intervalItem: Int = 5,
+	val styles: List<Int> = listOf(1, 2, 3, 4)
 )
 
-// 定时通知配置，HH为小时，MM为分钟
+// 定时通知配置，HH为小时，MM为分钟，styles为可用通知样式
 data class NotificationTimer(
 	val HH: Int = 0,
 	val MM: Int = 0,
-	val count: Int = 0
+	val count: Int = 0,
+	val styles: List<Int> = listOf(1, 2, 3, 4)
 )
 
 // 通知内容及适用场景

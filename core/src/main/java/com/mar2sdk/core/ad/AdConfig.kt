@@ -13,12 +13,16 @@ object AdConfig {
 	// rate: 广告展示概率
 	// max1H：每小时最大展示数
 	// max24H：滚动24小时最大展示数
-	// intervalSeconds：与上次展示的时间间隔
+	// interval：与上次展示的时间间隔，单位秒
+	// fromRoutes：允许展示广告的来源路由
+	// toRoutes：允许展示广告的目标路由
 	data class AdUnitConfig(
-		val rate: Int,
+		val rate: Double,
 		val max1H: Int,
 		val max24H: Int,
-		val intervalSeconds: Int
+		val interval: Int,
+		val fromRoutes: List<String>,
+		val toRoutes: List<String>
 	)
 
 	var defaultPlatform = AdPlatform.ADMOB
@@ -110,13 +114,18 @@ object AdConfig {
 		keys().asSequence().associateWith { key ->
 			getJSONObject(key).let { config ->
 				AdUnitConfig(
-					config.optInt("rate"),
+					config.optDouble("rate"),
 					config.optInt("1HMax"),
 					config.optInt("24HMax"),
-					config.optInt("interval_seconds")
+					config.optInt("interval"),
+					config.optJSONArray("fromRoutes")?.toStringList() ?: emptyList(),
+					config.optJSONArray("toRoutes")?.toStringList() ?: emptyList()
 				)
 			}
 		}
+
+	private fun JSONArray.toStringList(): List<String> =
+		(0 until length()).map { index -> getString(index) }
 
 	private fun Map<String, AdUnitConfig>.toJson(): String =
 		JSONObject().apply {
@@ -125,7 +134,9 @@ object AdConfig {
 					put("rate", config.rate)
 					put("1HMax", config.max1H)
 					put("24HMax", config.max24H)
-					put("interval_seconds", config.intervalSeconds)
+					put("interval", config.interval)
+					put("fromRoutes", JSONArray(config.fromRoutes))
+					put("toRoutes", JSONArray(config.toRoutes))
 				})
 			}
 		}.toString()

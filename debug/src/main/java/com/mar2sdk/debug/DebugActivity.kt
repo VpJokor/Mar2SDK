@@ -141,7 +141,7 @@ class DebugActivity : AppCompatActivity() {
 	}
 
 	private fun handleNotificationPermissionResult(granted: Boolean) {
-		// TODO: 通知权限打点
+		// INFO: 通知权限打点
 		ThinkingUtil.setUserAttr(LogAppParam.has_notification_permission, granted)
 
 		if (granted) {

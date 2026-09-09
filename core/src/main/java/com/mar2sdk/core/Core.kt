@@ -33,7 +33,7 @@ object Core {
 
 	lateinit var app: Application
 	lateinit var appMod: AppMod
-	// 用户分类
+	// 用户类型
 	var userType = UserType.NATURE
 	var testMod = TestMod.POLICY
 

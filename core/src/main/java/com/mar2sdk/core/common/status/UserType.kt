@@ -5,6 +5,7 @@ package com.mar2sdk.core.common.status
  * 审核/自然量/普通买量/高价值用户
  */
 enum class UserType {
+	UNKNOW,
 	RISK,
 	NATURE,
 	COMMON,

@@ -3,9 +3,16 @@ package com.mar2sdk.core.common
 import com.mar2sdk.core.log.ThinkingUtil
 import com.mar2sdk.core.common.status.EcpmType
 import com.mar2sdk.core.common.status.RiskType
+import com.mar2sdk.core.common.status.UserType
 import com.mar2sdk.core.util.PreferenceUtil
 
 object UserInfo {
+
+	// 本地分类出来的用户类型
+	var localUserType = UserType.NATURE
+	// 服务端下发的用户类型
+	var remoteUserType = UserType.UNKNOW
+
 	//ecpm为0,还是普通，还是高价值
 	var ecpmType = EcpmType.ECPM_UNKNOW
 

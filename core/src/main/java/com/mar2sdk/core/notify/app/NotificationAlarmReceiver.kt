@@ -42,9 +42,7 @@ class NotificationAlarmReceiver : BroadcastReceiver() {
 						// 等待之前排队的发送日志写入，供下一条通知的限额检查使用。
 						DBUtil.queryLogs(limit = 1)
 					} else {
-						NotificationAlarmScheduler.refresh(
-							resetTimes = intent.action == Intent.ACTION_TIME_CHANGED || intent.action == Intent.ACTION_TIMEZONE_CHANGED
-						)
+						NotificationAlarmScheduler.refresh()
 					}
 				}
 			} catch (exception: Exception) {

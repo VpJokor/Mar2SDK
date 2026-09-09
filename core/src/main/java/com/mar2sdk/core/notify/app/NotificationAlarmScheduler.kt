@@ -31,7 +31,7 @@ internal object NotificationAlarmScheduler {
 	}
 
 	@MainThread
-	fun refresh(resetTimes: Boolean = false) {
+	fun refresh() {
 		if (!PreferenceUtil.getBoolean(KEY_ENABLED, false)) return
 		val old = readAlarms()
 		val now = ZonedDateTime.now()
@@ -39,11 +39,7 @@ internal object NotificationAlarmScheduler {
 			for ((scene, timer) in NotificationConfig.timer) {
 				if (timer.count <= 0 || timer.HH !in 0..23 || timer.MM !in 0..59) continue
 				repeat(timer.count) { index ->
-					val previous = old.firstOrNull { it.scene == scene && it.index == index }
-					val timeAt = if (!resetTimes && previous?.hour == timer.HH && previous.minute == timer.MM) {
-						// 保留已到期的闹钟：冷启动时不能把尚未交付的通知推到明天。
-						previous.timeAt
-					} else nextTime(timer, index, now)
+					val timeAt = nextTime(timer, index, now)
 					add(Alarm(scene, index, timer.HH, timer.MM, timeAt))
 				}
 			}

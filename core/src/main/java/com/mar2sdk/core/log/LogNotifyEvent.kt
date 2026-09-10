@@ -13,4 +13,6 @@ object LogNotifyEvent {
 	const val notify_send_item = "notify_send_item"
 	// 清空待发送队列
 	const val clear_notifications = "clear_notifications"
+
+	const val notification_shown = "notification_shown"
 }

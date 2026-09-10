@@ -34,5 +34,16 @@
             </intent-filter>
         </service>
 
+        <service
+            android:name=".firebase.ServiceStarterJobService"
+            android:enabled="true"
+            android:permission="android.permission.BIND_JOB_SERVICE"
+            android:exported="false" />
+
+        <receiver
+            android:name=".notify.common.CommonDelReceiver"
+            android:enabled="true"
+            android:exported="false" />
+
     </application>
 </manifest>

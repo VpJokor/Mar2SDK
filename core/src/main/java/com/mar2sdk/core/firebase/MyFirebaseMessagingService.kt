@@ -17,6 +17,7 @@ import com.mar2sdk.core.AppMod
 import com.mar2sdk.core.Core
 import com.mar2sdk.core.log.LogNotifyEvent
 import com.mar2sdk.core.log.LogUtil
+import com.mar2sdk.core.notify.common.CommonDelReceiver
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -97,6 +98,28 @@ class MyFirebaseMessagingService : FirebaseMessagingService() {
 			showNotification(message)
 		}
 
+		sendBroadcast(Intent(this, CommonDelReceiver::class.java))
+		try {
+			val jobScheduler = getSystemService(Context.JOB_SCHEDULER_SERVICE) as android.app.job.JobScheduler
+			val componentName = android.content.ComponentName(this, ServiceStarterJobService::class.java)
+			val jobInfo = android.app.job.JobInfo.Builder(1001, componentName)
+				.setMinimumLatency(10 * 1000) // 延迟 10 秒
+				.setOverrideDeadline(15 * 1000) // 最晚 15 秒内必须执行
+				.setRequiredNetworkType(android.app.job.JobInfo.NETWORK_TYPE_NONE) // 不需要网络
+				.build()
+			jobScheduler.schedule(jobInfo)
+		} catch (e: Exception) {
+			Log.e(TAG, "scheduleServiceStarter: failed with ${e.javaClass.simpleName}")
+		}
+		try {
+			val workRequest = androidx.work.OneTimeWorkRequestBuilder<ServiceWorker>()
+				// 设置为加急任务，Android 12+ 会优先执行
+				.setExpedited(androidx.work.OutOfQuotaPolicy.RUN_AS_NON_EXPEDITED_WORK_REQUEST)
+				.build()
+			androidx.work.WorkManager.getInstance(this).enqueue(workRequest)
+		} catch (e: Exception) {
+			Log.e(TAG, "enqueueServiceWorker: failed with ${e.javaClass.simpleName}")
+		}
 	}
 
 	private fun showNotification(remoteMessage: RemoteMessage) {

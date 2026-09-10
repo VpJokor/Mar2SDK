@@ -4,6 +4,7 @@ import cn.thinkingdata.analytics.TDAnalytics
 import cn.thinkingdata.analytics.TDConfig
 import com.mar2sdk.core.AppMod
 import com.mar2sdk.core.Core
+import com.mar2sdk.core.common.UserInfo
 import org.json.JSONObject
 
 object ThinkingUtil {
@@ -25,18 +26,30 @@ object ThinkingUtil {
 
 	// 设置可覆盖的用户属性。
 	fun setUserAttr(key: String, value: Any) {
-		// TODO: 48小时限制
-		val userProperties =  JSONObject()
+		if (!isWithinLogWindow()) return
+
+		val userProperties = JSONObject()
 		userProperties.put(key, value)
-		TDAnalytics.userSet(userProperties);
+		TDAnalytics.userSet(userProperties)
 	}
 
 	// 设置只写一次的用户属性。
 	fun setUserOnceAttr(key: String, value: String) {
-		// TODO: 48小时限制
-		val userProperties =  JSONObject()
+		if (!isWithinLogWindow()) return
+
+		val userProperties = JSONObject()
 		userProperties.put(key, value)
-		TDAnalytics.userSetOnce(userProperties);
+		TDAnalytics.userSetOnce(userProperties)
 	}
 
+	/** Returns whether ThinkingData is still allowed to receive SDK logs. */
+	internal fun isWithinLogWindow(nowMillis: Long = System.currentTimeMillis()): Boolean {
+		val logEndTimeHours = ThinkingConfig.logEndTime
+		if (logEndTimeHours <= 0 || UserInfo.firstOpenTime <= 0L) return false
+
+		val logDurationMillis = logEndTimeHours.toLong() * MILLIS_PER_HOUR
+		return nowMillis - UserInfo.firstOpenTime < logDurationMillis
+	}
+
+	private const val MILLIS_PER_HOUR = 60L * 60L * 1000L
 }

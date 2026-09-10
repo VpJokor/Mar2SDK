@@ -43,9 +43,10 @@ object AppNotificationUtil {
 		if (randomContent == null) {
 			// TODO: 报错，打点
 			Log.e(TAG, "sendNotificationBaths: Content is null")
+			return
 		}
 		val icons = listOf(R.mipmap.ic_push_files, R.mipmap.ic_push_photos, R.mipmap.ic_push_videos, R.mipmap.ic_push_recoverd)
-		val content = randomContent!!
+		val content = randomContent
 		sendNotification(
 			context = Core.app,
 			id = id,

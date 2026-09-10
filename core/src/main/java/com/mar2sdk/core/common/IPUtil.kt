@@ -34,7 +34,6 @@ object IPUtil {
 
 	fun checkIpInfo() {
 		if (!requestInFlight.compareAndSet(false, true)) return
-		// Startup and ad callbacks may run on the main thread; keep all blocking work on IO.
 		scope.launch {
 			try {
 				val request = Request.Builder()
@@ -118,10 +117,9 @@ object IPUtil {
 		Log.e(TAG, detailSummary)
 		withContext(Dispatchers.Main) {
 			ThinkingUtil.setUserOnceAttr("ip_info", "IPInfo ip=${parsed.ip}, longitude=${parsed.longitude}, latitude=${parsed.latitude}, asn=${parsed.asn}, isp=${parsed.isp}",)
-			if (isGoogleIp) {
-				UserInfo.riskIP = RiskType.RISK
-				RiskUtil.judgeUserType()
-			}
+			UserInfo.riskIP = if (isGoogleIp) RiskType.RISK else RiskType.COMMON
+			RiskUtil.judgeUserType()
+
 		}
 		return detailSummary
 	}

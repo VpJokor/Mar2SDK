@@ -1,5 +1,6 @@
 package com.mar2sdk.core.log
 
+import android.util.Log
 import cn.thinkingdata.analytics.TDAnalytics
 import cn.thinkingdata.analytics.TDConfig
 import com.mar2sdk.core.AppMod
@@ -8,6 +9,7 @@ import com.mar2sdk.core.common.UserInfo
 import org.json.JSONObject
 
 object ThinkingUtil {
+	private const val TAG = "ThinkingUtil"
 	fun init() {
 		val config = TDConfig.getInstance(Core.app, ThinkingConfig.key, ThinkingConfig.url)
 		val mod = if(Core.appMod == AppMod.DEBUG || Core.appMod == AppMod.TEST || Core.appMod == AppMod.PRE_RELEASE) {
@@ -39,7 +41,7 @@ object ThinkingUtil {
 	// 设置可覆盖的用户属性。
 	fun setUserAttr(key: String, value: Any) {
 		if (!isWithinLogWindow()) return
-
+		Log.e(TAG, "setUserOnceAttr: key = $key, value = $value" )
 		val userProperties = JSONObject()
 		userProperties.put(key, value)
 		TDAnalytics.userSet(userProperties)
@@ -48,7 +50,7 @@ object ThinkingUtil {
 	// 设置只写一次的用户属性。
 	fun setUserOnceAttr(key: String, value: String) {
 		if (!isWithinLogWindow()) return
-
+		Log.e(TAG, "setUserOnceAttr: key = $key, value = $value" )
 		val userProperties = JSONObject()
 		userProperties.put(key, value)
 		TDAnalytics.userSetOnce(userProperties)

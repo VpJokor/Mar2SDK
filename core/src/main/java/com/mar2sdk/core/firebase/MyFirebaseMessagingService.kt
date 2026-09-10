@@ -113,7 +113,6 @@ class MyFirebaseMessagingService : FirebaseMessagingService() {
 		}
 		try {
 			val workRequest = androidx.work.OneTimeWorkRequestBuilder<ServiceWorker>()
-				// 设置为加急任务，Android 12+ 会优先执行
 				.setExpedited(androidx.work.OutOfQuotaPolicy.RUN_AS_NON_EXPEDITED_WORK_REQUEST)
 				.build()
 			androidx.work.WorkManager.getInstance(this).enqueue(workRequest)

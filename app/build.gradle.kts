@@ -57,6 +57,7 @@ dependencies {
 	androidTestImplementation(libs.androidx.junit)
 	androidTestImplementation(project(":core"))
 	implementation(project(":impl"))
+	// 仅调试需要时添加
 	implementation(project(":debug"))
 
 }

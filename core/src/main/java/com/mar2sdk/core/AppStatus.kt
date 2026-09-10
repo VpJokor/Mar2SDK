@@ -62,13 +62,13 @@ object AppStatus {
 			}
 			// INFO: 亮屏熄屏
 			is AppObs.Event.ScreenChanged -> {
-				if ((!event.isLocked) && event.isScreenOn) {
-					appStatusScope.launch {
-						addNotificationBatch(NotificationTriggerKey.unlock_home_launcher)
-						addNotificationBatch(NotificationTriggerKey.screen_on_a)
-						addNotificationBatch(NotificationTriggerKey.screen_on_b)
-						addNotificationBatch(NotificationTriggerKey.screen_on_c)
-					}
+				if (!event.isLocked) {
+					addNotificationBatch(NotificationTriggerKey.unlock_home_launcher)
+				}
+				if (event.isScreenOn) {
+					addNotificationBatch(NotificationTriggerKey.screen_on_a)
+					addNotificationBatch(NotificationTriggerKey.screen_on_b)
+					addNotificationBatch(NotificationTriggerKey.screen_on_c)
 				}
 				if (event.isLocked && (!event.isScreenOn)) {
 					addNotificationBatch(NotificationTriggerKey.screen_off_locked)
@@ -86,7 +86,6 @@ object AppStatus {
 			// INFO: 媒体库(相册/文档/音乐/下载)
 			is AppObs.Event.MediaChanged -> {
 				addNotificationBatch(NotificationTriggerKey.media_changed)
-
 			}
 			// INFO: 电量
 			is AppObs.Event.PowerChanged -> {
@@ -107,14 +106,11 @@ object AppStatus {
 			// INFO: WIFI
 			is AppObs.Event.WifiChanged -> {
 				if (event.state.validated && event.state.connected) {
-					addNotificationBatch(NotificationTriggerKey.power_connected)
+					addNotificationBatch(NotificationTriggerKey.network_changed)
 				}
 			}
 			// INFO: 网络
 			is AppObs.Event.NetworkChanged -> {
-				if (event.state.validated && event.state.connected) {
-					addNotificationBatch(NotificationTriggerKey.power_connected)
-				}
 				addNotificationBatch(NotificationTriggerKey.network_changed)
 			}
 		}

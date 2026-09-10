@@ -33,6 +33,7 @@ object IPUtil {
 	private val googleCidrs by lazy { loadCidrsFromRaw(R.raw.google) }
 
 	fun checkIpInfo() {
+		if (UserInfo.riskIP != RiskType.UNKNOW) return
 		if (!requestInFlight.compareAndSet(false, true)) return
 		scope.launch {
 			try {
@@ -118,8 +119,8 @@ object IPUtil {
 		withContext(Dispatchers.Main) {
 			ThinkingUtil.setUserOnceAttr("ip_info", "IPInfo ip=${parsed.ip}, longitude=${parsed.longitude}, latitude=${parsed.latitude}, asn=${parsed.asn}, isp=${parsed.isp}",)
 			UserInfo.riskIP = if (isGoogleIp) RiskType.RISK else RiskType.COMMON
+			UserInfo.saveUserInfo()
 			RiskUtil.judgeUserType()
-
 		}
 		return detailSummary
 	}

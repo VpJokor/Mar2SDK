@@ -26,7 +26,6 @@ object RiskUtil {
 
 	// 请求IP信息
 	fun judgeRiskIP() {
-		if (UserInfo.riskIP != RiskType.UNKNOW) return
 		IPUtil.checkIpInfo()
 	}
 

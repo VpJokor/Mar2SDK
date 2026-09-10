@@ -34,7 +34,7 @@ object Core {
 
 	lateinit var app: Application
 	lateinit var appMod: AppMod
-	// 用户类型
+	// 用户类型, 优先使用服务器返回的结果，如果服务器判断还没下发则使用客户端判断结果
 	var userType = if (UserInfo.netUserType == UserType.UNKNOW) {
 		UserInfo.localUserType
 	} else {

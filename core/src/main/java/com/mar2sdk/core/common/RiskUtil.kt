@@ -54,7 +54,12 @@ object RiskUtil {
 		if ((Core.appMod == AppMod.TEST || Core.appMod == AppMod.DEBUG) && Core.testMod == TestMod.FORCE) {
 			return
 		}
-		//正式版本逻辑
+		judgeFromLocal()
+		judgeUserFromNet()
+	}
+
+	// INFO: 本地用户分级
+	fun judgeFromLocal() {
 		if (
 			UserInfo.riskIP == RiskType.RISK ||
 			UserInfo.riskPackage == RiskType.RISK ||
@@ -78,10 +83,7 @@ object RiskUtil {
 		UserInfo.saveUserInfo()
 	}
 
-	fun judgeFromLocal() {
-
-	}
-
+	// TODO: 服务端用户分级策略
 	fun judgeUserFromNet() {
 
 	}

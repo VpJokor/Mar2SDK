@@ -2,15 +2,14 @@ package com.mar2sdk.core.log
 
 import android.os.Bundle
 import android.util.Log
-import cn.thinkingdata.analytics.TDAnalytics
 import com.google.firebase.analytics.FirebaseAnalytics
 import com.mar2sdk.core.AppMod
 import com.mar2sdk.core.Core
 import com.mar2sdk.core.ad.policy.ScreenAdContext
 import com.mar2sdk.core.ad.status.AdFormat
-import com.mar2sdk.core.firebase.SingularConfig
 import com.mar2sdk.core.common.RiskUtil
 import com.mar2sdk.core.common.UserInfo
+import com.mar2sdk.core.firebase.SingularConfig
 import com.mar2sdk.core.notify.app.AppNotificationManager
 import com.mar2sdk.core.notify.app.NotificationTriggerKey
 import com.mar2sdk.core.util.DBUtil
@@ -103,15 +102,8 @@ object LogUtil {
 	}
 
 	fun logThinking(eventName: String, params: Map<String, Any>) {
-		// 打点截止时间判断
-		if (!ThinkingUtil.isWithinLogWindow()) return
-
 		try {
-			val jsonObject = JSONObject()
-			for ((key, value) in params) {
-				jsonObject.put(key, value)
-			}
-			TDAnalytics.track(eventName, jsonObject)
+			ThinkingUtil.log(eventName, params)
 		} catch (e: Exception) {
 			Log.e(TAG, "logThinking error: ${e.message}")
 		}

@@ -24,6 +24,18 @@ object ThinkingUtil {
 		)
 	}
 
+	// 日志打点
+	fun log(eventName: String, params: Map<String, Any>) {
+		// 打点截止时间判断
+		if (!isWithinLogWindow()) return
+
+		val jsonObject = JSONObject()
+		for ((key, value) in params) {
+			jsonObject.put(key, value)
+		}
+		TDAnalytics.track(eventName, jsonObject)
+	}
+
 	// 设置可覆盖的用户属性。
 	fun setUserAttr(key: String, value: Any) {
 		if (!isWithinLogWindow()) return

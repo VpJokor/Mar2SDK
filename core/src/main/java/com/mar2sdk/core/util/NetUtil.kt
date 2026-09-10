@@ -2,16 +2,12 @@ package com.mar2sdk.core.util
 
 object NetUtil {
 
-	// INFO: 包名校验
-	fun checkPackage() {
+	// TODO: 登录接口
+	fun login() {
 
 	}
 
-	// INFO: IP校验
-	fun checkIP() {
-
-	}
-
+	// TODO: 打点接口
 	fun log() {
 
 	}

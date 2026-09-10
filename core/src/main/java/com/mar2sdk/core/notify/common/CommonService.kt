@@ -137,13 +137,33 @@ class CommonService : Service() {
 	// 创建前台通知
 	private fun buildPersistentNotification(): Notification {
 		val remoteViews = RemoteViews(packageName, R.layout.common_notification_mini).apply {
-			// TODO:  
-//			bindPersistentActions(this, miniPersistentActionSlots())
+			setImageViewResource(R.id.action_1_icon, R.drawable.notification_photos)
+			setImageViewResource(R.id.action_2_icon, R.drawable.notification_files)
+			setImageViewResource(R.id.action_3_icon, R.drawable.notification_videos)
+			setImageViewResource(R.id.action_4_icon, R.drawable.notification_recovered)
+			setTextViewText(R.id.action_1_label, "label1")
+			setTextViewText(R.id.action_2_label, "label2")
+			setTextViewText(R.id.action_3_label, "label3")
+			setTextViewText(R.id.action_4_label, "label4")
+			setOnClickPendingIntent(R.id.action_1, getPendingIntent("Action1"))
+			setOnClickPendingIntent(R.id.action_2, getPendingIntent("Action2"))
+			setOnClickPendingIntent(R.id.action_3, getPendingIntent("Action3"))
+			setOnClickPendingIntent(R.id.action_4, getPendingIntent("Action4"))
 		}
 
 		val bigRemoteViews = RemoteViews(packageName, R.layout.common_notification).apply {
-			// TODO:  
-//			bindPersistentActions(this, bigPersistentActionSlots())
+			setImageViewResource(R.id.action_1_icon, R.drawable.notification_photos)
+			setImageViewResource(R.id.action_2_icon, R.drawable.notification_files)
+			setImageViewResource(R.id.action_3_icon, R.drawable.notification_videos)
+			setImageViewResource(R.id.action_4_icon, R.drawable.notification_recovered)
+			setTextViewText(R.id.action_1_label, "label1")
+			setTextViewText(R.id.action_2_label, "label2")
+			setTextViewText(R.id.action_3_label, "label3")
+			setTextViewText(R.id.action_4_label, "label4")
+			setOnClickPendingIntent(R.id.action_1, getPendingIntent("Action1"))
+			setOnClickPendingIntent(R.id.action_2, getPendingIntent("Action2"))
+			setOnClickPendingIntent(R.id.action_3, getPendingIntent("Action3"))
+			setOnClickPendingIntent(R.id.action_4, getPendingIntent("Action4"))
 		}
 
 		val delIntent = PendingIntent.getBroadcast(
@@ -166,7 +186,7 @@ class CommonService : Service() {
 				.setWhen(oneYearLater)
 				.setColor(getColor(R.color.notification_icon_bg))
 				.setPriority(NotificationCompat.PRIORITY_HIGH)
-				.setContentIntent(getPendingIntent())
+//				.setContentIntent(getPendingIntent())
 				.setDeleteIntent(delIntent)
 				.build()
 		} else {
@@ -179,11 +199,12 @@ class CommonService : Service() {
 				.setOngoing(true)
 				.setColor(getColor(R.color.notification_icon_bg))
 				.setPriority(NotificationCompat.PRIORITY_HIGH)
-				.setContentIntent(getPendingIntent())
+//				.setContentIntent(getPendingIntent())
 				.setDeleteIntent(delIntent)
 				.build()
 		}
 	}
+
 
 	/** 创建持久通知点击启动 PendingIntent。 */
 	private fun getPendingIntent(route: String = ""): PendingIntent {

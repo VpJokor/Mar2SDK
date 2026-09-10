@@ -13,12 +13,13 @@
             android:layout_width="0dp"
             android:gravity="center"
             android:layout_height="wrap_content">
+
                 <ImageView
                     android:id="@+id/action_1_icon"
-                    android:src="@drawable/notification_files"
-                    android:contentDescription="@null"
                     android:layout_width="40dp"
-                    android:layout_height="40dp"/>
+                    android:layout_height="40dp"
+                    android:contentDescription="@null"
+                    android:src="@drawable/notification_files" />
 
                 <TextView
                     android:id="@+id/action_1_label"

@@ -5,6 +5,12 @@ import com.mar2sdk.core.Core
 import com.mar2sdk.core.R
 import com.mar2sdk.core.log.ThinkingUtil
 import com.mar2sdk.core.common.status.RiskType
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import kotlinx.serialization.Serializable
 import okhttp3.OkHttpClient
 import okhttp3.Request
@@ -12,6 +18,7 @@ import org.json.JSONArray
 import org.json.JSONObject
 import java.net.InetAddress
 import java.net.UnknownHostException
+import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.collections.buildList
 import kotlin.let
 import kotlin.takeIf
@@ -19,27 +26,36 @@ import kotlin.takeIf
 object IPUtil {
 	private const val TAG = "IPUtil"
 
+	private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
+	private val client by lazy { OkHttpClient() }
+	private val requestInFlight = AtomicBoolean(false)
 	private val cloudCidrs by lazy { loadCidrsFromRaw(R.raw.cloud) }
 	private val googleCidrs by lazy { loadCidrsFromRaw(R.raw.google) }
 
 	fun checkIpInfo() {
-		val result = runCatching {
-			val client = OkHttpClient()
-			val request = Request.Builder()
-				.url(CommonConfig.serverUrl + CommonConfig.ipInfoPath)
-				.get()
-				.build()
+		if (!requestInFlight.compareAndSet(false, true)) return
+		// Startup and ad callbacks may run on the main thread; keep all blocking work on IO.
+		scope.launch {
+			try {
+				val request = Request.Builder()
+					.url(CommonConfig.serverUrl + CommonConfig.ipInfoPath)
+					.get()
+					.build()
 
-			client.newCall(request).execute().use { response ->
-				if (!response.isSuccessful) throw IllegalStateException("Unexpected code $response")
-				val body = response.body?.string() ?: ""
-				val parsed = parseIpInfoPayload(body)
-				return@use applyIpInfoResult(parsed, "AdvCheckManager.getIpInfoV2")
+				val parsed = client.newCall(request).execute().use { response ->
+					if (!response.isSuccessful) throw IllegalStateException("Unexpected code $response")
+					parseIpInfoPayload(response.body?.string() ?: "")
+				}
+				val result = applyIpInfoResult(parsed)
+				Log.d(TAG, "checkIpInfo: $result")
+			} catch (exception: CancellationException) {
+				throw exception
+			} catch (exception: Exception) {
+				Log.e(TAG, "getIpInfoV2 error", exception)
+			} finally {
+				requestInFlight.set(false)
 			}
-		}.onFailure {
-			Log.e(TAG, "getIpInfoV2 error", it)
-		}.getOrNull()
-		Log.e(TAG, "checkIpInfo: $result" )
+		}
 	}
 
 	private fun parseIpInfoPayload(raw: String): IpGeoDetail? {
@@ -86,7 +102,7 @@ object IPUtil {
 		}.getOrNull()
 	}
 
-	private fun applyIpInfoResult(parsed: IpGeoDetail?, source: String): String? {
+	private suspend fun applyIpInfoResult(parsed: IpGeoDetail?): String? {
 		parsed ?: return null
 		val ipValue = parsed.ip
 		val isGoogleNetwork = if (ipValue != null) {
@@ -98,12 +114,14 @@ object IPUtil {
 			false
 		}
 		val isGoogleIp = isGoogleNetwork || parsed.isp?.contains("google", ignoreCase = true) == true || parsed.asn?.contains("15169") == true
-		ThinkingUtil.setUserOnceAttr("ip_info", "IPInfo ip=${parsed.ip}, longitude=${parsed.longitude}, latitude=${parsed.latitude}, asn=${parsed.asn}, isp=${parsed.isp}",)
-		val detailSummary = "IP detail -> ip=$parsed.ip, Asn=$parsed.asn, Isp=$parsed.isp"
+		val detailSummary = "IP detail -> ip=${parsed.ip}, Asn=${parsed.asn}, Isp=${parsed.isp}"
 		Log.e(TAG, detailSummary)
-		if (isGoogleIp) {
-			UserInfo.riskIP = RiskType.RISK
-			RiskUtil.judgeRisk()
+		withContext(Dispatchers.Main) {
+			ThinkingUtil.setUserOnceAttr("ip_info", "IPInfo ip=${parsed.ip}, longitude=${parsed.longitude}, latitude=${parsed.latitude}, asn=${parsed.asn}, isp=${parsed.isp}",)
+			if (isGoogleIp) {
+				UserInfo.riskIP = RiskType.RISK
+				RiskUtil.judgeUserType()
+			}
 		}
 		return detailSummary
 	}

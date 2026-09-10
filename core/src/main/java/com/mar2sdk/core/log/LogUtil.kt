@@ -12,7 +12,7 @@ import com.mar2sdk.core.common.UserInfo
 import com.mar2sdk.core.firebase.SingularConfig
 import com.mar2sdk.core.notify.app.AppNotificationManager
 import com.mar2sdk.core.notify.app.NotificationTriggerKey
-import com.mar2sdk.core.util.DBUtil
+import com.mar2sdk.core.common.DBUtil
 import com.singular.sdk.Singular
 import com.singular.sdk.SingularAdData
 import kotlinx.coroutines.CancellationException

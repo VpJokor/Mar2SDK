@@ -13,8 +13,8 @@ import com.mar2sdk.core.Core
 import com.mar2sdk.core.common.UserInfo
 import com.mar2sdk.core.log.ThinkingConfig
 import com.mar2sdk.core.notify.NotificationConfig
-import com.mar2sdk.core.util.DBUtil
-import com.mar2sdk.core.util.PreferenceUtil
+import com.mar2sdk.core.common.DBUtil
+import com.mar2sdk.core.common.PreferenceUtil
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob

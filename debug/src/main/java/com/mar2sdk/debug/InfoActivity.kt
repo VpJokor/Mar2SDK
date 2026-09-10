@@ -26,7 +26,7 @@ import com.mar2sdk.core.common.UserInfo
 import com.mar2sdk.core.notify.NotificationConfig
 import com.mar2sdk.core.notify.NotificationContent
 import com.mar2sdk.core.notify.NotificationUtil
-import com.mar2sdk.core.util.DBUtil
+import com.mar2sdk.core.common.DBUtil
 import kotlinx.coroutines.launch
 import java.time.Instant
 import java.time.ZoneId

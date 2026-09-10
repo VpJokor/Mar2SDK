@@ -9,7 +9,7 @@ import androidx.annotation.MainThread
 import com.mar2sdk.core.Core
 import com.mar2sdk.core.notify.NotificationConfig
 import com.mar2sdk.core.notify.NotificationTimer
-import com.mar2sdk.core.util.PreferenceUtil
+import com.mar2sdk.core.common.PreferenceUtil
 import org.json.JSONArray
 import org.json.JSONObject
 import java.time.ZonedDateTime

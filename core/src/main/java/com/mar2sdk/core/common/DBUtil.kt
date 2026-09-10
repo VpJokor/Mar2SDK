@@ -1,4 +1,4 @@
-package com.mar2sdk.core.util
+package com.mar2sdk.core.common
 
 import android.content.ContentValues
 import android.content.Context

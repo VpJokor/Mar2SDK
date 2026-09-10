@@ -4,7 +4,6 @@ import com.mar2sdk.core.log.ThinkingUtil
 import com.mar2sdk.core.common.status.EcpmType
 import com.mar2sdk.core.common.status.RiskType
 import com.mar2sdk.core.common.status.UserType
-import com.mar2sdk.core.util.PreferenceUtil
 
 object UserInfo {
 

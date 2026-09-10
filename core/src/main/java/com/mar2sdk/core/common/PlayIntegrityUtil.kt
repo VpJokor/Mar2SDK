@@ -5,6 +5,11 @@ import com.google.android.play.core.integrity.IntegrityManagerFactory
 import com.google.android.play.core.integrity.StandardIntegrityManager
 import com.mar2sdk.core.Core
 import com.mar2sdk.core.common.status.RiskType
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.Json
@@ -25,6 +30,7 @@ import java.security.MessageDigest
  */
 object PlayIntegrityUtil {
 	private const val TAG = "PlayIntegrityHelper"
+	private val networkScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
 
 	/**
 	 * 发起 Play Integrity 标准请求流程。
@@ -81,6 +87,13 @@ object PlayIntegrityUtil {
 	/** 将 token 切到后台线程发送给服务端解析，避免阻塞 Play Integrity 回调线程。 */
 
 	fun checkToken(token: String) {
+		// Integrity callbacks normally run on the main looper; the server verification is blocking.
+		networkScope.launch {
+			checkTokenOnIo(token)
+		}
+	}
+
+	private suspend fun checkTokenOnIo(token: String) {
 		Log.e(TAG, "checkToken: token=$token")
 
 		val client = OkHttpClient
@@ -103,7 +116,7 @@ object PlayIntegrityUtil {
 			client.newCall(request).execute().use { response ->
 				val body = response.body?.string()
 				if (response.isSuccessful) {
-					val json = JSONObject(body)
+					val json = JSONObject(body ?: return)
 					val dataString = json.getString("data")
 					Log.e(TAG, "checkToken: parsed data=$dataString")
 					val playIntegrityData = parseJson(dataString)
@@ -118,8 +131,10 @@ object PlayIntegrityUtil {
 					}
 					if (appIntegrity.appRecognitionVerdict == "UNRECOGNIZED_VERSION") {
 						Log.e(TAG, "checkToken: appRecognitionVerdict != PLAY_RECOGNIZED")
-						UserInfo.riskPackage = RiskType.RISK
-						RiskUtil.judgeUserType()
+						withContext(Dispatchers.Main) {
+							UserInfo.riskPackage = RiskType.RISK
+							RiskUtil.judgeUserType()
+						}
 					}
 				}
 			}

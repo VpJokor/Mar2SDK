@@ -3,8 +3,7 @@ package com.mar2sdk.core.ad.impl.admob
 import com.mar2sdk.core.Core
 import com.mar2sdk.core.AppMod
 import com.mar2sdk.core.R
-import com.mar2sdk.core.util.PreferenceUtil
-import kotlin.jvm.JvmName
+import com.mar2sdk.core.common.PreferenceUtil
 import org.json.JSONObject
 
 //admob的广告配置

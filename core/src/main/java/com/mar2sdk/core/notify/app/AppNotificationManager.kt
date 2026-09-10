@@ -15,7 +15,7 @@ import com.mar2sdk.core.log.LogNotifyEvent
 import com.mar2sdk.core.log.LogNotifyParam
 import com.mar2sdk.core.log.LogUtil
 import com.mar2sdk.core.notify.NotificationConfig
-import com.mar2sdk.core.util.DBUtil
+import com.mar2sdk.core.common.DBUtil
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers

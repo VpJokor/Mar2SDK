@@ -2,7 +2,6 @@ package com.mar2sdk.core.common
 
 import com.mar2sdk.core.Core
 import com.mar2sdk.core.R
-import com.mar2sdk.core.util.PreferenceUtil
 import org.json.JSONObject
 
 // 通用配置

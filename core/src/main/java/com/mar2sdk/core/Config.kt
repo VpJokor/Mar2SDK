@@ -12,8 +12,8 @@ import com.mar2sdk.core.log.LogConfig
 import com.mar2sdk.core.notify.NotificationConfig
 import com.mar2sdk.core.common.CommonConfig
 import com.mar2sdk.core.common.UserInfo
-import com.mar2sdk.core.util.DBUtil
-import com.mar2sdk.core.util.PreferenceUtil
+import com.mar2sdk.core.common.DBUtil
+import com.mar2sdk.core.common.PreferenceUtil
 
 /**
  * 配置相关的初始化器

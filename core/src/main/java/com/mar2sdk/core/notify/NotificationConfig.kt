@@ -7,7 +7,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
-import com.mar2sdk.core.util.PreferenceUtil
+import com.mar2sdk.core.common.PreferenceUtil
 import org.json.JSONArray
 import org.json.JSONObject
 

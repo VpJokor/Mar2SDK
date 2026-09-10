@@ -4,7 +4,7 @@ import android.util.Log
 import com.mar2sdk.core.ad.AdConfig
 import com.mar2sdk.core.log.LogAdEvent
 import com.mar2sdk.core.log.LogAdParam
-import com.mar2sdk.core.util.DBUtil
+import com.mar2sdk.core.common.DBUtil
 import kotlinx.coroutines.runBlocking
 import org.json.JSONObject
 

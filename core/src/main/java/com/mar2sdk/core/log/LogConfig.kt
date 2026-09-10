@@ -2,7 +2,7 @@ package com.mar2sdk.core.log
 
 import com.mar2sdk.core.Core
 import com.mar2sdk.core.R
-import com.mar2sdk.core.util.PreferenceUtil
+import com.mar2sdk.core.common.PreferenceUtil
 import org.json.JSONArray
 import org.json.JSONObject
 

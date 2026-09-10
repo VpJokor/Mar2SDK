@@ -1,4 +1,4 @@
-package com.mar2sdk.core.util
+package com.mar2sdk.core.common
 
 import android.app.Activity
 import android.app.Application

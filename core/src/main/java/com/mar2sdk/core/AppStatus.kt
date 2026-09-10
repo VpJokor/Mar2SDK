@@ -7,9 +7,8 @@ import com.mar2sdk.core.ad.AdLoader
 import com.mar2sdk.core.notify.app.AppNotificationManager
 import com.mar2sdk.core.notify.app.NotificationTriggerKey
 import com.mar2sdk.core.notify.common.CommonService
-import com.mar2sdk.core.util.AppObs
-import com.mar2sdk.core.util.AppObs.PackageChange
-import com.mar2sdk.core.util.AppObs.WifiState
+import com.mar2sdk.core.common.AppObs
+import com.mar2sdk.core.common.AppObs.PackageChange
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers

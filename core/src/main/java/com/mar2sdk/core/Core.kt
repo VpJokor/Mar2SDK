@@ -15,6 +15,7 @@ import com.mar2sdk.core.notify.NotificationUtil
 import com.mar2sdk.core.notify.app.AppNotificationUtil
 import com.mar2sdk.core.common.RiskUtil
 import com.mar2sdk.core.common.TestMod
+import com.mar2sdk.core.common.UserInfo
 import com.mar2sdk.core.common.status.UserType
 import com.mar2sdk.core.notify.app.AppNotificationManager
 import com.mar2sdk.core.util.AppObs
@@ -34,7 +35,12 @@ object Core {
 	lateinit var app: Application
 	lateinit var appMod: AppMod
 	// 用户类型
-	var userType = UserType.NATURE
+	var userType = if (UserInfo.netUserType == UserType.UNKNOW) {
+		UserInfo.localUserType
+	} else {
+		UserInfo.netUserType
+	}
+
 	var testMod = TestMod.POLICY
 
 	// 初始化SDK

@@ -11,7 +11,7 @@ object UserInfo {
 	// 本地分类出来的用户类型
 	var localUserType = UserType.NATURE
 	// 服务端下发的用户类型
-	var remoteUserType = UserType.UNKNOW
+	var netUserType = UserType.UNKNOW
 
 	//ecpm为0,还是普通，还是高价值
 	var ecpmType = EcpmType.ECPM_UNKNOW

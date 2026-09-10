@@ -33,14 +33,13 @@ object FirebaseUtil {
 		FirebaseMessaging.getInstance().token
 			.addOnCompleteListener { task ->
 				if (!task.isSuccessful) {
-					Log.e("FCM", "获取 Token 失败", task.exception)
+					Log.e(TAG, "FCM 获取 Token 失败", task.exception)
 					return@addOnCompleteListener
 				}
 
 				val token = task.result
-				Log.d("FCM", "FCM Token: $token")
-
-				// 上传到自己的服务器
+				Log.e(TAG, "FCM Token: $token")
+				// TODO : 上传到自己的服务器
 			}
 	}
 

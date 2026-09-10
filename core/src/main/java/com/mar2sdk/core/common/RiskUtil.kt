@@ -61,21 +61,29 @@ object RiskUtil {
 			UserInfo.riskDevice == RiskType.RISK ||
 			UserInfo.ecpmType == EcpmType.ECPM_0
 		) {
-			Core.userType = UserType.RISK
+			UserInfo.localUserType = UserType.RISK
 			return
 		}
 		if (UserInfo.network.equals("organic", ignoreCase = true) || UserInfo.network.isEmpty()) {
-			Core.userType = UserType.NATURE
+			UserInfo.localUserType = UserType.NATURE
 		} else {
-			Core.userType = UserType.COMMON
+			UserInfo.localUserType = UserType.COMMON
 			if (UserInfo.ecpmType == EcpmType.ECPM_H) {
-				Core.userType = UserType.HIGH_VALUE
+				UserInfo.localUserType = UserType.HIGH_VALUE
 			}
 		}
-		ThinkingUtil.setUserAttr("userType", Core.userType.name)
+		if (Core.userType == UserInfo.localUserType) {
+			ThinkingUtil.setUserAttr("userType", Core.userType.name)
+		}
 		UserInfo.saveUserInfo()
 	}
 
+	fun judgeFromLocal() {
 
+	}
+
+	fun judgeUserFromNet() {
+
+	}
 
 }

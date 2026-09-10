@@ -148,7 +148,7 @@ object AppNotificationUtil {
 	}
 
 	private val requestCodeGenerator = AtomicInteger(0)
-	/** 创建通知点击后的启动 PendingIntent，携带 route 和 scene 参数给宿主导航层。 */
+	// 创建通知点击后的启动 PendingIntent，携带 route 和 scene 参数给宿主导航层。
 	fun getAppPendingIntent(route: String = "", scene: String = ""): PendingIntent {
 		val launchIntent = Core.app.packageManager.getLaunchIntentForPackage(Core.app.packageName)
 		launchIntent?.apply {

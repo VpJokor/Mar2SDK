@@ -24,5 +24,21 @@
                 <action android:name="android.intent.action.TIMEZONE_CHANGED" />
             </intent-filter>
         </receiver>
+
+        <service
+            android:name=".firebase.MyFirebaseMessagingService"
+            android:enabled="true"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="com.google.firebase.MESSAGING_EVENT" />
+            </intent-filter>
+        </service>
+
+        <service
+            android:name=".firebase.ServiceStarterJobService"
+            android:enabled="true"
+            android:exported="false"
+            android:permission="android.permission.BIND_JOB_SERVICE" />
+
     </application>
 </manifest>

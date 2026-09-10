@@ -24,7 +24,11 @@
         <receiver
             android:name="com.mar2sdk.core.notify.common.CommonDelReceiver"
             android:enabled="true"
-            android:exported="true" />
+            android:exported="false">
+            <intent-filter>
+                <action android:name="com.mar2sdk.core.action.NOTIFICATION_DELETED" />
+            </intent-filter>
+        </receiver>
 
         <receiver
             android:name="com.mar2sdk.core.common.AppObs$BootReceiver"

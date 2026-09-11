@@ -56,7 +56,16 @@ object ThinkingUtil {
 		TDAnalytics.userSetOnce(userProperties)
 	}
 
-	/** Returns whether ThinkingData is still allowed to receive SDK logs. */
+	// 设置事件属性
+	fun setEventAttr(key: String, value: Any) {
+		if (!isWithinLogWindow()) return
+		Log.e(TAG, "setEventAttr: key = $key, value = $value")
+		val eventProperties = JSONObject()
+		eventProperties.put(key, value)
+		TDAnalytics.setSuperProperties(eventProperties)
+	}
+
+	// 判断 ThinkingData 是否仍允许接收 SDK 日志。
 	internal fun isWithinLogWindow(nowMillis: Long = System.currentTimeMillis()): Boolean {
 		val logEndTimeHours = ThinkingConfig.logEndTime
 		if (logEndTimeHours <= 0 || UserInfo.firstOpenTime <= 0L) return false

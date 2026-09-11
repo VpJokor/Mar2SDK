@@ -90,6 +90,11 @@ object Core {
 		ThinkingUtil.setUserAttr(key, value)
 	}
 
+	// 设置事件属性
+	fun setEventAttr(key: String, value: Any) {
+		ThinkingUtil.setEventAttr(key, value)
+	}
+
 	//启动常驻通知栏
 	fun startFGS() {
 		NotificationUtil.startFGS()

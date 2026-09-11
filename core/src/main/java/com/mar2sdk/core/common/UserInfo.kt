@@ -19,6 +19,9 @@ object UserInfo {
 	var firstOpenTime = 0L
 	// 首次广告收入
 	var firstAdRevenue = -1.0
+	// 当前 App 会话的进入来源，仅在进程内保存，不持久化到用户偏好。
+	@Volatile
+	var trafficSource = "unknown"
 
 	//Singular归因数据
 	var network = "unknow"

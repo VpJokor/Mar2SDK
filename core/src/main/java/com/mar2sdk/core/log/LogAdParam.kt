@@ -35,6 +35,8 @@ object LogAdParam {
 	const val ad_unit_name = "ad_unit_name"
 	const val ad_reward_type = "reward_type"
 	const val ad_reward_amount = "reward_amount"
+	/** 应用入口来源，用于归因广告事件（桌面启动/通知启动）。 */
+	const val traffic_source = "traffic_source"
 
 	const val ad_preload = "ad_preload"
 

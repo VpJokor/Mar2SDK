@@ -352,7 +352,7 @@ object AppObs {
 
 	private val activityLifecycleCallbacks = object : Application.ActivityLifecycleCallbacks {
 		override fun onActivityCreated(activity: Activity, savedInstanceState: Bundle?) {
-			NotificationUtil.trackNotificationClick(activity.intent)
+			NotificationUtil.trackAppOpen(activity.intent)
 		}
 
 		override fun onActivityStarted(activity: Activity) {
@@ -365,7 +365,7 @@ object AppObs {
 		}
 
 		override fun onActivityResumed(activity: Activity) {
-			NotificationUtil.trackNotificationClick(activity.intent)
+			NotificationUtil.trackAppOpen(activity.intent)
 		}
 
 		override fun onActivityPaused(activity: Activity) = Unit

@@ -4,6 +4,7 @@ package com.mar2sdk.impl
  * 广告点位表
  */
 object AreaKeys {
+	const val KEY_APP_FOREGROUND_OPEN = "app_foreground_open"
 	const val KEY_CONTENT1_START = "content1_start"
 	const val KEY_CONTENT1_BACK = "content1_back"
 	const val KEY_CONTENT1_LEAVE = "content1_leave"

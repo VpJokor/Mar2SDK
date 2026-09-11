@@ -29,3 +29,5 @@
 路由按完整字符串匹配，不支持部分通配；两组路由都匹配后才进入概率判断。当前广告填充实现主要支持 AdMob，组合格式仍是占位实现。
 
 示例资源：[`ad_config.json`](../../core/src/main/res/raw/ad_config.json)。
+
+`impl` 的 `Mar2Application` 会在应用从后台回到前台时请求 `app_foreground_open` 点位，冷启动不触发。此点位的 `format` 必须为 `OPEN`，并沿用全局及点位的频次、间隔和概率策略。请求的来源和目标路由均为空，通常配置为 `["*"]`。如使用 Preference 或 Remote Config 覆盖 `ad_units`，也需要包含此点位。

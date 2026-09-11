@@ -9,6 +9,15 @@
   "24HMax": 50,
   "interval":  30,
   "ad_units": {
+    "app_foreground_open" : {
+      "rate":  1.0,
+      "1HMax": 4,
+      "24HMax": 20,
+      "interval": 30,
+      "format": "OPEN",
+      "fromRoutes": ["*"],
+      "toRoutes": ["*"]
+    },
     "KEY_TEST_OPEN" : {
       "rate":  1.0,
       "1HMax":  4,

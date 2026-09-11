@@ -13,6 +13,7 @@ open class Mar2Application : Application() {
 		super.onCreate()
 		// 核心库初始化
 		Core.init(this, AppMod.DEBUG)
+		AppOpenAdManager.init(this)
 	}
 
 }

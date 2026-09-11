@@ -87,4 +87,15 @@ object RiskUtil {
 
 	}
 
+	/**
+	 * 更新本地配置信息
+	 * 1. 如果接口有返回 ad_config 和 notification_config 配置，则以服务器接口返回的为准(服务器接口暂时未对接，预留接口，暂时不实现)
+	 * 2. 如果接口没有返回配置，RemoteConfig已经可以拉到配置则 ad_config 和 notification_config 根据 Core.userType 取 RemoteConfig中对应的配置
+	 * 3. 如果接口没返回配置且RemoteConfig也还没拉到 ad_config 和 notification_config 配置，则使用本地Raw文件夹中的默认配置
+	 * 4. 除 ad_config 和 notification_config 配置以外，其他的配置文件 优先使用RemoteConfig中的配置，未拉到RemoteConfig中的配置时使用raw文件夹中的默认配置
+	 */
+	fun updateConfig() {
+
+	}
+
 }

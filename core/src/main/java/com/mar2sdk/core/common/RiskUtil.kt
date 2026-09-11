@@ -1,5 +1,6 @@
 package com.mar2sdk.core.common
 
+import android.util.Log
 import com.mar2sdk.core.AppMod
 import com.mar2sdk.core.Core
 import com.mar2sdk.core.ad.AdConfig
@@ -117,6 +118,7 @@ object RiskUtil {
 	 */
 	fun updateConfig() {
 		FirebaseUtil.onRemoteConfigActivated = { remoteConfig, _ ->
+			Log.e(TAG, "updateConfig: 从RemoteConfig上抓取到新的配置" )
 			activeRemoteConfig = remoteConfig
 			applyRemoteConfig(remoteConfig)
 		}
@@ -144,6 +146,7 @@ object RiskUtil {
 		apply: (JSONObject) -> Unit
 	) {
 		val value = runCatching { remoteConfig.getString(key) }.getOrNull()
+		Log.e(TAG, "applyJson: key = $key, value = $value")
 		if (value.isNullOrBlank()) return
 		runCatching { JSONObject(value) }
 			.onSuccess { json -> runCatching { apply(json) } }

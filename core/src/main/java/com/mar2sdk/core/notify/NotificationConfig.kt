@@ -131,6 +131,12 @@ object NotificationConfig {
 		config.optJSONArray("contents")?.let { contents = it.toContents() }
 	}
 
+	/** 应用单独管理的通知内容配置。 */
+	internal fun applyContentConfig(config: JSONObject) {
+		config.optJSONArray("contents")?.let { contents = it.toContents() } ?: return
+		saveNotificationConfig()
+	}
+
 	private fun resetToDefaults() {
 		ChannelCount = DEFAULT_CHANNEL_COUNT
 		isSend = false

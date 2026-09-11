@@ -52,6 +52,14 @@ object LogConfig {
 		}
 	}
 
+	internal fun applyConfig(config: JSONObject) {
+		config.optJSONArray("fbEvents")?.let { fbEvents = it.toStringList() }
+		config.optJSONArray("localEvents")?.let { localEvents = it.toStringList() }
+		config.optJSONArray("thEvents")?.let { thEvents = it.toStringList() }
+		config.optJSONArray("netEvents")?.let { netEvents = it.toStringList() }
+		saveLogConfig()
+	}
+
 	// 判断事件是否启用；`*` 表示启用全部事件。
 	fun isEnabled(events: Collection<String>, eventName: String): Boolean =
 		"*" in events || eventName in events

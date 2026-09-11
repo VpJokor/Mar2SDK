@@ -48,4 +48,11 @@ object ThinkingConfig {
 			PreferenceUtil.commitInt(KEY_LOG_END_TIME, logEndTime)
 		}
 	}
+
+	internal fun applyConfig(config: JSONObject) {
+		key = config.optString("key", key)
+		url = config.optString("url", url)
+		logEndTime = config.optInt("logEndTime", logEndTime)
+		saveThinkingConfig()
+	}
 }

@@ -110,6 +110,23 @@ object AdConfig {
 		}
 	}
 
+	/** 应用 Remote Config 的 JSON 配置，并保存到本地供下次启动使用。 */
+	internal fun applyConfig(config: JSONObject) {
+		with(config) {
+			if (has("defaultPlatform")) defaultPlatform = AdPlatform.valueOf(getString("defaultPlatform"))
+			if (has("activePlatforms")) activePlatforms = getJSONArray("activePlatforms").toAdPlatforms()
+			isOpen = optBoolean("isOpen", isOpen)
+			showMaxTime = optLong("showMaxTime", showMaxTime)
+			showMinTime = optLong("showMinTime", showMinTime)
+			showMod = optInt("showMod", showMod)
+			max1H = optInt("1HMax", max1H)
+			max24H = optInt("24HMax", max24H)
+			interval = optInt("interval", interval)
+			optJSONObject("ad_units")?.let { adUnits = it.toAdUnits() }
+		}
+		saveAdConfig()
+	}
+
 	private fun JSONArray.toAdPlatforms(): MutableSet<AdPlatform> =
 		(0 until length()).mapTo(mutableSetOf()) { index ->
 			AdPlatform.valueOf(getString(index))

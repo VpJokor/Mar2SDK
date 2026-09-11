@@ -99,4 +99,17 @@ object AdmobConfig {
 		}
 		updateAdUnitIds()
 	}
+
+	internal fun applyConfig(config: JSONObject) {
+		releaseOpenID = config.optString("releaseOpenID", releaseOpenID)
+		releaseInterID = config.optString("releaseInterID", releaseInterID)
+		releaseVideoID = config.optString("releaseVideoID", releaseVideoID)
+		openTimeout = config.optDouble("openTimeout", openTimeout)
+		interTimeout = config.optLong("interTimeout", interTimeout)
+		videoTimeout = config.optLong("videoTimeout", videoTimeout)
+		openPoolSize = config.optInt("openPoolSize", openPoolSize)
+		interPoolSize = config.optInt("interPoolSize", interPoolSize)
+		videoPoolSize = config.optInt("videoPoolSize", videoPoolSize)
+		saveAdmobConfig()
+	}
 }

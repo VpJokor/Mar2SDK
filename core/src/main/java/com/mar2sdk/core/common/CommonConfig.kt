@@ -63,4 +63,14 @@ object CommonConfig {
 			PreferenceUtil.commitString(KEY_IP_INFO_PATH, ipInfoPath)
 		}
 	}
+
+	internal fun applyConfig(config: JSONObject) {
+		highEcpm = config.optDouble("highEcpm", highEcpm)
+		serverUrl = config.optString("serverUrl", serverUrl)
+		ABTestName = config.optString("ABTestName", ABTestName)
+		PlayIntegrityID = config.optLong("PlayIntegrityID", PlayIntegrityID)
+		parseTokenPath = config.optString("parseTokenPath", parseTokenPath)
+		ipInfoPath = config.optString("ipInfoPath", ipInfoPath)
+		saveCommonConfig()
+	}
 }

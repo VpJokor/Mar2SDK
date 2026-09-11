@@ -2,18 +2,30 @@ package com.mar2sdk.core.common
 
 import com.mar2sdk.core.AppMod
 import com.mar2sdk.core.Core
+import com.mar2sdk.core.ad.AdConfig
+import com.mar2sdk.core.ad.impl.admob.AdmobConfig
+import com.mar2sdk.core.firebase.FirebaseUtil
+import com.mar2sdk.core.firebase.SingularConfig
+import com.mar2sdk.core.log.LogConfig
+import com.mar2sdk.core.log.ThinkingConfig
 import com.mar2sdk.core.log.ThinkingUtil
+import com.mar2sdk.core.notify.NotificationConfig
 import com.mar2sdk.core.common.status.EcpmType
 import com.mar2sdk.core.common.status.RiskType
 import com.mar2sdk.core.common.status.UserType
+import com.google.firebase.remoteconfig.FirebaseRemoteConfig
+import org.json.JSONObject
 
 /**
  * 风控类
  */
 object RiskUtil {
 	private const val TAG = "RiskUtil"
+	@Volatile
+	private var activeRemoteConfig: FirebaseRemoteConfig? = null
 
 	fun init() {
+		updateConfig()
 		judgeRisk()
 	}
 
@@ -66,6 +78,7 @@ object RiskUtil {
 			UserInfo.ecpmType == EcpmType.ECPM_0
 		) {
 			UserInfo.localUserType = UserType.RISK
+			activeRemoteConfig?.let(::applyRemoteConfig)
 			return
 		}
 		if (UserInfo.network.equals("organic", ignoreCase = true) || UserInfo.network.isEmpty()) {
@@ -80,6 +93,7 @@ object RiskUtil {
 			ThinkingUtil.setUserAttr("userType", Core.userType.name)
 		}
 		UserInfo.saveUserInfo()
+		activeRemoteConfig?.let(::applyRemoteConfig)
 	}
 
 	// TODO: 服务端用户分级策略
@@ -95,7 +109,37 @@ object RiskUtil {
 	 * 4. 除 ad_config 和 notification_config 配置以外，其他的配置文件 优先使用RemoteConfig中的配置，未拉到RemoteConfig中的配置时使用raw文件夹中的默认配置
 	 */
 	fun updateConfig() {
+		FirebaseUtil.onRemoteConfigActivated = { remoteConfig, _ ->
+			activeRemoteConfig = remoteConfig
+			applyRemoteConfig(remoteConfig)
+		}
+	}
 
+	private fun applyRemoteConfig(remoteConfig: FirebaseRemoteConfig) {
+		// 根据当前生效的用户类型选择 ad_config 和 notification_config。
+		applyJson(remoteConfig, "ad_config_${Core.userType.name}") { AdConfig.applyConfig(it) }
+		applyJson(remoteConfig, "notification_config_${Core.userType.name}") {
+			NotificationConfig.applyConfig(it)
+			NotificationConfig.saveNotificationConfig()
+		}
+
+		applyJson(remoteConfig, "notification_content") { NotificationConfig.applyContentConfig(it) }
+		applyJson(remoteConfig, "common_config") { CommonConfig.applyConfig(it) }
+		applyJson(remoteConfig, "admob_config") { AdmobConfig.applyConfig(it) }
+		applyJson(remoteConfig, "singular_config") { SingularConfig.applyConfig(it) }
+		applyJson(remoteConfig, "thinking_config") { ThinkingConfig.applyConfig(it) }
+		applyJson(remoteConfig, "log_config") { LogConfig.applyConfig(it) }
+	}
+
+	private fun applyJson(
+		remoteConfig: FirebaseRemoteConfig,
+		key: String,
+		apply: (JSONObject) -> Unit
+	) {
+		val value = runCatching { remoteConfig.getString(key) }.getOrNull()
+		if (value.isNullOrBlank()) return
+		runCatching { JSONObject(value) }
+			.onSuccess { json -> runCatching { apply(json) } }
 	}
 
 }

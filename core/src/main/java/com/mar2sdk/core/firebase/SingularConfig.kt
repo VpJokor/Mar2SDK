@@ -47,4 +47,11 @@ object SingularConfig {
 			PreferenceUtil.commitBoolean(KEY_TRACK_REVENUE, trackRevenue)
 		}
 	}
+
+	internal fun applyConfig(config: JSONObject) {
+		key = config.optString("key", key)
+		secret = config.optString("secret", secret)
+		trackRevenue = config.optBoolean("trackRevenue", trackRevenue)
+		saveSingularConfig()
+	}
 }

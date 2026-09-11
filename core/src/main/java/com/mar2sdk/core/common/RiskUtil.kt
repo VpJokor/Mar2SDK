@@ -103,7 +103,7 @@ object RiskUtil {
 		activeRemoteConfig?.let(::applyRemoteConfig)
 	}
 
-	// TODO: 服务端用户分级策略
+	// TODO: 读取服务端下发的用户类型和策略
 	fun judgeUserFromNet() {
 
 	}

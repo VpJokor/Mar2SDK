@@ -85,7 +85,7 @@ class MyFirebaseMessagingService : FirebaseMessagingService() {
 		)
 
 		LogUtil.log(
-			LogNotifyEvent.notification_shown,mapOf(
+			LogNotifyEvent.receive_fcm,mapOf(
 			"fCMSendTime" to fCMSendTime,
 			"fcmId" to fcmId,
 			"appPackage" to appPackage,

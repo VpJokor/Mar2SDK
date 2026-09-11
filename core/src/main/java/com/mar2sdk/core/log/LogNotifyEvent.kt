@@ -13,6 +13,9 @@ object LogNotifyEvent {
 	const val notify_send_item = "notify_send_item"
 	// 清空待发送队列
 	const val clear_notifications = "clear_notifications"
+	// 收到FCM打点
+	const val receive_fcm = "receive_fcm"
+	// 通知点击
+	const val notification_clicked = "notification_clicked"
 
-	const val notification_shown = "notification_shown"
 }

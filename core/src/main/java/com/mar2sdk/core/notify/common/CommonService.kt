@@ -186,7 +186,7 @@ class CommonService : Service() {
 				.setWhen(oneYearLater)
 				.setColor(getColor(R.color.notification_icon_bg))
 				.setPriority(NotificationCompat.PRIORITY_HIGH)
-//				.setContentIntent(getPendingIntent())
+				.setContentIntent(getPendingIntent("persistent"))
 				.setDeleteIntent(delIntent)
 				.build()
 		} else {
@@ -199,7 +199,7 @@ class CommonService : Service() {
 				.setOngoing(true)
 				.setColor(getColor(R.color.notification_icon_bg))
 				.setPriority(NotificationCompat.PRIORITY_HIGH)
-//				.setContentIntent(getPendingIntent())
+				.setContentIntent(getPendingIntent("persistent"))
 				.setDeleteIntent(delIntent)
 				.build()
 		}

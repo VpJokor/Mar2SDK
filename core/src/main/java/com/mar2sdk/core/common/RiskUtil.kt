@@ -89,6 +89,9 @@ object RiskUtil {
 				UserInfo.localUserType = UserType.HIGH_VALUE
 			}
 		}
+		if (Core.userType != UserInfo.localUserType && UserInfo.netUserType == UserType.UNKNOW) {
+			Core.userType = UserInfo.localUserType
+		}
 		if (Core.userType == UserInfo.localUserType) {
 			ThinkingUtil.setUserAttr("userType", Core.userType.name)
 		}

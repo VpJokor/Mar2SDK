@@ -71,6 +71,11 @@ object RiskUtil {
 
 	// INFO: 本地用户分级
 	fun judgeFromLocal() {
+		fun applyUserType() {
+			if (Core.userType != UserInfo.localUserType && UserInfo.netUserType == UserType.UNKNOW) {
+				Core.userType = UserInfo.localUserType
+			}
+		}
 		if (
 			UserInfo.riskIP == RiskType.RISK ||
 			UserInfo.riskPackage == RiskType.RISK ||
@@ -78,6 +83,7 @@ object RiskUtil {
 			UserInfo.ecpmType == EcpmType.ECPM_0
 		) {
 			UserInfo.localUserType = UserType.RISK
+			applyUserType()
 			activeRemoteConfig?.let(::applyRemoteConfig)
 			return
 		}
@@ -89,9 +95,7 @@ object RiskUtil {
 				UserInfo.localUserType = UserType.HIGH_VALUE
 			}
 		}
-		if (Core.userType != UserInfo.localUserType && UserInfo.netUserType == UserType.UNKNOW) {
-			Core.userType = UserInfo.localUserType
-		}
+		applyUserType()
 		if (Core.userType == UserInfo.localUserType) {
 			ThinkingUtil.setUserAttr("userType", Core.userType.name)
 		}

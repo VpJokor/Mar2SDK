@@ -27,6 +27,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.mar2sdk.debug.DebugActivity
 import com.mar2sdk.impl.BaseActivity
+import com.mar2sdk.impl.ContentActivity
 import com.mar2sdk.impl.ObserveScreenAdRoutes
 import com.mar2sdk.impl.SplashScreen
 import com.mar2sdk.impl.contentComposable
@@ -67,6 +68,12 @@ class MainActivity : BaseActivity() {
 							},
 							onContent2Click = {
 								navController.navigate(Routes.CONTENT_2)
+							},
+							onViewContentClick = {
+								startActivity(
+									Intent(this@MainActivity, Content1Activity::class.java)
+										.putExtra(ContentActivity.EXTRA_FROM_ROUTE, Routes.MAIN)
+								)
 							}
 						)
 					}
@@ -107,7 +114,8 @@ private fun MainScreen(
 	onDebugClick: () -> Unit,
 	onSplashClick: () -> Unit,
 	onContent1Click: () -> Unit,
-	onContent2Click: () -> Unit
+	onContent2Click: () -> Unit,
+	onViewContentClick: () -> Unit
 ) {
 	Column(
 		modifier = Modifier
@@ -134,6 +142,13 @@ private fun MainScreen(
 			) {
 				Text(text = "开屏页面")
 			}
+		}
+		Button(
+			onClick = onViewContentClick,
+			modifier = Modifier.fillMaxWidth(),
+			contentPadding = PaddingValues(10.dp)
+		) {
+			Text(text = "View/XML 广告示例")
 		}
 		Row(
 			modifier = Modifier.fillMaxWidth(),
@@ -166,7 +181,8 @@ private fun MainScreenPreview() {
 			onDebugClick = {},
 			onSplashClick = {},
 			onContent1Click = {},
-			onContent2Click = {}
+			onContent2Click = {},
+			onViewContentClick = {}
 		)
 	}
 }

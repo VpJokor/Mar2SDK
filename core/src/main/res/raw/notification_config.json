@@ -121,6 +121,14 @@
       "styles": [1,2,3,4],
       "interval_batch":  60,
       "interval_item": 5
+    },
+    "media_changed" : {
+      "first_delay": 300,
+      "delay":  0,
+      "count":  3,
+      "styles": [1,2,3,4],
+      "interval_batch":  60,
+      "interval_item": 5
     }
   },
   "timer":  {

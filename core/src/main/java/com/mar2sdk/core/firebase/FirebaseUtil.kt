@@ -21,8 +21,6 @@ object FirebaseUtil {
 	private const val TAG = "FireBaseUtil"
 	private var initialized = false
 	private var configUpdateRegistration: ConfigUpdateListenerRegistration? = null
-
-	/** Called after a fetch has been activated. The key set is empty for the initial fetch. */
 	@Volatile
 	var onRemoteConfigActivated: ((FirebaseRemoteConfig, Set<String>) -> Unit)? = null
 
@@ -86,8 +84,8 @@ object FirebaseUtil {
 		}
 		configUpdateRegistration = remoteConfig.addOnConfigUpdateListener(object : ConfigUpdateListener {
 			override fun onUpdate(configUpdate: ConfigUpdate) {
-				// Real-time updates have already been fetched by the SDK. Fetching again
-				// here can be throttled by minimumFetchIntervalInSeconds.
+				// 实时更新已经由 SDK 完成抓取，这里只需要激活已抓取的配置。
+				// 再次抓取可能会受到 minimumFetchIntervalInSeconds 的限制。
 				remoteConfig.activate()
 					.addOnCompleteListener { task ->
 						if (task.isSuccessful) {
@@ -103,8 +101,7 @@ object FirebaseUtil {
 			}
 		})
 
-		// Apply settings before the first fetch. Without this call a fresh install
-		// only receives values after a real-time server update.
+		// 首次抓取前先应用配置设置，否则新安装应用只能在服务端实时更新后获取配置。
 		remoteConfig.setConfigSettingsAsync(configSettings)
 			.addOnSuccessListener {
 				remoteConfig.fetchAndActivate()

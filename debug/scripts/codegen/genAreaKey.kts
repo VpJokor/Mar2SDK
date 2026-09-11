@@ -14,7 +14,8 @@ import kotlin.system.exitProcess
  * app 模块为业务代码，页面随时会增加和减少。
  *
  * 内容页以 contentComposable(route) 为准。每个静态 route 会生成 start、back、leave
- * 三个广告点位；直接字符串和字符串 const val 均可作为 route。
+ * 三个广告点位；应用从后台回到前台使用的 app_foreground_open 点位也会固定生成。
+ * 直接字符串和字符串 const val 均可作为 route。
  *
  * 用法：
  *   kotlin debug/scripts/codegen/genAreaKey.kts [项目根目录] [--dry-run|--check]
@@ -32,6 +33,7 @@ import kotlin.system.exitProcess
  */
 
 private val AREA_KEY_SUFFIXES = listOf("start", "back", "leave")
+private val APP_FOREGROUND_OPEN_AREA_KEY = "app_foreground_open"
 private val CONTENT_COMPOSABLE = Regex("""\bcontentComposable\s*\(""")
 private val STRING_CONST = Regex(
 	"""\bconst\s+val\s+([A-Za-z_][A-Za-z0-9_]*)(?:\s*:\s*(?:kotlin\s*\.\s*)?String)?\s*="""
@@ -532,6 +534,7 @@ private fun existingAreaKeys(outputFile: Path): Map<String, String> {
 
 private fun generatedAreaKeys(routes: List<String>): LinkedHashMap<String, String> {
 	val result = linkedMapOf<String, String>()
+	result[constantName(APP_FOREGROUND_OPEN_AREA_KEY)] = APP_FOREGROUND_OPEN_AREA_KEY
 	routes.forEach { route ->
 		AREA_KEY_SUFFIXES.forEach { suffix ->
 			val areaKey = "${route}_$suffix"

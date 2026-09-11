@@ -29,6 +29,7 @@ import com.mar2sdk.core.AppStatus
 import com.mar2sdk.core.Core
 import com.mar2sdk.core.log.LogAppEvent
 import com.mar2sdk.core.log.LogUtil
+import com.mar2sdk.core.notify.NotificationUtil
 import java.util.concurrent.CopyOnWriteArraySet
 
 /**
@@ -350,7 +351,9 @@ object AppObs {
 	}
 
 	private val activityLifecycleCallbacks = object : Application.ActivityLifecycleCallbacks {
-		override fun onActivityCreated(activity: Activity, savedInstanceState: Bundle?) = Unit
+		override fun onActivityCreated(activity: Activity, savedInstanceState: Bundle?) {
+			NotificationUtil.trackNotificationClick(activity.intent)
+		}
 
 		override fun onActivityStarted(activity: Activity) {
 			startedActivityCount++
@@ -361,7 +364,9 @@ object AppObs {
 			}
 		}
 
-		override fun onActivityResumed(activity: Activity) = Unit
+		override fun onActivityResumed(activity: Activity) {
+			NotificationUtil.trackNotificationClick(activity.intent)
+		}
 
 		override fun onActivityPaused(activity: Activity) = Unit
 

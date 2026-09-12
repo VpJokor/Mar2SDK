@@ -1,6 +1,6 @@
 {
   "fbEvents": ["*"],
   "localEvents": ["*"],
-  "thEvents": ["notification_clicked","ad_occur","ad_impression","ad_revenue"],
+  "thEvents": ["notification_clicked","ad_occur","ad_impression","ad_revenue","screen_open","screen_close","screen_navigate"],
   "netEvents": ["eventA","eventB","eventC"]
 }

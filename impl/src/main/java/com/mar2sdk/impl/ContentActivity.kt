@@ -21,6 +21,7 @@ abstract class ContentActivity : BaseActivity() {
 	private val adSession by lazy { ScreenAdSession(screenName) }
 	private var hasEntered = false
 	private var backRequested = false
+	private var pageVisible = false
 
 	private val backCallback = object : OnBackPressedCallback(true) {
 		override fun handleOnBackPressed() {
@@ -29,6 +30,12 @@ abstract class ContentActivity : BaseActivity() {
 			val targetRoute = intent.getStringExtra(EXTRA_FROM_ROUTE).orEmpty()
 			adSession.navigateAfterAd(targetRoute, ::launchScreenAd) {
 				if (!isFinishing && !isDestroyed) {
+					logScreenNavigation(
+						fromRoute = screenName,
+						toRoute = targetRoute,
+						container = SCREEN_CONTAINER_ACTIVITY,
+						reason = "back",
+					)
 					setResult(RESULT_OK, Intent().putExtra(EXTRA_RETURNED_FROM_ROUTE, screenName))
 					finish()
 				}
@@ -60,6 +67,7 @@ abstract class ContentActivity : BaseActivity() {
 	override fun onResume() {
 		super.onResume()
 		if (isFinishing || isDestroyed) return
+		trackPageOpen()
 		adSession.onResume(
 			hasEntered = hasEntered,
 			markEntered = { hasEntered = true },
@@ -69,6 +77,7 @@ abstract class ContentActivity : BaseActivity() {
 	}
 
 	override fun onPause() {
+		trackPageClose("pause")
 		adSession.onPause()
 		super.onPause()
 	}
@@ -84,6 +93,12 @@ abstract class ContentActivity : BaseActivity() {
 			.putExtra(EXTRA_TO_ROUTE, toScreenName)
 		adSession.navigateAfterAd(toScreenName, ::launchScreenAd) {
 			if (!isFinishing && !isDestroyed) {
+				logScreenNavigation(
+					fromRoute = screenName,
+					toRoute = toScreenName,
+					container = SCREEN_CONTAINER_ACTIVITY,
+					reason = "navigate",
+				)
 				startActivityForResult(routedIntent, NAVIGATION_REQUEST_CODE)
 			}
 		}
@@ -106,6 +121,28 @@ abstract class ContentActivity : BaseActivity() {
 	/** Hook for tests and host applications that need to observe or replace ad launching. */
 	protected open fun showScreenAd(context: ScreenAdContext): Boolean =
 		AdActivity.showAd(this, context)
+
+	private fun trackPageOpen() {
+		if (pageVisible) return
+		pageVisible = true
+		logScreenOpen(
+			screenName = screenName,
+			fromRoute = intent.getStringExtra(EXTRA_FROM_ROUTE).orEmpty(),
+			container = SCREEN_CONTAINER_ACTIVITY,
+			reason = if (hasEntered) "return" else "enter",
+		)
+	}
+
+	private fun trackPageClose(reason: String) {
+		if (!pageVisible) return
+		pageVisible = false
+		logScreenClose(
+			screenName = screenName,
+			fromRoute = intent.getStringExtra(EXTRA_FROM_ROUTE).orEmpty(),
+			container = SCREEN_CONTAINER_ACTIVITY,
+			reason = reason,
+		)
+	}
 
 	companion object {
 		const val EXTRA_FROM_ROUTE = "com.mar2sdk.impl.extra.CONTENT_FROM_ROUTE"

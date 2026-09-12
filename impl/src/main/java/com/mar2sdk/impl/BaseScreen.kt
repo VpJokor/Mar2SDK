@@ -111,34 +111,75 @@ fun BaseScreen(content: @Composable () -> Unit) {
 	val navigateWithAd = remember(session, launchAd) {
 		{ toRoute: String, navigation: () -> Unit ->
 			require(toRoute.isNotBlank()) { "The ad navigation target route must not be blank" }
-			session.navigateAfterAd(toRoute, launchAd, navigation)
+			session.navigateAfterAd(toRoute, launchAd) {
+				logScreenNavigation(
+					fromRoute = screenName,
+					toRoute = toRoute,
+					container = SCREEN_CONTAINER_COMPOSE,
+					reason = "navigate",
+				)
+				navigation()
+			}
 		}
 	}
 
-	if (adsEnabled && lifecycleOwner != null) {
-		DisposableEffect(lifecycleOwner, session, launchAd) {
+	if (lifecycleOwner != null) {
+		DisposableEffect(lifecycleOwner, session, launchAd, adsEnabled, screenName) {
+			var pageVisible = false
+			fun trackPageOpen(fromRoute: String, reason: String) {
+				if (pageVisible) return
+				pageVisible = true
+				logScreenOpen(
+					screenName = screenName,
+					fromRoute = fromRoute,
+					container = SCREEN_CONTAINER_COMPOSE,
+					reason = reason,
+				)
+			}
+			fun trackPageClose(reason: String) {
+				if (!pageVisible) return
+				pageVisible = false
+				logScreenClose(
+					screenName = screenName,
+					fromRoute = backStackEntry?.savedStateHandle
+						?.get<String>(SCREEN_AD_FROM_ROUTE_KEY)
+						.orEmpty(),
+					container = SCREEN_CONTAINER_COMPOSE,
+					reason = reason,
+				)
+			}
 			val observer = LifecycleEventObserver { _, event ->
 				when (event) {
 					Lifecycle.Event.ON_RESUME -> {
 						val hasEntered = backStackEntry?.savedStateHandle
 							?.get<Boolean>(HAS_ENTERED_KEY) == true ||
 							(backStackEntry == null && standaloneHasEntered.value)
-						session.onResume(
-							hasEntered = hasEntered,
-							markEntered = {
-								if (backStackEntry == null) {
-									standaloneHasEntered.value = true
-								} else {
-									backStackEntry.savedStateHandle[HAS_ENTERED_KEY] = true
-								}
-							},
-							launchAd = launchAd,
-							fromRoute = backStackEntry?.savedStateHandle
-								?.get<String>(SCREEN_AD_FROM_ROUTE_KEY).orEmpty()
+						val fromRoute = backStackEntry?.savedStateHandle
+							?.get<String>(SCREEN_AD_FROM_ROUTE_KEY).orEmpty()
+						trackPageOpen(
+							fromRoute = fromRoute,
+							reason = if (hasEntered) "return" else "enter",
 						)
+						if (adsEnabled) {
+							session.onResume(
+								hasEntered = hasEntered,
+								markEntered = {
+									if (backStackEntry == null) {
+										standaloneHasEntered.value = true
+									} else {
+										backStackEntry.savedStateHandle[HAS_ENTERED_KEY] = true
+									}
+								},
+								launchAd = launchAd,
+								fromRoute = fromRoute
+							)
+						}
 					}
 					Lifecycle.Event.ON_PAUSE,
-					Lifecycle.Event.ON_STOP -> session.onPause()
+					Lifecycle.Event.ON_STOP -> {
+						if (adsEnabled) session.onPause()
+						trackPageClose(event.name.lowercase())
+					}
 					else -> Unit
 				}
 			}
@@ -148,6 +189,7 @@ fun BaseScreen(content: @Composable () -> Unit) {
 				observer.onStateChanged(lifecycleOwner, Lifecycle.Event.ON_RESUME)
 			}
 			onDispose {
+				trackPageClose("dispose")
 				lifecycleOwner.lifecycle.removeObserver(observer)
 			}
 		}

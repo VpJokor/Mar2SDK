@@ -1,8 +1,10 @@
 # Activity 页面清单
 
-本文档按当前仓库的 `app`、`impl`、`debug` 三个模块整理。依据各模块的 `AndroidManifest.xml` 和主源码，当前示例 APP 合并后的运行时 Activity 共 **6 个**。
+本文档按当前仓库的 `app`、`impl`、`debug` 三个模块整理。依据各模块的 `AndroidManifest.xml` 和主源码，当前示例 APP 的**项目自有运行时 Activity 共 6 个**。
 
 `core` 是 SDK 核心库，虽然部分 API 接收 `Activity` 参数，但 `core/src/main/AndroidManifest.xml` 没有注册 Activity，因此不单独提供页面。
+
+最终 APK 的合并 Manifest 还会包含 Google Mobile Ads、Chartboost、Unity 等第三方广告 SDK 自带的 Activity。这些是 SDK 内部承载页或跳转页，不属于本项目的业务功能页面，本文不列入统计。
 
 ## 一、运行时 Activity
 

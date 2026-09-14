@@ -7,6 +7,7 @@ import com.mar2sdk.core.AppMod
 import com.mar2sdk.core.Core
 import com.mar2sdk.core.ad.policy.ScreenAdContext
 import com.mar2sdk.core.ad.status.AdFormat
+import com.mar2sdk.core.ad.status.AdPlatform
 import com.mar2sdk.core.common.RiskUtil
 import com.mar2sdk.core.common.UserInfo
 import com.mar2sdk.core.firebase.SingularConfig
@@ -28,8 +29,13 @@ import org.json.JSONObject
 object LogUtil {
 	private const val TAG = "LogUtil"
 	private val notificationScope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
+	private val firebaseAutoCollectedAdEvents = setOf(LogAdEvent.ad_impression, LogAdEvent.ad_click)
 
 	fun log(eventName: String, params: Map<String, Any>) {
+		logInternal(eventName, params)
+	}
+
+	private fun logInternal(eventName: String, params: Map<String, Any>) {
 		if (Core.appMod == AppMod.DEBUG || Core.appMod == AppMod.TEST || Core.appMod == AppMod.PRE_RELEASE) {
 			Log.e(TAG, "log: $eventName ${formatParams(params)}")
 		}
@@ -38,7 +44,7 @@ object LogUtil {
 		} catch (exception: Exception) {
 			Log.e(TAG, "spUse error", exception)
 		}
-		if (LogConfig.isEnabled(LogConfig.fbEvents, eventName)) {
+		if (shouldLogFirebase(eventName, params) && LogConfig.isEnabled(LogConfig.fbEvents, eventName)) {
 			try {
 				logFirebase(eventName, params)
 			} catch (exception: Exception) {
@@ -81,6 +87,16 @@ object LogUtil {
 				}
 			}
 		}
+	}
+
+	/**
+	 * AdMob automatically reports these standard events when Firebase Analytics
+	 * is linked. Keep routing them to the other configured channels, but avoid a
+	 * second Firebase event from the SDK's manual callbacks.
+	 */
+	private fun shouldLogFirebase(eventName: String, params: Map<String, Any>): Boolean {
+		val isAdMobEvent = params[LogAdParam.ad_platform] == AdPlatform.ADMOB.name
+		return !(isAdMobEvent && eventName in firebaseAutoCollectedAdEvents)
 	}
 
 	/** 上报 Firebase Analytics 事件，并把 Map 参数转换为 Bundle。 */

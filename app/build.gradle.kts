@@ -58,6 +58,8 @@ dependencies {
 	androidTestImplementation(platform(libs.androidx.compose.bom))
 	androidTestImplementation("androidx.compose.ui:ui-test-junit4")
 	androidTestImplementation(project(":core"))
+	androidTestImplementation(platform("com.google.firebase:firebase-bom:34.2.0"))
+	androidTestImplementation("com.google.firebase:firebase-messaging")
 	implementation(project(":impl"))
 	// 仅调试需要时添加
 	implementation(project(":debug"))

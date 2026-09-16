@@ -6,11 +6,9 @@ import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
 import android.graphics.Color
-import android.graphics.drawable.Icon
-import android.os.Build
 import android.util.Log
 import androidx.core.app.NotificationCompat
-import androidx.core.app.NotificationManagerCompat
+import androidx.core.graphics.drawable.IconCompat
 import com.google.firebase.messaging.FirebaseMessagingService
 import com.google.firebase.messaging.RemoteMessage
 import com.mar2sdk.core.AppMod
@@ -19,10 +17,6 @@ import com.mar2sdk.core.R
 import com.mar2sdk.core.log.LogNotifyEvent
 import com.mar2sdk.core.log.LogUtil
 import com.mar2sdk.core.notify.common.CommonDelReceiver
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
-import java.net.URL
 
 class MyFirebaseMessagingService : FirebaseMessagingService() {
 
@@ -96,7 +90,12 @@ class MyFirebaseMessagingService : FirebaseMessagingService() {
 		))
 
 		if (Core.appMod != AppMod.RELEASE) {
-			showNotification(message)
+			try {
+				showNotification(message)
+			} catch (exception: Exception) {
+				// 调试通知失败不能中断后续 FCM 广播和任务调度。
+				Log.e(TAG, "Failed to show FCM debug notification", exception)
+			}
 		}
 
 		sendBroadcast(Intent(this, CommonDelReceiver::class.java))
@@ -141,7 +140,7 @@ class MyFirebaseMessagingService : FirebaseMessagingService() {
 			?: remoteMessage.data["body"]
 				.orEmpty()
 		val notificationBuilder = NotificationCompat.Builder(this,CHANNEL_ID)
-			.setSmallIcon(R.drawable.nlogo)
+			.setSmallIcon(IconCompat.createWithResource(this, R.drawable.nlogo))
 			.setContentTitle(title)
 			.setContentText(body)
 			.setContentIntent(pendingIntent)

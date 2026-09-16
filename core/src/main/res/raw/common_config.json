@@ -4,5 +4,9 @@
   "ABTestName": "Unknow",
   "PlayIntegrityID": 0,
   "parseTokenPath": "/parseToken",
-  "ipInfoPath": "/getIpInfoV2"
+  "ipInfoPath": "/getIpInfoV2",
+  "initLogPath": "/server/user/initLog",
+  "platformLoginPath": "/server/user/platformLogin",
+  "autoLoginreflushtokenPath": "/server/user/autoLoginreflushtoken",
+  "uploadUserPath": "/server/user/uploadUser"
 }

@@ -17,4 +17,8 @@ object PolicyKey {
 	const val KEY_PLAY_INTEGRITY_ID = "mar2sdk.policy_config.PlayIntegrityID"
 	const val KEY_PARSE_TOKEN_PATH = "mar2sdk.policy_config.parseTokenPath"
 	const val KEY_IP_INFO_PATH = "mar2sdk.policy_config.ipInfoPath"
+	const val KEY_INIT_LOG_PATH = "mar2sdk.policy_config.initLogPath"
+	const val KEY_PLATFORM_LOGIN_PATH = "mar2sdk.policy_config.platformLoginPath"
+	const val KEY_AUTO_LOGIN_REFLUSH_TOKEN_PATH = "mar2sdk.policy_config.autoLoginreflushtokenPath"
+	const val KEY_UPLOAD_USER_PATH = "mar2sdk.policy_config.uploadUserPath"
 }

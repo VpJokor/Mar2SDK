@@ -18,6 +18,14 @@ object CommonConfig {
 	var parseTokenPath = "/parseToken"
 	// IP信息请求路径
 	var ipInfoPath = "/getIpInfoV2"
+	// 初始化日志请求路径
+	var initLogPath = "/server/user/initLog"
+	// 平台登录请求路径
+	var platformLoginPath = "/server/user/platformLogin"
+	// 自动登录刷新Token请求路径
+	var autoLoginreflushtokenPath = "/server/user/autoLoginreflushtoken"
+	// 用户信息上传请求路径
+	var uploadUserPath = "/server/user/uploadUser"
 
 	fun init() {
 		loadConfigFromRaw()
@@ -37,6 +45,10 @@ object CommonConfig {
 			PlayIntegrityID = getLong("PlayIntegrityID")
 			parseTokenPath = getString("parseTokenPath")
 			ipInfoPath = getString("ipInfoPath")
+			initLogPath = getString("initLogPath")
+			platformLoginPath = getString("platformLoginPath")
+			autoLoginreflushtokenPath = getString("autoLoginreflushtokenPath")
+			uploadUserPath = getString("uploadUserPath")
 		}
 	}
 
@@ -49,6 +61,10 @@ object CommonConfig {
 			PlayIntegrityID = PreferenceUtil.getLong(KEY_PLAY_INTEGRITY_ID, PlayIntegrityID)
 			parseTokenPath = PreferenceUtil.getString(KEY_PARSE_TOKEN_PATH, parseTokenPath)
 			ipInfoPath = PreferenceUtil.getString(KEY_IP_INFO_PATH, ipInfoPath)
+			initLogPath = PreferenceUtil.getString(KEY_INIT_LOG_PATH, initLogPath)
+			platformLoginPath = PreferenceUtil.getString(KEY_PLATFORM_LOGIN_PATH, platformLoginPath)
+			autoLoginreflushtokenPath = PreferenceUtil.getString(KEY_AUTO_LOGIN_REFLUSH_TOKEN_PATH, autoLoginreflushtokenPath)
+			uploadUserPath = PreferenceUtil.getString(KEY_UPLOAD_USER_PATH, uploadUserPath)
 		}
 	}
 
@@ -61,6 +77,10 @@ object CommonConfig {
 			PreferenceUtil.commitLong(KEY_PLAY_INTEGRITY_ID, PlayIntegrityID)
 			PreferenceUtil.commitString(KEY_PARSE_TOKEN_PATH, parseTokenPath)
 			PreferenceUtil.commitString(KEY_IP_INFO_PATH, ipInfoPath)
+			PreferenceUtil.commitString(KEY_INIT_LOG_PATH, initLogPath)
+			PreferenceUtil.commitString(KEY_PLATFORM_LOGIN_PATH, platformLoginPath)
+			PreferenceUtil.commitString(KEY_AUTO_LOGIN_REFLUSH_TOKEN_PATH, autoLoginreflushtokenPath)
+			PreferenceUtil.commitString(KEY_UPLOAD_USER_PATH, uploadUserPath)
 		}
 	}
 
@@ -71,6 +91,10 @@ object CommonConfig {
 		PlayIntegrityID = config.optLong("PlayIntegrityID", PlayIntegrityID)
 		parseTokenPath = config.optString("parseTokenPath", parseTokenPath)
 		ipInfoPath = config.optString("ipInfoPath", ipInfoPath)
+		initLogPath = config.optString("initLogPath", initLogPath)
+		platformLoginPath = config.optString("platformLoginPath", platformLoginPath)
+		autoLoginreflushtokenPath = config.optString("autoLoginreflushtokenPath", autoLoginreflushtokenPath)
+		uploadUserPath = config.optString("uploadUserPath", uploadUserPath)
 		saveCommonConfig()
 	}
 }

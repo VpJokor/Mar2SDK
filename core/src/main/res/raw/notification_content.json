@@ -4,7 +4,7 @@
       "Title": "Lost Photos Found!",
       "Content": "We found 23 deleted photos. Tap to restore them instantly.",
       "Button": "Check",
-      "Scenes": ["occur_scene_1", "occur_scene_2", "occur_scene_3"],
+      "Scenes": ["*"],
       "Route": "/recoverPhotos",
       "Languages": {
         "ja" :  {

@@ -153,20 +153,24 @@ class MainActivity : BaseActivity() {
 	}
 
 	private fun handleNotificationIntent(intent: Intent) {
-		if (intent.getStringExtra("AppOpenFrom") != "persistent") return
 		val route = intent.getStringExtra("Route") ?: return
-		if (route in setOf("Action1", "Action2", "Action3", "Action4", "persistent")) {
+		val supported = when (intent.getStringExtra("AppOpenFrom")) {
+			"persistent" -> route in setOf("Action1", "Action2", "Action3", "Action4", "persistent")
+			"app_push" -> route in setOf("/recoverPhotos", "/recoverVideos", "/recoverFiles")
+			else -> false
+		}
+		if (supported) {
 			pendingNotificationRequest = NotificationNavigationRequest(route)
 		}
 	}
 
-	/** 宿主在这里配置按钮目标；当前分别演示 Compose 页面与 View/XML Activity。 */
+	/** 宿主在这里配置常驻按钮和普通 APP 通知的目标页面。 */
 	private fun openNotificationDestination(route: String, navController: NavHostController) {
 		when (route) {
-			"Action1", "Action2", "persistent" -> {
+			"Action1", "Action2", "persistent", "/recoverPhotos", "/recoverVideos" -> {
 				val destination = when (route) {
-					"Action1" -> Routes.CONTENT_1
-					"Action2" -> Routes.CONTENT_2
+					"Action1", "/recoverPhotos" -> Routes.CONTENT_1
+					"Action2", "/recoverVideos" -> Routes.CONTENT_2
 					else -> Routes.MAIN
 				}
 				navController.navigate(destination) {
@@ -174,8 +178,8 @@ class MainActivity : BaseActivity() {
 					launchSingleTop = true
 				}
 			}
-			"Action3", "Action4" -> {
-				val destination = if (route == "Action3") Content1Activity::class.java else Content2Activity::class.java
+			"Action3", "Action4", "/recoverFiles" -> {
+				val destination = if (route == "Action4") Content2Activity::class.java else Content1Activity::class.java
 				startActivity(
 					Intent(this, destination)
 						.putExtra(ContentActivity.EXTRA_FROM_ROUTE, navController.currentDestination?.route ?: Routes.MAIN)

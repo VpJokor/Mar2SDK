@@ -155,7 +155,7 @@ object AppNotificationUtil {
 			putExtra("AppOpenFrom", "app_push")
 			putExtra("Route", route)
 			putExtra("Scene", scene)
-			addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP)
+			addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP)
 		}
 		val requestCode = requestCodeGenerator.incrementAndGet()
 		return PendingIntent.getActivity(

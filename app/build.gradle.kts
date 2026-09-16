@@ -55,6 +55,8 @@ dependencies {
 	testImplementation(libs.junit)
 	androidTestImplementation(libs.androidx.espresso.core)
 	androidTestImplementation(libs.androidx.junit)
+	androidTestImplementation(platform(libs.androidx.compose.bom))
+	androidTestImplementation("androidx.compose.ui:ui-test-junit4")
 	androidTestImplementation(project(":core"))
 	implementation(project(":impl"))
 	// 仅调试需要时添加

@@ -21,7 +21,6 @@ import com.mar2sdk.core.R
 import com.mar2sdk.core.common.status.UserType
 import com.mar2sdk.core.log.LogAppEvent
 import com.mar2sdk.core.log.LogUtil
-import java.util.concurrent.atomic.AtomicInteger
 
 /**
  * 常驻通知栏
@@ -32,9 +31,6 @@ class CommonService : Service() {
 		private const val NOTIFICATION_ID = 3001
 		private const val CHANNEL_ID = "channel_id_common"
 		private const val TAG = "CommonService"
-		private const val MAX_PERSISTENT_ACTIONS = 4
-
-		private val requestCodeGenerator = AtomicInteger(0)
 
 		fun intent(context: Context): Intent {
 			return Intent(context, CommonService::class.java).apply {
@@ -199,22 +195,22 @@ class CommonService : Service() {
 	}
 
 	/** 创建持久通知点击启动 PendingIntent。 */
-	private fun getPendingIntent(route: String = ""): PendingIntent {
+	private fun getPendingIntent(route: String): PendingIntent {
 		val launchIntent = packageManager.getLaunchIntentForPackage(packageName) ?: Intent()
 		launchIntent.apply {
+			// Extras do not identify a PendingIntent; keep one stable action per button.
+			action = "$packageName.mar2sdk.notification.persistent.$route"
 			putExtra("AppOpenFrom", "persistent")
 			putExtra("Route", route)
-			putExtra("Scene", route)
-			addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP)
+			putExtra("Scene", "persistent")
+			addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP)
 		}
 
-		val requestCode = requestCodeGenerator.incrementAndGet()
-		val pendingIntent = PendingIntent.getActivity(
+		return PendingIntent.getActivity(
 			this,
-			requestCode,
+			NOTIFICATION_ID,
 			launchIntent,
-			PendingIntent.FLAG_CANCEL_CURRENT or PendingIntent.FLAG_IMMUTABLE
+			PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
 		)
-		return pendingIntent
 	}
 }

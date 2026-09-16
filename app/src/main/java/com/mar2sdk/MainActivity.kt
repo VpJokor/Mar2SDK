@@ -18,10 +18,16 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.withResumed
+import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
@@ -41,8 +47,23 @@ private object Routes {
 }
 
 class MainActivity : BaseActivity() {
+	companion object {
+		private const val STATE_PENDING_NOTIFICATION_ROUTE = "pending_notification_route"
+	}
+
+	// 每次点击都是独立请求，即使连续点击同一个按钮也能再次触发。
+	private class NotificationNavigationRequest(val route: String)
+	private var pendingNotificationRequest by mutableStateOf<NotificationNavigationRequest?>(null)
+
 	override fun onCreate(savedInstanceState: Bundle?) {
 		super.onCreate(savedInstanceState)
+		if (savedInstanceState == null) {
+			handleNotificationIntent(intent)
+		} else {
+			// 只恢复尚未处理的请求，避免重建时重复执行启动 Intent 中的跳转。
+			pendingNotificationRequest = savedInstanceState.getString(STATE_PENDING_NOTIFICATION_ROUTE)
+				?.let(::NotificationNavigationRequest)
+		}
 		enableEdgeToEdge()
 		setContent {
 			val navController = rememberNavController()
@@ -104,6 +125,61 @@ class MainActivity : BaseActivity() {
 						)
 					}
 				}
+			}
+
+			val notificationRequest = pendingNotificationRequest
+			LaunchedEffect(notificationRequest) {
+				if (notificationRequest != null) {
+					// NavHost 已完成组合；回到前台后再修改页面或启动 Activity。
+					lifecycle.withResumed {
+						if (pendingNotificationRequest === notificationRequest) {
+							openNotificationDestination(notificationRequest.route, navController)
+							pendingNotificationRequest = null
+						}
+					}
+				}
+			}
+		}
+	}
+
+	override fun onNewIntent(intent: Intent) {
+		super.onNewIntent(intent)
+		handleNotificationIntent(intent)
+	}
+
+	override fun onSaveInstanceState(outState: Bundle) {
+		outState.putString(STATE_PENDING_NOTIFICATION_ROUTE, pendingNotificationRequest?.route)
+		super.onSaveInstanceState(outState)
+	}
+
+	private fun handleNotificationIntent(intent: Intent) {
+		if (intent.getStringExtra("AppOpenFrom") != "persistent") return
+		val route = intent.getStringExtra("Route") ?: return
+		if (route in setOf("Action1", "Action2", "Action3", "Action4", "persistent")) {
+			pendingNotificationRequest = NotificationNavigationRequest(route)
+		}
+	}
+
+	/** 宿主在这里配置按钮目标；当前分别演示 Compose 页面与 View/XML Activity。 */
+	private fun openNotificationDestination(route: String, navController: NavHostController) {
+		when (route) {
+			"Action1", "Action2", "persistent" -> {
+				val destination = when (route) {
+					"Action1" -> Routes.CONTENT_1
+					"Action2" -> Routes.CONTENT_2
+					else -> Routes.MAIN
+				}
+				navController.navigate(destination) {
+					popUpTo(Routes.MAIN)
+					launchSingleTop = true
+				}
+			}
+			"Action3", "Action4" -> {
+				val destination = if (route == "Action3") Content1Activity::class.java else Content2Activity::class.java
+				startActivity(
+					Intent(this, destination)
+						.putExtra(ContentActivity.EXTRA_FROM_ROUTE, navController.currentDestination?.route ?: Routes.MAIN)
+				)
 			}
 		}
 	}

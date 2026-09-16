@@ -1,0 +1,7 @@
+<resources>
+    <!-- 宿主 APP 可定义同名字符串覆盖常驻通知按钮文案。 -->
+    <string name="common_notification_action_1">Photos</string>
+    <string name="common_notification_action_2">Files</string>
+    <string name="common_notification_action_3">Videos</string>
+    <string name="common_notification_action_4">Recovered</string>
+</resources>

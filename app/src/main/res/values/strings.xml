@@ -1,4 +1,9 @@
 <resources>
     <string name="app_name">Mar2SDK</string>
     <string name="debug_page">调试页面</string>
+    <!-- 覆盖 SDK 默认的常驻通知按钮文案，按从左到右排列。 -->
+    <string name="common_notification_action_1">清理照片</string>
+    <string name="common_notification_action_2">文件管理</string>
+    <string name="common_notification_action_3">清理视频</string>
+    <string name="common_notification_action_4">恢复记录</string>
 </resources>

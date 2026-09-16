@@ -19,7 +19,7 @@
                     android:layout_width="40dp"
                     android:layout_height="40dp"
                     android:contentDescription="@null"
-                    android:src="@drawable/notification_files" />
+                    android:src="@drawable/notification_photos" />
 
                 <TextView
                     android:id="@+id/action_1_label"
@@ -27,7 +27,7 @@
                     android:gravity="center"
                     android:maxLines="1"
                     android:ellipsize="end"
-                    android:text="photos"
+                    android:text="@string/common_notification_action_1"
                     android:textSize="13sp"
                     android:textColor="@color/notification_content"
                     android:layout_width="wrap_content"
@@ -43,7 +43,7 @@
             android:layout_height="wrap_content">
                 <ImageView
                     android:id="@+id/action_2_icon"
-                    android:src="@drawable/notification_photos"
+                    android:src="@drawable/notification_files"
                     android:contentDescription="@null"
                     android:layout_width="40dp"
                     android:layout_height="40dp"/>
@@ -54,7 +54,7 @@
                     android:gravity="center"
                     android:maxLines="1"
                     android:ellipsize="end"
-                    android:text="videos"
+                    android:text="@string/common_notification_action_2"
                     android:textSize="13sp"
                     android:textColor="@color/notification_content"
                     android:layout_width="wrap_content"
@@ -81,7 +81,7 @@
                     android:gravity="center"
                     android:maxLines="1"
                     android:ellipsize="end"
-                    android:text="other_files"
+                    android:text="@string/common_notification_action_3"
                     android:textSize="13sp"
                     android:textColor="@color/notification_content"
                     android:layout_width="wrap_content"
@@ -108,7 +108,7 @@
                     android:gravity="center"
                     android:maxLines="1"
                     android:ellipsize="end"
-                    android:text="recovered"
+                    android:text="@string/common_notification_action_4"
                     android:textSize="13sp"
                     android:textColor="@color/notification_content"
                     android:layout_width="wrap_content"

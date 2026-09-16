@@ -12,4 +12,9 @@ object NetUtil {
 
 	}
 
+	// TODO: 上报用户信息
+	fun upInfo() {
+
+	}
+
 }

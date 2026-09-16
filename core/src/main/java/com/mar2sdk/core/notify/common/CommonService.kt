@@ -13,6 +13,7 @@ import android.os.IBinder
 import android.os.PowerManager
 import android.util.Log
 import android.widget.RemoteViews
+import androidx.annotation.LayoutRes
 import androidx.core.app.NotificationCompat
 import androidx.core.content.ContextCompat
 import com.mar2sdk.core.Core
@@ -136,35 +137,8 @@ class CommonService : Service() {
 
 	// 创建前台通知
 	private fun buildPersistentNotification(): Notification {
-		val remoteViews = RemoteViews(packageName, R.layout.common_notification_mini).apply {
-			setImageViewResource(R.id.action_1_icon, R.drawable.notification_photos)
-			setImageViewResource(R.id.action_2_icon, R.drawable.notification_files)
-			setImageViewResource(R.id.action_3_icon, R.drawable.notification_videos)
-			setImageViewResource(R.id.action_4_icon, R.drawable.notification_recovered)
-			setTextViewText(R.id.action_1_label, "label1")
-			setTextViewText(R.id.action_2_label, "label2")
-			setTextViewText(R.id.action_3_label, "label3")
-			setTextViewText(R.id.action_4_label, "label4")
-			setOnClickPendingIntent(R.id.action_1, getPendingIntent("Action1"))
-			setOnClickPendingIntent(R.id.action_2, getPendingIntent("Action2"))
-			setOnClickPendingIntent(R.id.action_3, getPendingIntent("Action3"))
-			setOnClickPendingIntent(R.id.action_4, getPendingIntent("Action4"))
-		}
-
-		val bigRemoteViews = RemoteViews(packageName, R.layout.common_notification).apply {
-			setImageViewResource(R.id.action_1_icon, R.drawable.notification_photos)
-			setImageViewResource(R.id.action_2_icon, R.drawable.notification_files)
-			setImageViewResource(R.id.action_3_icon, R.drawable.notification_videos)
-			setImageViewResource(R.id.action_4_icon, R.drawable.notification_recovered)
-			setTextViewText(R.id.action_1_label, "label1")
-			setTextViewText(R.id.action_2_label, "label2")
-			setTextViewText(R.id.action_3_label, "label3")
-			setTextViewText(R.id.action_4_label, "label4")
-			setOnClickPendingIntent(R.id.action_1, getPendingIntent("Action1"))
-			setOnClickPendingIntent(R.id.action_2, getPendingIntent("Action2"))
-			setOnClickPendingIntent(R.id.action_3, getPendingIntent("Action3"))
-			setOnClickPendingIntent(R.id.action_4, getPendingIntent("Action4"))
-		}
+		val remoteViews = createPersistentRemoteViews(R.layout.common_notification_mini)
+		val bigRemoteViews = createPersistentRemoteViews(R.layout.common_notification)
 
 		val delIntent = PendingIntent.getBroadcast(
 			this,
@@ -205,6 +179,24 @@ class CommonService : Service() {
 		}
 	}
 
+
+	/** 折叠和展开通知共用资源绑定，宿主 APP 可通过同名资源覆盖图标和文案。 */
+	private fun createPersistentRemoteViews(@LayoutRes layoutId: Int): RemoteViews {
+		return RemoteViews(packageName, layoutId).apply {
+			setImageViewResource(R.id.action_1_icon, R.drawable.notification_photos)
+			setImageViewResource(R.id.action_2_icon, R.drawable.notification_files)
+			setImageViewResource(R.id.action_3_icon, R.drawable.notification_videos)
+			setImageViewResource(R.id.action_4_icon, R.drawable.notification_recovered)
+			setTextViewText(R.id.action_1_label, getString(R.string.common_notification_action_1))
+			setTextViewText(R.id.action_2_label, getString(R.string.common_notification_action_2))
+			setTextViewText(R.id.action_3_label, getString(R.string.common_notification_action_3))
+			setTextViewText(R.id.action_4_label, getString(R.string.common_notification_action_4))
+			setOnClickPendingIntent(R.id.action_1, getPendingIntent("Action1"))
+			setOnClickPendingIntent(R.id.action_2, getPendingIntent("Action2"))
+			setOnClickPendingIntent(R.id.action_3, getPendingIntent("Action3"))
+			setOnClickPendingIntent(R.id.action_4, getPendingIntent("Action4"))
+		}
+	}
 
 	/** 创建持久通知点击启动 PendingIntent。 */
 	private fun getPendingIntent(route: String = ""): PendingIntent {

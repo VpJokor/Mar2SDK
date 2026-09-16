@@ -39,6 +39,11 @@ object LogAdParam {
 	const val traffic_source = "traffic_source"
 
 	const val ad_preload = "ad_preload"
+	// 加载成功时读取的展示前价格，仅供观察。
+	const val ad_price_micros = "ad_price_micros"
+	const val ad_price_currency = "ad_price_currency"
+	const val ad_price_precision = "ad_price_precision"
+	const val ad_ecpm = "ad_ecpm"
 
 
 	// 收入上报相关字段和值。

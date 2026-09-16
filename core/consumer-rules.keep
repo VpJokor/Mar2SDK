@@ -1,0 +1,44 @@
+# AdMob 25.3.0 price extraction matches these runtime classes, declaring classes,
+# field names, and field types. Keep the exact reflection paths and descriptors.
+-keep,includedescriptorclasses class com.google.android.gms.internal.ads.zzbgm {
+    com.google.android.gms.internal.ads.zzbgq zzb;
+}
+-keep,includedescriptorclasses class com.google.android.gms.internal.ads.zzcvn {
+    com.google.android.gms.internal.ads.zzcvm zza;
+}
+# The API-side proxy can hold an in-process AdsDynamite Binder from another loader.
+# Dynamite's own classes are delivered by Play services and are not shrunk in this AAR.
+-keep class com.google.android.gms.internal.ads.zzbgo {}
+-keep class com.google.android.gms.internal.ads.zzbel {
+    android.os.IBinder zza;
+}
+-keep,includedescriptorclasses class com.google.android.gms.internal.ads.zzbss {
+    com.google.android.gms.ads.internal.client.zzbu zzc;
+}
+-keep,includedescriptorclasses class com.google.android.gms.internal.ads.zzets {
+    com.google.android.gms.internal.ads.zzdmh zzj;
+}
+-keep,includedescriptorclasses class com.google.android.gms.internal.ads.zzccy {
+    com.google.android.gms.internal.ads.zzccp zzb;
+}
+-keep,includedescriptorclasses class com.google.android.gms.internal.ads.zzfke {
+    com.google.android.gms.internal.ads.zzdvu zzi;
+}
+
+# Preserve the intermediate runtime types and their shared superclass so R8
+# cannot merge or rewrite the hierarchy inspected by the extractor.
+-keep class com.google.android.gms.internal.ads.zzcvm {}
+-keep class com.google.android.gms.internal.ads.zzdmh {}
+-keep class com.google.android.gms.internal.ads.zzdvu {}
+-keep,includedescriptorclasses class com.google.android.gms.internal.ads.zzcya {
+    com.google.android.gms.internal.ads.zzfkn zzb;
+}
+-keep,includedescriptorclasses class com.google.android.gms.internal.ads.zzfkn {
+    com.google.android.gms.ads.internal.client.zzt zzae;
+}
+-keep class com.google.android.gms.ads.internal.client.zzt {
+    int zza;
+    int zzb;
+    java.lang.String zzc;
+    long zzd;
+}

@@ -23,6 +23,8 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import java.util.Collections
+import java.util.WeakHashMap
 
 /**
  * admob的广告加载器
@@ -65,6 +67,12 @@ object AdmobLoader {
 	val openPool = mutableMapOf<AppOpenAd, Long>()
 	val interPool = mutableMapOf<InterstitialAd, Long>()
 	val videoPool = mutableMapOf<RewardedAd, Long>()
+
+	// 价格快照不持有广告强引用，广告离开池并被释放后可一起回收。
+	private val loadedPrices = Collections.synchronizedMap(WeakHashMap<Any, AdmobPrice>())
+
+	/** 获取加载成功时的探价快照；null 表示未获取到有效价格。 */
+	fun getLoadedPrice(ad: Any): AdmobPrice? = loadedPrices[ad]
 
 	// 正在加载中的 开屏/插屏/视频 广告
 	var isLoadingOpen = false
@@ -315,19 +323,28 @@ object AdmobLoader {
 		adUnitId = adUnitId
 	)
 
-	private fun logLoad(eventName: String, adContext: ScreenAdContext) {
-		LogUtil.log(eventName, adContext.toAdLogParams() + mapOf(LogAdParam.ad_preload to (adContext.areaKey == "preload")))
+	private fun logLoad(eventName: String, adContext: ScreenAdContext, price: AdmobPrice? = null) {
+		val params = adContext.toAdLogParams() + mapOf(LogAdParam.ad_preload to (adContext.areaKey == "preload"))
+		val priceParams = if (price == null) emptyMap() else mapOf(
+			LogAdParam.ad_price_micros to price.valueMicros,
+			LogAdParam.ad_price_currency to price.currencyCode,
+			LogAdParam.ad_price_precision to price.precisionType,
+			LogAdParam.ad_ecpm to price.ecpm,
+		)
+		LogUtil.log(eventName, params + priceParams)
 	}
 
-	private inline fun <T> cacheLoadedAd(
+	private inline fun <T : Any> cacheLoadedAd(
 		ad: T,
 		pool: MutableMap<T, Long>,
 		adContext: ScreenAdContext,
 		adName: String,
 		complete: () -> Unit,
 	) {
+		val price = AdmobPriceProbe.read(ad)
+		if (price != null) loadedPrices[ad] = price
 		try {
-			logLoad(LogAdEvent.ad_finish_loading, adContext)
+			logLoad(LogAdEvent.ad_finish_loading, adContext, price)
 		} catch (error: Exception) {
 			Log.e(TAG, "Failed to log loaded $adName ad", error)
 		}

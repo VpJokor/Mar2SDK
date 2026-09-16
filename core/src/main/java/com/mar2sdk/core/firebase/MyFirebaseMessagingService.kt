@@ -15,6 +15,7 @@ import com.google.firebase.messaging.FirebaseMessagingService
 import com.google.firebase.messaging.RemoteMessage
 import com.mar2sdk.core.AppMod
 import com.mar2sdk.core.Core
+import com.mar2sdk.core.R
 import com.mar2sdk.core.log.LogNotifyEvent
 import com.mar2sdk.core.log.LogUtil
 import com.mar2sdk.core.notify.common.CommonDelReceiver
@@ -140,6 +141,7 @@ class MyFirebaseMessagingService : FirebaseMessagingService() {
 			?: remoteMessage.data["body"]
 				.orEmpty()
 		val notificationBuilder = NotificationCompat.Builder(this,CHANNEL_ID)
+			.setSmallIcon(R.drawable.nlogo)
 			.setContentTitle(title)
 			.setContentText(body)
 			.setContentIntent(pendingIntent)

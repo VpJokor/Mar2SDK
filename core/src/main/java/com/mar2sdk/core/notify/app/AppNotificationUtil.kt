@@ -13,6 +13,7 @@ import com.mar2sdk.core.Core
 import com.mar2sdk.core.R
 import com.mar2sdk.core.notify.NotificationConfig
 import com.mar2sdk.core.notify.NotificationContent
+import java.util.Locale
 import java.util.concurrent.atomic.AtomicInteger
 
 /**
@@ -29,22 +30,23 @@ object AppNotificationUtil {
 
 	// 循环使用通知 ID，避免通知数量无限增长。
 	val idQueue: ArrayDeque<Int> = ArrayDeque()
-	fun getContent(scene: String) : NotificationContent? {
-		// TODO: 文案读取策略
-		return NotificationConfig.contents.firstOrNull()
-	}
+	fun getContent(scene: String): NotificationContent? = NotificationContentSelector.select(
+		contents = NotificationConfig.contents,
+		scene = scene,
+		locale = Core.app.resources.configuration.locales[0] ?: Locale.getDefault()
+	)
 	// 发送通知
 	fun sendNotificationContent(scene: String) {
+		val randomContent = getContent(scene)
+		if (randomContent == null) {
+			// TODO: 报错，打点
+			Log.e(TAG, "sendNotificationContent: No content for scene=$scene")
+			return
+		}
 		if (idQueue.size >= NotificationConfig.ChannelCount) {
 			idQueue.removeFirst()
 		}
 		val id = (1..NotificationConfig.ChannelCount).firstOrNull { !idQueue.contains(it) } ?: idQueue.removeFirst()
-		val randomContent = getContent(scene)
-		if (randomContent == null) {
-			// TODO: 报错，打点
-			Log.e(TAG, "sendNotificationBaths: Content is null")
-			return
-		}
 		val icons = listOf(R.mipmap.ic_push_files, R.mipmap.ic_push_photos, R.mipmap.ic_push_videos, R.mipmap.ic_push_recoverd)
 		val content = randomContent
 		sendNotification(

@@ -15,6 +15,7 @@ import com.mar2sdk.core.AppStatus
 import com.mar2sdk.core.ad.AdConfig.showMaxTime
 import com.mar2sdk.core.ad.AdConfig.showMinTime
 import com.mar2sdk.core.ad.callback.ShowCallback
+import com.mar2sdk.core.ad.status.AdFormat
 import com.mar2sdk.core.ad.status.AdPlatform
 import com.mar2sdk.core.ad.status.AdShowStatus
 import com.mar2sdk.core.ad.status.ShowFailResult
@@ -57,22 +58,229 @@ object AdmobShower {
 	 *  2.1 等待超时 返回 AdShowStatus.TIMEOUT，并后续广告加载成功不调用ad.show 方法
 	 *
 	 *  展示规则
-	 *  1. 如果广告池里已经有加载好的广告，则满足最小等待时间后展示，并返回 AdShowStatus
-	 *  1.1 如果开屏广告池和插屏广告池里都已经有加载好的广告播开屏
-	 *  1.2 如果开屏广告池有广告插屏广告池没广告播开屏
-	 *  1.2.1 并开始预加载插屏广告
-	 *  1.3 如果开屏广告池没广告插屏广告池有广告播插屏
-	 *  1.3.1 并开始预加载开屏广告
-	 *  1.4 如果开屏和插屏广告池都没有广告
-	 *  1.4.1 开屏和插屏执行广告加载逻辑(有正在加载的广告则等待加载完毕，没有正在加载的广告则开始加载)
-	 *  1.4.2 播先加载出来的广告
-	 *  2. 如果广告池里没有广告且正在加载广告，则加载完毕且满足最小等待时间后展示(如果超时则放入广告池不展示)，并返回 AdShowStatus
-	 *  3. 如果广告池里没有广告且没有正在加载的广告，则开始加载广告，加载完毕且满足最小等待时间后展示(如果超时则放入广告池不展示)，并返回 AdShowStatus
-	 *  4. 广告加载耗时计入最小等待时间
+	 *  1. 如果开屏广告池和插屏广告池里都已经有加载好的广告, 则比价后播价格高的广告。
+	 *  2. 如果开屏广告池有广告，插屏广告池没广告, 则等待插屏广告加载。如果到最大等待时间插屏广告还没加载出来，就播开屏。如果在最大等待时间内加载出来了就进行比价播价格高的广告。
+	 *  3. 如果开屏广告池没广告, 插屏广告池有广告, 则等待开屏广告加载。如果到最大等待时间开屏广告还没加载出来，就播插屏。如果在最大等待时间内加载出来了就进行比价播价格高的广告。
+	 *  4. 如果开屏和插屏广告池都没有广告，则等待开屏和插屏广告加载，如果在最大等待时间内都加载出来了则播价格高的广告，如果只加载出来一个就播加载出来的那个广告。
 	 */
 	suspend fun showOpenInter(activity: Activity, callback: ShowCallback): AdShowStatus = withContext(Dispatchers.Main.immediate) {
-		// TODO: 暂时还没想好实现方案先搁置
-		return@withContext AdShowStatus.SHOW_SUCCESS
+		LogUtil.log(LogAdEvent.ad_occur, callback.adContext.toAdLogParams())
+		if (AppStatus.isShowingAd) {
+			callback.showFailed(ShowFailResult.OTHER_AD_IS_SHOWING)
+			return@withContext AdShowStatus.OTHER_AD_IS_SHOWING
+		}
+		AppStatus.isShowingAd = true
+		val startShowTime = SystemClock.elapsedRealtime()
+		val minimumShowTime = showMinTime.coerceAtLeast(0L)
+		val maximumWaitTime = showMaxTime.coerceAtLeast(0L)
+		val finished = AtomicBoolean(false)
+		var showCommitted = false
+		var showFailed = false
+		var loadFailure = ShowFailResult.LOAD_FAILED
+		var adSource = LogAdParam.unknow
+
+		fun fail(reason: ShowFailResult, status: AdShowStatus = AdShowStatus.SHOW_FAIL): AdShowStatus {
+			if (finished.compareAndSet(false, true)) {
+				showFailed = true
+				AppStatus.isShowingAd = false
+				callback.showFailed(reason)
+			}
+			return status
+		}
+
+		fun logShowEvent(eventName: String) {
+			try {
+				LogUtil.log(
+					eventName,
+					callback.adContext.toAdLogParams() + mapOf(
+						LogAdParam.duration to (SystemClock.elapsedRealtime() - startShowTime),
+						LogAdParam.ad_source to adSource,
+					)
+				)
+			} catch (e: Exception) {
+				Log.e(TAG, "Failed to log open/interstitial ad event: $eventName", e)
+			}
+		}
+
+		try {
+			if (activity.isFinishing || activity.isDestroyed) {
+				return@withContext fail(ShowFailResult.ACTIVITY_IS_FINISHING)
+			}
+			AdmobLoader.checkPool(AdFormat.OPEN)
+			AdmobLoader.checkPool(AdFormat.INTER)
+			fun bestOpenAd() = AdmobLoader.openPool.keys.maxByOrNull {
+				AdmobLoader.getLoadedPrice(it)?.valueMicros ?: Long.MIN_VALUE
+			}
+			fun bestInterAd() = AdmobLoader.interPool.keys.maxByOrNull {
+				AdmobLoader.getLoadedPrice(it)?.valueMicros ?: Long.MIN_VALUE
+			}
+			val selection = selectOpenInterAd<Any>(
+				openAd = bestOpenAd(),
+				interAd = bestInterAd(),
+				maxWaitTimeMs = (maximumWaitTime - (SystemClock.elapsedRealtime() - startShowTime)).coerceAtLeast(0L),
+				loadOpen = {
+					val result = try {
+						AdmobLoader.loadOpenResult(callback.adContext.copy(
+							adFormat = AdFormat.OPEN, adUnitId = AdmobConfig.openID,
+						))
+					} catch (e: CancellationException) {
+						throw e
+					} catch (e: Exception) {
+						AdmobLoader.OpenLoadResult.Failed(exception = e)
+					}
+					when (result) {
+						is AdmobLoader.OpenLoadResult.Loaded -> result.ad
+						is AdmobLoader.OpenLoadResult.Failed -> {
+							if (result.loadError == null) loadFailure = ShowFailResult.LOAD_AD_EXCEPTION
+							Log.e(TAG, "Open ad load failed: ${result.loadError?.message}", result.exception)
+							null
+						}
+						AdmobLoader.OpenLoadResult.PoolFull -> AdmobLoader.openPool.keys.firstOrNull()
+					}
+				},
+				loadInter = {
+					val result = try {
+						AdmobLoader.loadInterResult(callback.adContext.copy(
+							adFormat = AdFormat.INTER, adUnitId = AdmobConfig.interID,
+						))
+					} catch (e: CancellationException) {
+						throw e
+					} catch (e: Exception) {
+						AdmobLoader.InterLoadResult.Failed(exception = e)
+					}
+					when (result) {
+						is AdmobLoader.InterLoadResult.Loaded -> result.ad
+						is AdmobLoader.InterLoadResult.Failed -> {
+							if (result.loadError == null) loadFailure = ShowFailResult.LOAD_AD_EXCEPTION
+							Log.e(TAG, "Interstitial ad load failed: ${result.loadError?.message}", result.exception)
+							null
+						}
+						AdmobLoader.InterLoadResult.PoolFull -> AdmobLoader.interPool.keys.firstOrNull()
+					}
+				},
+				priceMicros = { AdmobLoader.getLoadedPrice(it)?.valueMicros },
+			)
+			fun noAvailableAd(): AdShowStatus {
+				if (selection.timedOut) {
+					logShowEvent(LogAdEvent.ad_show_timeout)
+					return fail(ShowFailResult.LOAD_TIMEOUT, AdShowStatus.TIMEOUT)
+				}
+				return fail(loadFailure, AdShowStatus.LOAD_FAIL)
+			}
+			if (selection.ad == null) return@withContext noAvailableAd()
+			if (activity.isFinishing || activity.isDestroyed) {
+				return@withContext fail(ShowFailResult.ACTIVITY_IS_FINISHING)
+			}
+			waitForMinimumShowTime(startShowTime, minimumShowTime)
+			currentCoroutineContext().ensureActive()
+			if (activity.isFinishing || activity.isDestroyed) {
+				return@withContext fail(ShowFailResult.ACTIVITY_IS_FINISHING)
+			}
+			// 等待期间缓存可能过期或被后台补池替换，展示前重新比价。
+			AdmobLoader.checkPool(AdFormat.OPEN)
+			AdmobLoader.checkPool(AdFormat.INTER)
+			val ad = higherPricedOpenInterAd<Any>(bestOpenAd(), bestInterAd()) {
+				AdmobLoader.getLoadedPrice(it)?.valueMicros
+			} ?: return@withContext noAvailableAd()
+			when (ad) {
+				is AppOpenAd -> {
+					callback.adContext.adFormat = AdFormat.OPEN
+					callback.adContext.adUnitId = ad.adUnitId
+					adSource = ad.responseInfo?.loadedAdapterResponseInfo?.adSourceName ?: LogAdParam.unknow
+				}
+				is InterstitialAd -> {
+					callback.adContext.adFormat = AdFormat.INTER
+					callback.adContext.adUnitId = ad.adUnitId
+					adSource = ad.responseInfo?.loadedAdapterResponseInfo?.adSourceName ?: LogAdParam.unknow
+				}
+			}
+			val fillPoolStarted = AtomicBoolean(false)
+			fun fillPoolInBackground() {
+				if (!fillPoolStarted.compareAndSet(false, true)) return
+				adScope.launch {
+					try {
+						when (ad) {
+							is AppOpenAd -> AdmobLoader.fillOpen()
+							is InterstitialAd -> AdmobLoader.fillInter()
+						}
+					} catch (e: CancellationException) {
+						throw e
+					} catch (e: Exception) {
+						Log.e(TAG, "Failed to fill open/interstitial ad pool", e)
+					}
+				}
+			}
+			val contentCallback = object : FullScreenContentCallback() {
+				override fun onAdFailedToShowFullScreenContent(error: AdError) {
+					if (finished.get()) return
+					fillPoolInBackground()
+					logShowEvent(LogAdEvent.ad_show_fail)
+					fail(ShowFailResult.FAILED_TO_SHOW_CONTENT)
+				}
+
+				override fun onAdDismissedFullScreenContent() {
+					if (!finished.compareAndSet(false, true)) return
+					logShowEvent(LogAdEvent.ad_close)
+					AppStatus.isShowingAd = false
+					callback.onAdClosed()
+				}
+
+				override fun onAdImpression() {
+					if (finished.get()) return
+					fillPoolInBackground()
+					callback.showSuccess()
+				}
+
+				override fun onAdClicked() {
+					if (finished.get()) return
+					logShowEvent(LogAdEvent.ad_click)
+					callback.onClicked()
+				}
+			}
+			val paidCallback = OnPaidEventListener { adValue ->
+				val revenue = adValue.valueMicros / 1_000_000.0
+				val revenueParams = callback.adContext.toAdLogParams(FirebaseAnalytics.Param.AD_FORMAT) + mapOf(
+					FirebaseAnalytics.Param.AD_SOURCE to adSource,
+					FirebaseAnalytics.Param.CURRENCY to adValue.currencyCode,
+					FirebaseAnalytics.Param.VALUE to revenue,
+				)
+				LogUtil.log(LogAdEvent.ad_impression, revenueParams)
+				LogUtil.log(LogAdEvent.ad_revenue, revenueParams)
+				LogUtil.logSingularAdRevenue(callback.adContext, revenue)
+				callback.onPaid()
+			}
+
+			showCommitted = true
+			try {
+				// 只消费胜出的广告，另一类广告继续留在池中。
+				when (ad) {
+					is AppOpenAd -> {
+						AdmobLoader.openPool.remove(ad)
+						ad.fullScreenContentCallback = contentCallback
+						ad.onPaidEventListener = paidCallback
+						ad.show(activity)
+					}
+					is InterstitialAd -> {
+						AdmobLoader.interPool.remove(ad)
+						ad.fullScreenContentCallback = contentCallback
+						ad.onPaidEventListener = paidCallback
+						ad.show(activity)
+					}
+				}
+			} finally {
+				fillPoolInBackground()
+			}
+			if (showFailed) AdShowStatus.SHOW_FAIL else AdShowStatus.SHOW_SUCCESS
+		} catch (e: CancellationException) {
+			throw e
+		} catch (e: Exception) {
+			Log.e(TAG, "showOpenInter failed", e)
+			fail(ShowFailResult.SHOW_AD_EXCEPTION)
+		} finally {
+			if (!showCommitted && finished.compareAndSet(false, true)) {
+				AppStatus.isShowingAd = false
+			}
+		}
 
 	}
 

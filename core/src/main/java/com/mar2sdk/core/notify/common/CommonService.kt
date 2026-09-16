@@ -203,8 +203,8 @@ class CommonService : Service() {
 		val launchIntent = packageManager.getLaunchIntentForPackage(packageName) ?: Intent()
 		launchIntent.apply {
 			putExtra("AppOpenFrom", "persistent")
-			putExtra("Route", "persistent")
-			putExtra("Scene", "persistent")
+			putExtra("Route", route)
+			putExtra("Scene", route)
 			addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP)
 		}
 

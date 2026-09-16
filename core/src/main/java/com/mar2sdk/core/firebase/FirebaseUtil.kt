@@ -64,7 +64,21 @@ object FirebaseUtil {
 	}
 
 	private fun initFCM() {
-		FirebaseMessaging.getInstance().token
+		val messaging = FirebaseMessaging.getInstance()
+		val topic = when (Core.appMod) {
+			AppMod.PRE_RELEASE, AppMod.RELEASE -> "all"
+			AppMod.DEBUG, AppMod.TEST -> "debug-all"
+		}
+		messaging.subscribeToTopic(topic)
+			.addOnCompleteListener { task ->
+				if (task.isSuccessful) {
+					Log.i(TAG, "FCM topic subscribed: $topic")
+				} else {
+					Log.e(TAG, "FCM topic subscription failed: $topic", task.exception)
+				}
+			}
+
+		messaging.token
 			.addOnCompleteListener { task ->
 				if (!task.isSuccessful) {
 					Log.e(TAG, "FCM 获取 Token 失败", task.exception)

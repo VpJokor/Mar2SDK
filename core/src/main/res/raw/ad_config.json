@@ -7,7 +7,7 @@
   "showMod": 555,
   "1HMax": 50,
   "24HMax": 50,
-  "interval":  30,
+  "interval":  0,
   "ad_units": {
     "app_foreground_open" : {
       "rate":  1.0,
@@ -22,7 +22,7 @@
       "rate":  1.0,
       "1HMax":  4,
       "24HMax":  20,
-      "interval":  30,
+      "interval":  0,
       "format": "OPEN",
       "fromRoutes": ["*"],
       "toRoutes": ["*"]
@@ -31,7 +31,7 @@
       "rate":  1.0,
       "1HMax":  4,
       "24HMax":  20,
-      "interval":  30,
+      "interval":  0,
       "format": "INTER",
       "fromRoutes": ["*"],
       "toRoutes": ["*"]
@@ -40,7 +40,7 @@
       "rate":  1.0,
       "1HMax":  4,
       "24HMax":  20,
-      "interval":  30,
+      "interval":  0,
       "format": "VIDEO",
       "fromRoutes": ["*"],
       "toRoutes": ["*"]
@@ -49,7 +49,7 @@
       "rate":  1.0,
       "1HMax":  4,
       "24HMax":  20,
-      "interval":  30,
+      "interval":  0,
       "format": "OPEN_INTER",
       "fromRoutes": ["*"],
       "toRoutes": ["*"]
@@ -58,7 +58,7 @@
       "rate":  1.0,
       "1HMax":  4,
       "24HMax":  20,
-      "interval":  30,
+      "interval":  0,
       "format": "INTER_VIDEO",
       "fromRoutes": ["*"],
       "toRoutes": ["*"]
@@ -67,7 +67,7 @@
       "rate":  1.0,
       "1HMax":  4,
       "24HMax":  20,
-      "interval":  30,
+      "interval":  0,
       "format": "OPEN",
       "fromRoutes": ["*"],
       "toRoutes": ["*"]
@@ -76,7 +76,7 @@
       "rate":  1.0,
       "1HMax":  4,
       "24HMax":  20,
-      "interval":  30,
+      "interval":  0,
       "format": "INTER",
       "fromRoutes": ["*"],
       "toRoutes": ["*"]
@@ -85,7 +85,7 @@
       "rate":  1.0,
       "1HMax":  4,
       "24HMax":  20,
-      "interval":  30,
+      "interval":  0,
       "format": "VIDEO",
       "fromRoutes": ["*"],
       "toRoutes": ["*"]
@@ -94,7 +94,7 @@
       "rate":  1.0,
       "1HMax":  4,
       "24HMax":  20,
-      "interval":  30,
+      "interval":  0,
       "format": "INTER_VIDEO",
       "fromRoutes": ["*"],
       "toRoutes": ["*"]
@@ -103,7 +103,7 @@
       "rate":  1.0,
       "1HMax":  4,
       "24HMax":  20,
-      "interval":  30,
+      "interval":  0,
       "format": "INTER_VIDEO",
       "fromRoutes": ["*"],
       "toRoutes": ["*"]
@@ -112,7 +112,7 @@
       "rate":  1.0,
       "1HMax":  4,
       "24HMax":  20,
-      "interval":  30,
+      "interval":  0,
       "format": "INTER_VIDEO",
       "fromRoutes": ["*"],
       "toRoutes": ["*"]

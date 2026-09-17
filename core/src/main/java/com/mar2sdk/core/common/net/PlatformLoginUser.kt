@@ -2,7 +2,7 @@ package com.mar2sdk.core.common.net
 
 import java.io.IOException
 
-/** 游客登录成功后返回并持久化的用户；时间戳为毫秒，expiredTime 为秒。 */
+/** 游客或 Token 登录成功后返回并持久化的用户；时间戳为毫秒，expiredTime 为秒。 */
 data class PlatformLoginUser(
 	val uid: Long,
 	val name: String,

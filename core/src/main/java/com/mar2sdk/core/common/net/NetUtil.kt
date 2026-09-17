@@ -78,21 +78,7 @@ object NetUtil {
 					clientKey = clientKey,
 				)
 				val user = requestPlatformLogin(request)
-				currentCoroutineContext().ensureActive()
-				PreferenceUtil.commitString(loginUserKey(appID), PlatformLoginProtocol.encodeUser(user))
-				withContext(Dispatchers.Main) {
-					// 归因平台故障不应把已成功的服务端登录变为登录失败。
-					try {
-						TDAnalytics.login(user.uid.toString())
-					} catch (exception: Exception) {
-						Log.w(TAG, "Unable to set ThinkingData login identity")
-					}
-					try {
-						Singular.setCustomUserId(user.uid.toString())
-					} catch (exception: Exception) {
-						Log.w(TAG, "Unable to set Singular login identity")
-					}
-				}
+				saveLoginUser(appID, user)
 				Result.success(user)
 			} catch (exception: CancellationException) {
 				throw exception
@@ -101,13 +87,32 @@ object NetUtil {
 			}
 		}
 
-	/** 读取指定产品上次成功登录的用户；是否仍有效由服务端决定。 */
-	fun getPlatformLoginUser(): PlatformLoginUser? {
+	/** 读取当前配置产品上次成功登录的用户；是否仍有效由服务端决定。 */
+	fun getPlatformLoginUser(): PlatformLoginUser? = readLoginUser(CommonConfig.serverAppID)
+
+	private fun readLoginUser(appID: Int): PlatformLoginUser? {
 		PreferenceUtil.init()
-		val appID = CommonConfig.serverAppID
 		val stored = PreferenceUtil.getString(loginUserKey(appID), "")
 		if (stored.isEmpty()) return null
 		return runCatching { PlatformLoginProtocol.decodeUser(stored) }.getOrNull()
+	}
+
+	private suspend fun saveLoginUser(appID: Int, user: PlatformLoginUser) {
+		currentCoroutineContext().ensureActive()
+		PreferenceUtil.commitString(loginUserKey(appID), PlatformLoginProtocol.encodeUser(user))
+		withContext(Dispatchers.Main) {
+			// 分析 SDK 的故障不改变已成功的服务端登录结果。
+			try {
+				TDAnalytics.login(user.uid.toString())
+			} catch (exception: Exception) {
+				Log.w(TAG, "Unable to set ThinkingData login identity")
+			}
+			try {
+				Singular.setCustomUserId(user.uid.toString())
+			} catch (exception: Exception) {
+				Log.w(TAG, "Unable to set Singular login identity")
+			}
+		}
 	}
 
 	@Synchronized
@@ -157,6 +162,14 @@ object NetUtil {
 		callFactory: Call.Factory = client,
 	): Unit = executeRequest(request, callFactory, InitLogProtocol::parseResponse)
 
+	internal suspend fun requestAutoLoginreflushtoken(
+		request: Request,
+		expectedUid: Long,
+		callFactory: Call.Factory = client,
+	): PlatformLoginUser = executeRequest(request, callFactory) {
+		AutoLoginProtocol.parseResponse(it, System.currentTimeMillis(), expectedUid)
+	}
+
 	private suspend fun <T> executeRequest(
 		request: Request,
 		callFactory: Call.Factory,
@@ -194,18 +207,57 @@ object NetUtil {
 				deviceDpi = Core.app.resources.displayMetrics.densityDpi.toString(),
 			)
 			requestInitLog(request)
-			Log.d(TAG, "SDK initialization report succeeded")
+			Log.e(TAG, "SDK initialization report succeeded")
 		} catch (exception: CancellationException) {
-			throw exception
+			Log.e(TAG, "initLog: ", exception)
 		} catch (exception: Exception) {
 			val code = (exception as? ServerApiException)?.code
 			Log.w(TAG, "SDK initialization report failed: code=$code, error=${exception.javaClass.simpleName}")
 		}
 	}
 
-	// TODO: 刷新Token
-	fun autoLoginreflushtoken() {
+	/** 使用当前产品配置和已保存的凭据异步执行 Token 登录或刷新。 */
+	fun autoLoginreflushtoken(): Job = networkScope.launch {
+		autoLoginreflushtoken(CommonConfig.serverAppID, CommonConfig.serverClientKey, Core.SDK_VERSION)
+			.onSuccess { user ->
+				Log.d(TAG, "Token login succeeded: uid=${user.uid}")
+			}
+			.onFailure { error ->
+				val code = (error as? ServerApiException)?.code
+				Log.w(TAG, "Token login failed: code=$code, error=${error.javaClass.simpleName}")
+			}
+	}
 
+	/**
+	 * 使用指定产品已保存的 uid/token 登录并更新凭据；不生成新游客身份。
+	 * 无缓存或请求失败通过 Result 返回，保留原用户；取消继续向上传递。
+	 * 此接口需要旧 token 通过服务端校验，成功返回的 token 可能与原值相同。
+	 */
+	suspend fun autoLoginreflushtoken(
+		appID: Int,
+		clientKey: String,
+		sdkVersion: String,
+	): Result<PlatformLoginUser> = withContext(Dispatchers.IO) {
+		try {
+			require(appID > 0) { "appID must be positive" }
+			require(clientKey.isNotBlank()) { "clientKey is required" }
+			require(sdkVersion.isNotBlank()) { "sdkVersion is required" }
+			val savedUser = readLoginUser(appID)
+				?: throw IllegalStateException("No saved login credentials; call platformLogin first")
+			val request = AutoLoginProtocol.createRequest(
+				url = requestUrl(CommonConfig.autoLoginreflushtokenPath),
+				info = requestInfo(appID, sdkVersion, deviceIdentifier()),
+				user = savedUser,
+				clientKey = clientKey,
+			)
+			val user = requestAutoLoginreflushtoken(request, savedUser.uid)
+			saveLoginUser(appID, user)
+			Result.success(user)
+		} catch (exception: CancellationException) {
+			throw exception
+		} catch (exception: Exception) {
+			Result.failure(exception)
+		}
 	}
 
 	// TODO: 用户信息上报

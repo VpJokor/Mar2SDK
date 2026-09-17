@@ -8,9 +8,13 @@ import com.mar2sdk.core.common.CommonConfig
 import com.mar2sdk.core.common.PreferenceUtil
 import com.singular.sdk.Singular
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.ensureActive
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.withContext
 import okhttp3.Call
@@ -31,8 +35,26 @@ object NetUtil {
 	private const val TAG = "NetUtil"
 	private const val DEVICE_ID_KEY = "sf_device_id"
 	private const val ACCOUNT_ID_KEY = "sf_temp_uid"
+	private val loginScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
 	private val client by lazy {
 		OkHttpClient.Builder().callTimeout(30, TimeUnit.SECONDS).build()
+	}
+
+	/** 使用产品配置异步登录游客；由 Core.init 调用，返回的 Job 可用于取消或等待。 */
+	fun login(): Job = loginScope.launch {
+		val appID = CommonConfig.serverAppID
+		if (appID <= 0) {
+			Log.e(TAG, "Guest login skipped: serverAppID must be a positive integer")
+			return@launch
+		}
+		platformLogin(appID, CommonConfig.serverClientKey, Core.SDK_VERSION)
+			.onSuccess { user ->
+				Log.e(TAG, "Guest login succeeded: uid=${user.uid}")
+			}
+			.onFailure { error ->
+				val code = (error as? ServerApiException)?.code
+				Log.e(TAG, "Guest login failed: code=$code, error=${error.javaClass.simpleName}")
+			}
 	}
 
 	/**
@@ -91,8 +113,9 @@ object NetUtil {
 		}
 
 	/** 读取指定产品上次成功登录的用户；是否仍有效由服务端决定。 */
-	fun getPlatformLoginUser(appID: Int): PlatformLoginUser? {
+	fun getPlatformLoginUser(): PlatformLoginUser? {
 		PreferenceUtil.init()
+		val appID = CommonConfig.serverAppID
 		val stored = PreferenceUtil.getString(loginUserKey(appID), "")
 		if (stored.isEmpty()) return null
 		return runCatching { PlatformLoginProtocol.decodeUser(stored) }.getOrNull()

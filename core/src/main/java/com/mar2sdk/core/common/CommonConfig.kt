@@ -14,6 +14,8 @@ object CommonConfig {
 	var serverAppID: Int = 0
 	// 服务端的客户端密钥
 	var serverClientKey = "clientKey"
+	// SDK 初始化时是否自动登录游客
+	var isAutoLogin = true
 	// AB测试的名字
 	var ABTestName = "Unknow"
 	// PlayIntegrity的项目ID
@@ -47,6 +49,7 @@ object CommonConfig {
 			serverUrl = getString("serverUrl")
 			serverAppID = getInt("serverAppID")
 			serverClientKey = getString("serverClientKey")
+			isAutoLogin = getBoolean("isAutoLogin")
 			ABTestName = getString("ABTestName")
 			PlayIntegrityID = getLong("PlayIntegrityID")
 			parseTokenPath = getString("parseTokenPath")
@@ -65,6 +68,7 @@ object CommonConfig {
 			serverUrl = PreferenceUtil.getString(KEY_SERVER_URL, serverUrl)
 			serverAppID = PreferenceUtil.getInt(KEY_SERVER_APP_ID, serverAppID)
 			serverClientKey = PreferenceUtil.getString(KEY_SERVER_CLIENT_KEY, serverClientKey)
+			isAutoLogin = PreferenceUtil.getBoolean(KEY_IS_AUTO_LOGIN, isAutoLogin)
 			ABTestName = PreferenceUtil.getString(KEY_AB_TEST_NAME, ABTestName)
 			PlayIntegrityID = PreferenceUtil.getLong(KEY_PLAY_INTEGRITY_ID, PlayIntegrityID)
 			parseTokenPath = PreferenceUtil.getString(KEY_PARSE_TOKEN_PATH, parseTokenPath)
@@ -83,6 +87,7 @@ object CommonConfig {
 			PreferenceUtil.commitString(KEY_SERVER_URL, serverUrl)
 			PreferenceUtil.commitInt(KEY_SERVER_APP_ID, serverAppID)
 			PreferenceUtil.commitString(KEY_SERVER_CLIENT_KEY, serverClientKey)
+			PreferenceUtil.commitBoolean(KEY_IS_AUTO_LOGIN, isAutoLogin)
 			PreferenceUtil.commitString(KEY_AB_TEST_NAME, ABTestName)
 			PreferenceUtil.commitLong(KEY_PLAY_INTEGRITY_ID, PlayIntegrityID)
 			PreferenceUtil.commitString(KEY_PARSE_TOKEN_PATH, parseTokenPath)
@@ -99,6 +104,7 @@ object CommonConfig {
 		serverUrl = config.optString("serverUrl", serverUrl)
 		serverAppID = config.optInt("serverAppID", serverAppID)
 		serverClientKey = config.optString("serverClientKey", serverClientKey)
+		isAutoLogin = config.optBoolean("isAutoLogin", isAutoLogin)
 		ABTestName = config.optString("ABTestName", ABTestName)
 		PlayIntegrityID = config.optLong("PlayIntegrityID", PlayIntegrityID)
 		parseTokenPath = config.optString("parseTokenPath", parseTokenPath)

@@ -5,6 +5,7 @@
   "serverUrl": "https://api-server.magamecdn.online",
   "serverAppID": 20046,
   "serverClientKey": "c096c08247534b1299ee3c0a4189a6df",
+  "isAutoLogin": true,
   "parseTokenPath": "/parseToken",
   "ipInfoPath": "/getIpInfoV2",
   "initLogPath": "/server/user/initLog",

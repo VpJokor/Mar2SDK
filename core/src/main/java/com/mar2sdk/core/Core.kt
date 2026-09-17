@@ -18,6 +18,7 @@ import com.mar2sdk.core.common.TestMod
 import com.mar2sdk.core.common.UserInfo
 import com.mar2sdk.core.common.status.UserType
 import com.mar2sdk.core.common.AppObs
+import com.mar2sdk.core.common.CommonConfig
 import com.mar2sdk.core.common.net.NetUtil
 
 enum class AppMod {
@@ -67,7 +68,9 @@ object Core {
 		// 开始监听手机状态
 		AppObs.init()
 		// 游客登录
-		NetUtil.login()
+		if (CommonConfig.isAutoLogin) {
+			NetUtil.login()
+		}
 	}
 
 	suspend fun showAd(activity: Activity, callback: ShowCallback): AdShowStatus {

@@ -11,10 +11,12 @@ import com.mar2sdk.core.common.PreferenceUtil
 import com.singular.sdk.Singular
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.async
 import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.launch
@@ -25,6 +27,7 @@ import okhttp3.Callback
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.Response
+import org.json.JSONArray
 import org.json.JSONObject
 import java.io.IOException
 import java.math.BigDecimal
@@ -227,6 +230,11 @@ object NetUtil {
 		callFactory: Call.Factory = client,
 	): Unit = executeRequest(request, callFactory, UploadUserProtocol::parseResponse)
 
+	internal suspend fun requestReport(
+		request: Request,
+		callFactory: Call.Factory = client,
+	): Unit = executeRequest(request, callFactory, ReportProtocol::parseResponse)
+
 	internal suspend fun requestAutoLoginreflushtoken(
 		request: Request,
 		expectedUid: Long,
@@ -392,9 +400,45 @@ object NetUtil {
 		Log.w(TAG, "User attribution report failed: code=$code, error=${exception.javaClass.simpleName}")
 	}
 
-	// TODO: 事件上报
-	fun report() {
-
+	/**
+	 * 批量上报完整的数数广告事件，单条也使用 JSONArray；调用前须完成登录。
+	 * 缺少 #account_id 时补充当前产品已登录用户的 uid，已有账号必须与该用户一致。
+	 * 返回值可取消，通过 await() 取得 Result；成功仅表示服务端接受了整批数据。
+	 * 调用方负责保留失败批次，重试时复用原 #uuid、#event_id 和采集属性。
+	 */
+	fun report(events: JSONArray): Deferred<Result<Unit>> {
+		// 在切换线程前固定事件、产品配置和账号，避免后续修改或切换账号影响本次请求。
+		val snapshot = events.toString()
+		val appID = CommonConfig.serverAppID
+		val clientKey = CommonConfig.serverClientKey
+		val url = requestUrl(ReportProtocol.PATH)
+		val loginUser = runCatching {
+			require(appID > 0) { "appID must be positive" }
+			readLoginUser(appID)
+				?: throw IllegalStateException("No saved login credentials; call login first")
+		}
+		return networkScope.async {
+			try {
+				val user = loginUser.getOrThrow()
+				val request = ReportProtocol.createRequest(
+					url = url,
+					info = requestInfo(appID, Core.SDK_VERSION, deviceIdentifier()),
+					clientKey = clientKey,
+					uid = user.uid,
+					packageName = Core.app.packageName,
+					events = JSONArray(snapshot),
+				)
+				requestReport(request)
+				Log.d(TAG, "Ad event report accepted")
+				Result.success(Unit)
+			} catch (exception: CancellationException) {
+				throw exception
+			} catch (exception: Exception) {
+				val code = (exception as? ServerApiException)?.code
+				Log.w(TAG, "Ad event report failed: code=$code, error=${exception.javaClass.simpleName}")
+				Result.failure(exception)
+			}
+		}
 	}
 
 }

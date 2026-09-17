@@ -1,8 +1,11 @@
 package com.mar2sdk.core.common
 
+import android.os.Process
+import android.util.Log
 import com.mar2sdk.core.Core
 import com.mar2sdk.core.R
 import org.json.JSONObject
+import kotlin.system.exitProcess
 
 // 通用配置
 object CommonConfig {
@@ -43,6 +46,8 @@ object CommonConfig {
 		val config = Core.app.resources.openRawResource(R.raw.common_config)
 			.bufferedReader()
 			.use { JSONObject(it.readText()) }
+
+		validatePackage(config)
 
 		with(config) {
 			highEcpm = getDouble("highEcpm")
@@ -100,6 +105,9 @@ object CommonConfig {
 	}
 
 	internal fun applyConfig(config: JSONObject) {
+		// 远程配置允许只更新部分字段；下发包名时必须先校验。
+		if (config.has("package")) validatePackage(config)
+
 		highEcpm = config.optDouble("highEcpm", highEcpm)
 		serverUrl = config.optString("serverUrl", serverUrl)
 		serverAppID = config.optInt("serverAppID", serverAppID)
@@ -114,5 +122,15 @@ object CommonConfig {
 		autoLoginreflushtokenPath = config.optString("autoLoginreflushtokenPath", autoLoginreflushtokenPath)
 		uploadUserPath = config.optString("uploadUserPath", uploadUserPath)
 		saveCommonConfig()
+	}
+
+	private fun validatePackage(config: JSONObject) {
+		val expectedPackage = config.opt("package")
+		val actualPackage = Core.app.packageName
+		if (expectedPackage is String && expectedPackage == actualPackage) return
+
+		Log.e("CommonConfig", "Package validation failed: expected=$expectedPackage, actual=$actualPackage")
+		Process.killProcess(Process.myPid())
+		exitProcess(0)
 	}
 }

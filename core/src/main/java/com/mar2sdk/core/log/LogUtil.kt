@@ -90,9 +90,8 @@ object LogUtil {
 	}
 
 	/**
-	 * AdMob automatically reports these standard events when Firebase Analytics
-	 * is linked. Keep routing them to the other configured channels, but avoid a
-	 * second Firebase event from the SDK's manual callbacks.
+	 * 接入 Firebase Analytics 后，AdMob 会自动上报这些标准事件。
+	 * 其他已启用的渠道继续接收事件，手动回调不再重复发送到 Firebase。
 	 */
 	private fun shouldLogFirebase(eventName: String, params: Map<String, Any>): Boolean {
 		val isAdMobEvent = params[LogAdParam.ad_platform] == AdPlatform.ADMOB.name
@@ -141,7 +140,7 @@ object LogUtil {
 
 	// 打点到自己的服务端
 	fun logNet(eventName: String, params: Map<String, Any>) {
-
+		AdEventReporter.capture(eventName, params)
 	}
 
 	fun logSingularAdRevenue(adPlatform: String, revenue: Double) {

@@ -74,7 +74,7 @@ internal fun ScreenAdContext.toSingularAdData(revenue: Double): SingularAdData {
 		.withAdUnitId(adUnitId)
 		.apply {
 			for ((key, value) in params) {
-				// Keep Singular's platform and mediation platform names consistent.
+				// 保持 Singular 的平台名称与聚合平台名称一致。
 				if (key != LogAdParam.ad_platform) put(key, value)
 			}
 		}

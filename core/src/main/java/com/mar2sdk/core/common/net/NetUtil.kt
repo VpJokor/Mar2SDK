@@ -6,8 +6,8 @@ import android.util.Log
 import cn.thinkingdata.analytics.TDAnalytics
 import com.mar2sdk.core.Core
 import com.mar2sdk.core.common.CommonConfig
-import com.mar2sdk.core.common.PolicyKey
 import com.mar2sdk.core.common.PreferenceUtil
+import com.mar2sdk.core.log.AdEventReporter
 import com.singular.sdk.Singular
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
@@ -66,7 +66,7 @@ object NetUtil {
 			val session = loginSessions.getOrPut(appID) {
 				LoginSession(
 					loadUser = { readLoginUser(appID) },
-					restoreUser = { syncLoginIdentity(it) },
+					restoreUser = { syncLoginIdentity(appID, it) },
 					clearUser = { clearLoginUser(appID) },
 					tokenLogin = { autoLoginreflushtoken(appID, CommonConfig.serverClientKey, Core.SDK_VERSION) },
 					guestLogin = { platformLogin(appID, CommonConfig.serverClientKey, Core.SDK_VERSION) },
@@ -82,6 +82,7 @@ object NetUtil {
 
 	/** 网络监听只补偿已经发起过的登录，不会绕过 isAutoLogin 开关启动新登录。 */
 	internal fun onNetworkAvailable() {
+		AdEventReporter.onNetworkAvailable()
 		val session = loginSessions[CommonConfig.serverAppID] ?: return
 		networkScope.launch {
 			try {
@@ -145,7 +146,7 @@ object NetUtil {
 	private suspend fun saveLoginUser(appID: Int, user: PlatformLoginUser) {
 		currentCoroutineContext().ensureActive()
 		PreferenceUtil.commitString(loginUserKey(appID), PlatformLoginProtocol.encodeUser(user))
-		syncLoginIdentity(user)
+		syncLoginIdentity(appID, user)
 		if (appID == CommonConfig.serverAppID) {
 			attributionSync(appID).onLogin(user.uid)
 			uploadUser(appID)
@@ -158,12 +159,13 @@ object NetUtil {
 		withContext(NonCancellable) {
 			attributionSyncs[appID]?.clearUser()
 			PreferenceUtil.removeByKey(loginUserKey(appID))
-			syncLoginIdentity(null)
+			syncLoginIdentity(appID, null)
 		}
 	}
 
-	private suspend fun syncLoginIdentity(user: PlatformLoginUser?) {
+	private suspend fun syncLoginIdentity(appID: Int, user: PlatformLoginUser?) {
 		withContext(Dispatchers.Main) {
+			if (appID != CommonConfig.serverAppID) return@withContext
 			// 分析 SDK 的故障不改变已成功的服务端登录结果。
 			try {
 				if (user == null) TDAnalytics.logout() else TDAnalytics.login(user.uid.toString())
@@ -174,6 +176,11 @@ object NetUtil {
 				if (user == null) Singular.unsetCustomUserId() else Singular.setCustomUserId(user.uid.toString())
 			} catch (exception: Exception) {
 				Log.w(TAG, "Unable to set Singular login identity")
+			}
+			try {
+				if (user == null) AdEventReporter.onLogout(appID) else AdEventReporter.onLogin(appID, user.uid)
+			} catch (exception: Exception) {
+				Log.w(TAG, "Unable to restore ad reporting identity")
 			}
 		}
 	}
@@ -363,17 +370,7 @@ object NetUtil {
 
 	private fun readAttribution(appID: Int): JSONObject? {
 		val stored = PreferenceUtil.getString(attributionKey(appID), "")
-		if (stored.isNotEmpty()) return JSONObject(stored)
-		// 已安装用户可能不再收到首次归因回调，兼容旧版保存的三个实际字段。
-		if (appID != CommonConfig.serverAppID) return null
-		fun legacyValue(key: String) = PreferenceUtil.getString(key, "")
-			.takeIf { it.isNotBlank() && it != "unknow" }
-		val network = legacyValue(PolicyKey.KEY_NETWORK) ?: return null
-		return JSONObject().apply {
-			put("network", network)
-			legacyValue(PolicyKey.KEY_CAMPAIGN_Id)?.let { put("campaign_id", it) }
-			legacyValue(PolicyKey.KEY_CAMPAIGN_NAME)?.let { put("campaign_name", it) }
-		}
+		return if (stored.isEmpty()) null else JSONObject(stored)
 	}
 
 	private fun attributionSync(appID: Int): UserAttributionSync = attributionSyncs.getOrPut(appID) {
@@ -406,7 +403,17 @@ object NetUtil {
 	 * 返回值可取消，通过 await() 取得 Result；成功仅表示服务端接受了整批数据。
 	 * 调用方负责保留失败批次，重试时复用原 #uuid、#event_id 和采集属性。
 	 */
-	fun report(events: JSONArray): Deferred<Result<Unit>> {
+	fun report(events: JSONArray): Deferred<Result<Unit>> = launchReport(events)
+
+	/** 队列必须使用采集时的身份，防止在检查身份后、创建请求前切换产品或账号。 */
+	internal fun report(events: JSONArray, appID: Int, uid: Long): Deferred<Result<Unit>> =
+		launchReport(events, appID, uid)
+
+	private fun launchReport(
+		events: JSONArray,
+		expectedAppID: Int? = null,
+		expectedUid: Long? = null,
+	): Deferred<Result<Unit>> {
 		// 在切换线程前固定事件、产品配置和账号，避免后续修改或切换账号影响本次请求。
 		val snapshot = events.toString()
 		val appID = CommonConfig.serverAppID
@@ -414,8 +421,11 @@ object NetUtil {
 		val url = requestUrl(ReportProtocol.PATH)
 		val loginUser = runCatching {
 			require(appID > 0) { "appID must be positive" }
-			readLoginUser(appID)
+			require(expectedAppID == null || appID == expectedAppID) { "Report product no longer matches current configuration" }
+			val user = readLoginUser(appID)
 				?: throw IllegalStateException("No saved login credentials; call login first")
+			require(expectedUid == null || user.uid == expectedUid) { "Report user no longer matches current login" }
+			user
 		}
 		return networkScope.async {
 			try {

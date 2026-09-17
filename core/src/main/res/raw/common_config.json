@@ -3,7 +3,7 @@
   "PlayIntegrityID": 0,
   "highEcpm": 0.0,
   "serverUrl": "https://api-server.magamecdn.online",
-  "serverAppID": "20046",
+  "serverAppID": 20046,
   "serverClientKey": "c096c08247534b1299ee3c0a4189a6df",
   "parseTokenPath": "/parseToken",
   "ipInfoPath": "/getIpInfoV2",

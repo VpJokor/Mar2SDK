@@ -11,7 +11,7 @@ object CommonConfig {
 	// 服务端的Url
 	var serverUrl = "https://api.newminigame.online"
 	// 服务端的App ID
-	var serverAppID = "appId"
+	var serverAppID: Int = 0
 	// 服务端的客户端密钥
 	var serverClientKey = "clientKey"
 	// AB测试的名字
@@ -45,7 +45,7 @@ object CommonConfig {
 		with(config) {
 			highEcpm = getDouble("highEcpm")
 			serverUrl = getString("serverUrl")
-			serverAppID = getString("serverAppID")
+			serverAppID = getInt("serverAppID")
 			serverClientKey = getString("serverClientKey")
 			ABTestName = getString("ABTestName")
 			PlayIntegrityID = getLong("PlayIntegrityID")
@@ -63,7 +63,7 @@ object CommonConfig {
 		with(PolicyKey) {
 			highEcpm = PreferenceUtil.getDouble(KEY_HIGH_ECPM, highEcpm)
 			serverUrl = PreferenceUtil.getString(KEY_SERVER_URL, serverUrl)
-			serverAppID = PreferenceUtil.getString(KEY_SERVER_APP_ID, serverAppID)
+			serverAppID = PreferenceUtil.getInt(KEY_SERVER_APP_ID, serverAppID)
 			serverClientKey = PreferenceUtil.getString(KEY_SERVER_CLIENT_KEY, serverClientKey)
 			ABTestName = PreferenceUtil.getString(KEY_AB_TEST_NAME, ABTestName)
 			PlayIntegrityID = PreferenceUtil.getLong(KEY_PLAY_INTEGRITY_ID, PlayIntegrityID)
@@ -81,7 +81,7 @@ object CommonConfig {
 		with(PolicyKey) {
 			PreferenceUtil.commitDouble(KEY_HIGH_ECPM, highEcpm)
 			PreferenceUtil.commitString(KEY_SERVER_URL, serverUrl)
-			PreferenceUtil.commitString(KEY_SERVER_APP_ID, serverAppID)
+			PreferenceUtil.commitInt(KEY_SERVER_APP_ID, serverAppID)
 			PreferenceUtil.commitString(KEY_SERVER_CLIENT_KEY, serverClientKey)
 			PreferenceUtil.commitString(KEY_AB_TEST_NAME, ABTestName)
 			PreferenceUtil.commitLong(KEY_PLAY_INTEGRITY_ID, PlayIntegrityID)
@@ -97,7 +97,7 @@ object CommonConfig {
 	internal fun applyConfig(config: JSONObject) {
 		highEcpm = config.optDouble("highEcpm", highEcpm)
 		serverUrl = config.optString("serverUrl", serverUrl)
-		serverAppID = config.optString("serverAppID", serverAppID)
+		serverAppID = config.optInt("serverAppID", serverAppID)
 		serverClientKey = config.optString("serverClientKey", serverClientKey)
 		ABTestName = config.optString("ABTestName", ABTestName)
 		PlayIntegrityID = config.optLong("PlayIntegrityID", PlayIntegrityID)

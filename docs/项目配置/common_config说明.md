@@ -5,6 +5,7 @@
 | 字段 | 类型 | 资源默认值 | 说明 |
 | --- | --- | ---: | --- |
 | `highEcpm` | 小数 | `0.0` | 高 eCPM 阈值，用于风险判定中的首个广告收入比较。 |
+| `serverAppID` | 整数 | `20046` | 服务端产品 ID，对应 `CommonConfig.serverAppID: Int`，必须大于 0。 |
 | `serverUrl` | 字符串 | `https://api.newminigame.online` | SDK 后端服务基地址。 |
 | `ABTestName` | 字符串 | `Unknow` | AB 实验名称，按业务实验配置填写。 |
 | `PlayIntegrityID` | 整数 | `0` | Google Cloud 项目号，用于 Play Integrity。 |

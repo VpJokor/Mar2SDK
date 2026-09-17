@@ -14,7 +14,7 @@ object CommonConfig {
 	var serverAppID: Int = 0
 	// 服务端的客户端密钥
 	var serverClientKey = "clientKey"
-	// SDK 初始化时是否自动登录游客
+	// SDK 初始化时是否自动登录；根据缓存有效期选择 Token 或游客登录。
 	var isAutoLogin = true
 	// AB测试的名字
 	var ABTestName = "Unknow"

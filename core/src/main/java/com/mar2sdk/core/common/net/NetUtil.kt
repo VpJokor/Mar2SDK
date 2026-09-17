@@ -12,6 +12,7 @@ import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.ensureActive
@@ -28,6 +29,7 @@ import java.math.BigDecimal
 import java.util.Locale
 import java.util.TimeZone
 import java.util.UUID
+import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.TimeUnit
 import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
@@ -37,25 +39,62 @@ object NetUtil {
 	private const val DEVICE_ID_KEY = "sf_device_id"
 	private const val ACCOUNT_ID_KEY = "sf_temp_uid"
 	private val networkScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
+	private val loginSessions = ConcurrentHashMap<Int, LoginSession>()
 	private val client by lazy {
 		OkHttpClient.Builder().callTimeout(30, TimeUnit.SECONDS).build()
 	}
 
-	/** 使用产品配置异步登录游客；由 Core.init 调用，返回的 Job 可用于取消或等待。 */
-	fun login(): Job = networkScope.launch {
+	/** 统一登录入口：有效缓存走 Token 登录，否则使用原游客身份登录。 */
+	fun login(): Job = launchLogin(refresh = false)
+
+	/** 已有登录用户的主动刷新入口，复用有效期判断和失败补偿。 */
+	fun refreshUser(): Job = launchLogin(refresh = true)
+
+	private fun launchLogin(refresh: Boolean): Job = networkScope.launch {
 		val appID = CommonConfig.serverAppID
 		if (appID <= 0) {
-			Log.e(TAG, "Guest login skipped: serverAppID must be a positive integer")
+			Log.e(TAG, "Login skipped: serverAppID must be a positive integer")
 			return@launch
 		}
-		platformLogin(appID, CommonConfig.serverClientKey, Core.SDK_VERSION)
-			.onSuccess { user ->
-				Log.e(TAG, "Guest login succeeded: uid=${user.uid}")
+		try {
+			val session = loginSessions.getOrPut(appID) {
+				LoginSession(
+					loadUser = { readLoginUser(appID) },
+					restoreUser = { syncLoginIdentity(it) },
+					clearUser = { clearLoginUser(appID) },
+					tokenLogin = { autoLoginreflushtoken(appID, CommonConfig.serverClientKey, Core.SDK_VERSION) },
+					guestLogin = { platformLogin(appID, CommonConfig.serverClientKey, Core.SDK_VERSION) },
+				)
 			}
-			.onFailure { error ->
-				val code = (error as? ServerApiException)?.code
-				Log.e(TAG, "Guest login failed: code=$code, error=${error.javaClass.simpleName}")
+			logLoginResult(if (refresh) session.refreshUser() else session.login())
+		} catch (exception: CancellationException) {
+			throw exception
+		} catch (exception: Exception) {
+			logLoginResult(Result.failure(exception))
+		}
+	}
+
+	/** 网络监听只补偿已经发起过的登录，不会绕过 isAutoLogin 开关启动新登录。 */
+	internal fun onNetworkAvailable() {
+		val session = loginSessions[CommonConfig.serverAppID] ?: return
+		networkScope.launch {
+			try {
+				session.onNetworkAvailable()?.let(::logLoginResult)
+			} catch (exception: CancellationException) {
+				throw exception
+			} catch (exception: Exception) {
+				logLoginResult(Result.failure(exception))
 			}
+		}
+	}
+
+	private fun logLoginResult(result: Result<PlatformLoginUser>) {
+		result.onSuccess { user ->
+			Log.d(TAG, "Login succeeded: uid=${user.uid}")
+		}.onFailure { error ->
+			val code = (error as? ServerApiException)?.code
+			Log.w(TAG, "Login failed: code=$code, error=${error.javaClass.simpleName}")
+		}
 	}
 
 	/**
@@ -100,15 +139,28 @@ object NetUtil {
 	private suspend fun saveLoginUser(appID: Int, user: PlatformLoginUser) {
 		currentCoroutineContext().ensureActive()
 		PreferenceUtil.commitString(loginUserKey(appID), PlatformLoginProtocol.encodeUser(user))
+		syncLoginIdentity(user)
+	}
+
+	private suspend fun clearLoginUser(appID: Int) {
+		currentCoroutineContext().ensureActive()
+		// 一旦删除凭据，必须同时清除分析身份；取消仍可阻止后续网络重登。
+		withContext(NonCancellable) {
+			PreferenceUtil.removeByKey(loginUserKey(appID))
+			syncLoginIdentity(null)
+		}
+	}
+
+	private suspend fun syncLoginIdentity(user: PlatformLoginUser?) {
 		withContext(Dispatchers.Main) {
 			// 分析 SDK 的故障不改变已成功的服务端登录结果。
 			try {
-				TDAnalytics.login(user.uid.toString())
+				if (user == null) TDAnalytics.logout() else TDAnalytics.login(user.uid.toString())
 			} catch (exception: Exception) {
 				Log.w(TAG, "Unable to set ThinkingData login identity")
 			}
 			try {
-				Singular.setCustomUserId(user.uid.toString())
+				if (user == null) Singular.unsetCustomUserId() else Singular.setCustomUserId(user.uid.toString())
 			} catch (exception: Exception) {
 				Log.w(TAG, "Unable to set Singular login identity")
 			}

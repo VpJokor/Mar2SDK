@@ -69,7 +69,7 @@ object Core {
 		AppObs.init()
 		// 每次初始化均上报设备信息，无需等待用户登录。
 		NetUtil.initLog()
-		// 游客登录
+		// 自动登录：有效缓存使用 Token，否则执行游客登录。
 		if (CommonConfig.isAutoLogin) {
 			NetUtil.login()
 		}

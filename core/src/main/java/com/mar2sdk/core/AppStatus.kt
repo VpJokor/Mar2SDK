@@ -9,6 +9,7 @@ import com.mar2sdk.core.notify.app.NotificationTriggerKey
 import com.mar2sdk.core.notify.common.CommonService
 import com.mar2sdk.core.common.AppObs
 import com.mar2sdk.core.common.AppObs.PackageChange
+import com.mar2sdk.core.common.net.NetUtil
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -111,6 +112,9 @@ object AppStatus {
 			}
 			// INFO: 网络
 			is AppObs.Event.NetworkChanged -> {
+				if (event.state.connected && event.state.validated) {
+					NetUtil.onNetworkAvailable()
+				}
 				addNotificationBatch(NotificationTriggerKey.network_changed)
 			}
 		}

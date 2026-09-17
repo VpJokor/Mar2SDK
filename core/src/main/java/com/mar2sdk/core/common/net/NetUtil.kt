@@ -6,6 +6,7 @@ import android.util.Log
 import cn.thinkingdata.analytics.TDAnalytics
 import com.mar2sdk.core.Core
 import com.mar2sdk.core.common.CommonConfig
+import com.mar2sdk.core.common.PolicyKey
 import com.mar2sdk.core.common.PreferenceUtil
 import com.singular.sdk.Singular
 import kotlinx.coroutines.CancellationException
@@ -24,6 +25,7 @@ import okhttp3.Callback
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.Response
+import org.json.JSONObject
 import java.io.IOException
 import java.math.BigDecimal
 import java.util.Locale
@@ -40,6 +42,7 @@ object NetUtil {
 	private const val ACCOUNT_ID_KEY = "sf_temp_uid"
 	private val networkScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
 	private val loginSessions = ConcurrentHashMap<Int, LoginSession>()
+	private val attributionSyncs = ConcurrentHashMap<Int, UserAttributionSync>()
 	private val client by lazy {
 		OkHttpClient.Builder().callTimeout(30, TimeUnit.SECONDS).build()
 	}
@@ -140,12 +143,17 @@ object NetUtil {
 		currentCoroutineContext().ensureActive()
 		PreferenceUtil.commitString(loginUserKey(appID), PlatformLoginProtocol.encodeUser(user))
 		syncLoginIdentity(user)
+		if (appID == CommonConfig.serverAppID) {
+			attributionSync(appID).onLogin(user.uid)
+			uploadUser(appID)
+		}
 	}
 
 	private suspend fun clearLoginUser(appID: Int) {
 		currentCoroutineContext().ensureActive()
 		// 一旦删除凭据，必须同时清除分析身份；取消仍可阻止后续网络重登。
 		withContext(NonCancellable) {
+			attributionSyncs[appID]?.clearUser()
 			PreferenceUtil.removeByKey(loginUserKey(appID))
 			syncLoginIdentity(null)
 		}
@@ -213,6 +221,11 @@ object NetUtil {
 		request: Request,
 		callFactory: Call.Factory = client,
 	): Unit = executeRequest(request, callFactory, InitLogProtocol::parseResponse)
+
+	internal suspend fun requestUploadUser(
+		request: Request,
+		callFactory: Call.Factory = client,
+	): Unit = executeRequest(request, callFactory, UploadUserProtocol::parseResponse)
 
 	internal suspend fun requestAutoLoginreflushtoken(
 		request: Request,
@@ -312,13 +325,76 @@ object NetUtil {
 		}
 	}
 
-	// TODO: 用户信息上报
-	fun uploadUser() {
+	/** 使用当前产品本次成功登录的 uid 上报已持久化的 Singular 归因；可取消返回的 Job。 */
+	fun uploadUser(): Job = uploadUser(CommonConfig.serverAppID)
 
+	private fun uploadUser(appID: Int): Job = networkScope.launch {
+		try {
+			require(appID > 0) { "appID must be positive" }
+			PreferenceUtil.init()
+			attributionSync(appID).sync()
+		} catch (exception: CancellationException) {
+			throw exception
+		} catch (exception: Exception) {
+			logUploadUserFailure(exception)
+		}
+	}
+
+	/** 完整快照一次写入，避免读取到半更新字段；先于登录到达时留待登录成功后同步。 */
+	internal fun onSingularAttribution(attribution: JSONObject) {
+		val network = attribution.opt("network")
+		if (network == null || network == JSONObject.NULL || network.toString().isBlank()) return
+		val appID = CommonConfig.serverAppID
+		if (appID <= 0) return
+		PreferenceUtil.init()
+		PreferenceUtil.commitString(attributionKey(appID), attribution.toString())
+		uploadUser(appID)
+	}
+
+	private fun attributionKey(appID: Int) = "mar2sdk.singular_attribution.$appID"
+
+	private fun readAttribution(appID: Int): JSONObject? {
+		val stored = PreferenceUtil.getString(attributionKey(appID), "")
+		if (stored.isNotEmpty()) return JSONObject(stored)
+		// 已安装用户可能不再收到首次归因回调，兼容旧版保存的三个实际字段。
+		if (appID != CommonConfig.serverAppID) return null
+		fun legacyValue(key: String) = PreferenceUtil.getString(key, "")
+			.takeIf { it.isNotBlank() && it != "unknow" }
+		val network = legacyValue(PolicyKey.KEY_NETWORK) ?: return null
+		return JSONObject().apply {
+			put("network", network)
+			legacyValue(PolicyKey.KEY_CAMPAIGN_Id)?.let { put("campaign_id", it) }
+			legacyValue(PolicyKey.KEY_CAMPAIGN_NAME)?.let { put("campaign_name", it) }
+		}
+	}
+
+	private fun attributionSync(appID: Int): UserAttributionSync = attributionSyncs.getOrPut(appID) {
+		UserAttributionSync(
+			loadAttribution = { readAttribution(appID) },
+			upload = { uid, attribution ->
+				require(appID == CommonConfig.serverAppID) { "Attribution product no longer matches current configuration" }
+				val request = UploadUserProtocol.createRequest(
+					url = requestUrl(CommonConfig.uploadUserPath),
+					info = requestInfo(appID, Core.SDK_VERSION, deviceIdentifier()),
+					uid = uid,
+					attribution = attribution,
+					clientKey = CommonConfig.serverClientKey,
+				)
+				requestUploadUser(request)
+				Log.d(TAG, "User attribution report succeeded: uid=$uid")
+			},
+			onFailure = ::logUploadUserFailure,
+		)
+	}
+
+	private fun logUploadUserFailure(exception: Exception) {
+		val code = (exception as? ServerApiException)?.code
+		Log.w(TAG, "User attribution report failed: code=$code, error=${exception.javaClass.simpleName}")
 	}
 
 	// TODO: 事件上报
 	fun report() {
 
 	}
+
 }

@@ -5,6 +5,7 @@ import cn.thinkingdata.analytics.TDAnalytics
 import com.mar2sdk.core.Core
 import com.mar2sdk.core.common.RiskUtil
 import com.mar2sdk.core.common.UserInfo
+import com.mar2sdk.core.common.net.NetUtil
 import com.singular.sdk.Singular
 import org.json.JSONException
 import org.json.JSONObject
@@ -20,9 +21,11 @@ object SingularUtil {
 				// INFO: 只有首次安装APP时该方法会被回调
 				val promoteParams = JSONObject()
 				try {
-					val network = attributionData["network"]?.toString().orEmpty()
-					val campaignId = attributionData["campaign_id"]?.toString()?.takeIf { it.isNotEmpty() }
-					val campaignName = attributionData["campaign_name"]?.toString()?.takeIf { it.isNotEmpty() }
+					val attribution = JSONObject(attributionData)
+					NetUtil.onSingularAttribution(attribution)
+					val network = attribution.value("network").orEmpty()
+					val campaignId = attribution.value("campaign_id")
+					val campaignName = attribution.value("campaign_name")
 					Log.e(TAG, "init: Singular初始化成功 network = $network")
 
 					UserInfo.network = network
@@ -48,5 +51,10 @@ object SingularUtil {
 			}
 		Singular.init(Core.app, config)
 	}
+
+	private fun JSONObject.value(key: String): String? = opt(key)
+		?.takeUnless { it == JSONObject.NULL }
+		?.toString()
+		?.takeIf { it.isNotEmpty() }
 
 }

@@ -1,8 +1,10 @@
 {
-  "highEcpm": 0.0,
-  "serverUrl": "https://api.newminigame.online",
   "ABTestName": "Unknow",
   "PlayIntegrityID": 0,
+  "highEcpm": 0.0,
+  "serverUrl": "https://api.newminigame.online",
+  "sercerAppID": "appId",
+  "sercerClientKey": "clientKey",
   "parseTokenPath": "/parseToken",
   "ipInfoPath": "/getIpInfoV2",
   "initLogPath": "/server/user/initLog",

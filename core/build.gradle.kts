@@ -29,8 +29,10 @@ dependencies {
 	implementation(libs.androidx.core.ktx)
 	implementation(libs.material)
 	implementation(libs.kotlinx.coroutines.android)
+	implementation("com.squareup.okhttp3:okhttp:4.12.0")
 	testImplementation(libs.junit)
 	testImplementation(libs.kotlinx.coroutines.test)
+	testImplementation("org.json:json:20250517")
 	androidTestImplementation(libs.androidx.espresso.core)
 	androidTestImplementation(libs.androidx.junit)
 	//Google相关服务

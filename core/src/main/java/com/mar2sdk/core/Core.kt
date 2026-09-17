@@ -18,6 +18,7 @@ import com.mar2sdk.core.common.TestMod
 import com.mar2sdk.core.common.UserInfo
 import com.mar2sdk.core.common.status.UserType
 import com.mar2sdk.core.common.AppObs
+import com.mar2sdk.core.common.net.NetUtil
 
 enum class AppMod {
 	DEBUG,
@@ -30,6 +31,8 @@ enum class AppMod {
  * 核心库入口
  */
 object Core {
+	// 由 core/build.gradle.kts 中的 version 在构建时生成。
+	const val SDK_VERSION = BuildConfig.SDK_VERSION
 
 	lateinit var app: Application
 	lateinit var appMod: AppMod
@@ -63,6 +66,8 @@ object Core {
 		AppNotificationUtil.init()
 		// 开始监听手机状态
 		AppObs.init()
+		// 游客登录
+		NetUtil.login()
 	}
 
 	suspend fun showAd(activity: Activity, callback: ShowCallback): AdShowStatus {

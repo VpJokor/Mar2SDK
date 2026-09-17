@@ -3,8 +3,13 @@ plugins {
 	alias(libs.plugins.kotlin.parcelize)
 }
 
+version = "1.0.0"
+
 android {
 	namespace = "com.mar2sdk.core"
+	buildFeatures {
+		buildConfig = true
+	}
 	compileSdk {
 		version = release(37) {
 			minorApiLevel = 0
@@ -13,6 +18,7 @@ android {
 
 	defaultConfig {
 		minSdk = 29
+		buildConfigField("String", "SDK_VERSION", "\"${project.version}\"")
 		consumerProguardFiles("consumer-rules.keep")
 
 		testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"

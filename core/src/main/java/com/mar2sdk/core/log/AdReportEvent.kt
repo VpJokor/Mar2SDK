@@ -9,7 +9,6 @@ import org.json.JSONObject
 
 internal object AdReportEvent {
 
-	val supportedEvents = setOf("ad_revenue", "ad_impression", "ad_click")
 	private val currencyPattern = Regex("[A-Za-z]{3}")
 
 	fun create(
@@ -26,7 +25,7 @@ internal object AdReportEvent {
 		uuid: String = UUID.randomUUID().toString(),
 		eventId: Long = (UUID.randomUUID().mostSignificantBits and Long.MAX_VALUE).coerceAtLeast(1L),
 	): JSONObject {
-		require(eventName in supportedEvents) { "Unsupported report event" }
+		require(eventName.isNotBlank()) { "Report event name is required" }
 		require(uid > 0) { "A logged-in user is required" }
 		require(distinctId.isNotBlank()) { "ThinkingData distinct ID is required" }
 		require(packageName.isNotBlank()) { "Package name is required" }

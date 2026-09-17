@@ -180,7 +180,7 @@ object NetUtil {
 			try {
 				if (user == null) AdEventReporter.onLogout(appID) else AdEventReporter.onLogin(appID, user.uid)
 			} catch (exception: Exception) {
-				Log.w(TAG, "Unable to restore ad reporting identity")
+				Log.w(TAG, "Unable to restore reporting identity")
 			}
 		}
 	}
@@ -398,7 +398,7 @@ object NetUtil {
 	}
 
 	/**
-	 * 批量上报完整的数数广告事件，单条也使用 JSONArray；调用前须完成登录。
+	 * 批量上报完整的数数事件，单条也使用 JSONArray；调用前须完成登录。
 	 * 缺少 #account_id 时补充当前产品已登录用户的 uid，已有账号必须与该用户一致。
 	 * 返回值可取消，通过 await() 取得 Result；成功仅表示服务端接受了整批数据。
 	 * 调用方负责保留失败批次，重试时复用原 #uuid、#event_id 和采集属性。
@@ -439,13 +439,13 @@ object NetUtil {
 					events = JSONArray(snapshot),
 				)
 				requestReport(request)
-				Log.d(TAG, "Ad event report accepted")
+				Log.d(TAG, "Event report accepted")
 				Result.success(Unit)
 			} catch (exception: CancellationException) {
 				throw exception
 			} catch (exception: Exception) {
 				val code = (exception as? ServerApiException)?.code
-				Log.w(TAG, "Ad event report failed: code=$code, error=${exception.javaClass.simpleName}")
+				Log.w(TAG, "Event report failed: code=$code, error=${exception.javaClass.simpleName}")
 				Result.failure(exception)
 			}
 		}

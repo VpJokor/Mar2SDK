@@ -83,6 +83,29 @@ class AdReportEventTest {
 	}
 
 	@Test
+	fun acceptsCustomEventsAndPreservesTheirPropertiesWithoutRevenueValidation() {
+		val appStart = create("app_start", mapOf("launch_source" to "notification"))
+		val purchase = create("purchase", mapOf(
+			"value" to "premium",
+			"currency" to "credits",
+			"items" to listOf(mapOf("sku" to "item-001", "quantity" to 2)),
+		))
+
+		assertEquals("app_start", appStart.getString("#event_name"))
+		val startProperties = appStart.getJSONObject("properties")
+		assertEquals("notification", startProperties.getString("launch_source"))
+		assertFalse(startProperties.has("value"))
+		assertFalse(startProperties.has("currency"))
+		assertEquals("purchase", purchase.getString("#event_name"))
+		val purchaseProperties = purchase.getJSONObject("properties")
+		assertEquals("premium", purchaseProperties.getString("value"))
+		assertEquals("credits", purchaseProperties.getString("currency"))
+		val item = purchaseProperties.getJSONArray("items").getJSONObject(0)
+		assertEquals("item-001", item.getString("sku"))
+		assertEquals(2, item.getInt("quantity"))
+	}
+
+	@Test
 	fun mergesBusinessPropertiesWithoutAllowingSystemPropertyOverrides() {
 		val preset = JSONObject().put("#os", "Android").put("#bundle_id", "old.package")
 			.put("#zone_offset", -12).put("campaign", "preset")
@@ -194,7 +217,8 @@ class AdReportEventTest {
 		for (uid in listOf(0L, -1L)) {
 			assertThrows(IllegalArgumentException::class.java) { create(uid = uid) }
 		}
-		for (blank in listOf("", " ")) {
+		for (blank in listOf("", " ", "\t\n")) {
+			assertThrows(IllegalArgumentException::class.java) { create(eventName = blank) }
 			assertThrows(IllegalArgumentException::class.java) { create(distinctId = blank) }
 			assertThrows(IllegalArgumentException::class.java) { create(packageName = blank) }
 			assertThrows(IllegalArgumentException::class.java) { create(uuid = blank) }
@@ -202,7 +226,6 @@ class AdReportEventTest {
 		for (eventId in listOf(0L, -1L)) {
 			assertThrows(IllegalArgumentException::class.java) { create(eventId = eventId) }
 		}
-		assertThrows(IllegalArgumentException::class.java) { create("app_start") }
 	}
 
 	@Test

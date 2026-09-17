@@ -14,7 +14,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import org.json.JSONObject
 
-/** 广告回调只采集快照；持久化、批量发送和重试在后台执行。 */
+/** 事件采集时只生成快照；持久化、批量发送和重试在后台执行。 */
 internal object AdEventReporter {
 	private const val TAG = "AdEventReporter"
 	private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
@@ -33,7 +33,7 @@ internal object AdEventReporter {
 				}
 			},
 			onFailure = { error ->
-				Log.w(TAG, "Ad report queue failed: ${error.javaClass.simpleName}")
+				Log.w(TAG, "Report queue failed: ${error.javaClass.simpleName}")
 			},
 			batchSize = { LogConfig.reportBatchSize },
 			flushDelayMillis = { LogConfig.reportFlushIntervalMillis },
@@ -59,7 +59,7 @@ internal object AdEventReporter {
 	}
 
 	fun capture(eventName: String, params: Map<String, Any>) {
-		if (eventName !in AdReportEvent.supportedEvents) return
+		if (eventName.isBlank()) return
 		val owner = currentIdentity() ?: return
 		try {
 			val timeMillis = System.currentTimeMillis()
@@ -83,7 +83,7 @@ internal object AdEventReporter {
 		} catch (exception: CancellationException) {
 			throw exception
 		} catch (exception: Exception) {
-			Log.w(TAG, "Unable to capture ad report: ${exception.javaClass.simpleName}")
+			Log.w(TAG, "Unable to capture report event: ${exception.javaClass.simpleName}")
 		}
 	}
 

@@ -39,6 +39,7 @@ import org.json.JSONArray
 import org.json.JSONObject
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -47,7 +48,7 @@ import org.junit.runner.RunWith
 @RunWith(AndroidJUnit4::class)
 class AdEventReporterIntegrationTest {
 	@Test
-	fun loginEnablesReportingAndBusinessFailureRetriesTheOriginalEvents() = runBlocking(Dispatchers.IO) {
+	fun loginEnablesConfiguredEventsAndBusinessFailureRetriesTheOriginalEvents() = runBlocking(Dispatchers.IO) {
 		val app = InstrumentationRegistry.getInstrumentation().targetContext.applicationContext as Application
 		val uid = 1542198364433551363L + (System.nanoTime() and 0xfffff)
 		val identity = AdReportIdentity(APP_ID, uid)
@@ -58,6 +59,20 @@ class AdEventReporterIntegrationTest {
 		val previousClientKey = CommonConfig.serverClientKey
 		val previousUrl = CommonConfig.serverUrl
 		val previousLoginPath = CommonConfig.platformLoginPath
+		val previousFbEvents = LogConfig.fbEvents
+		val previousLocalEvents = LogConfig.localEvents
+		val previousThEvents = LogConfig.thEvents
+		val previousNetEvents = LogConfig.netEvents
+		val previousBatchSize = LogConfig.reportBatchSize
+		val previousFlushIntervalMillis = LogConfig.reportFlushIntervalMillis
+		restorations += {
+			LogConfig.fbEvents = previousFbEvents
+			LogConfig.localEvents = previousLocalEvents
+			LogConfig.thEvents = previousThEvents
+			LogConfig.netEvents = previousNetEvents
+			LogConfig.reportBatchSize = previousBatchSize
+			LogConfig.reportFlushIntervalMillis = previousFlushIntervalMillis
+		}
 		val preferences = app.getSharedPreferences("preference", Context.MODE_PRIVATE)
 		val preferenceKeys = listOf(
 			"mar2sdk.login_user.$APP_ID", "mar2sdk.singular_attribution.$APP_ID",
@@ -99,6 +114,13 @@ class AdEventReporterIntegrationTest {
 			CommonConfig.serverClientKey = CLIENT_KEY
 			CommonConfig.serverUrl = server.url
 			CommonConfig.platformLoginPath = LOGIN_PATH
+			// 仅启用自有服务端渠道，避免路由验证触发其他日志系统。
+			LogConfig.fbEvents = emptyList()
+			LogConfig.localEvents = emptyList()
+			LogConfig.thEvents = emptyList()
+			LogConfig.netEvents = listOf("*")
+			LogConfig.reportBatchSize = 20
+			LogConfig.reportFlushIntervalMillis = 100L
 			withContext(Dispatchers.Main) {
 				// 隔离默认数数实例，避免影响其他设备测试。
 				TDAnalytics::class.java.getDeclaredField("instance").apply { isAccessible = true }.set(null, null)
@@ -123,6 +145,8 @@ class AdEventReporterIntegrationTest {
 			LogUtil.logNet(LogAdEvent.ad_impression, commonParams + ("format" to "INTER"))
 			LogUtil.logNet(LogAdEvent.ad_revenue, commonParams + mapOf("value" to 0.000153, "currency" to "USD", "ad_format" to "INTER"))
 			LogUtil.logNet(LogAdEvent.ad_click, commonParams + mapOf("format" to "INTER", "duration_time" to 14356L))
+			// 自定义事件通过统一入口和通配符配置上报，无需广告收入字段。
+			LogUtil.log("level_complete", commonParams + mapOf("level_id" to 7, "value" to "bonus", "currency" to "gems"))
 
 			val deadline = System.nanoTime() + TimeUnit.SECONDS.toNanos(15)
 			val failed = server.nextReport(deadline)
@@ -173,16 +197,35 @@ class AdEventReporterIntegrationTest {
 			}
 			inspect(failed)
 			inspect(retried)
-			while (received.size < 3) inspect(server.nextReport(deadline))
-			assertEquals(setOf("ad_impression", "ad_revenue", "ad_click"), received.keys)
-			assertEquals(3, received.values.map { it.getString("#uuid") }.toSet().size)
-			assertEquals(3, received.values.map { it.get("#event_id").toString() }.toSet().size)
+			while (received.size < 4) inspect(server.nextReport(deadline))
+			assertEquals(setOf("ad_impression", "ad_revenue", "ad_click", "level_complete"), received.keys)
+			assertEquals(4, received.values.map { it.getString("#uuid") }.toSet().size)
+			assertEquals(4, received.values.map { it.get("#event_id").toString() }.toSet().size)
 			assertEquals(0.000153, received.getValue("ad_revenue").getJSONObject("properties").getDouble("value"), 0.0)
 			assertEquals("USD", received.getValue("ad_revenue").getJSONObject("properties").getString("currency"))
 			assertEquals(14356L, received.getValue("ad_click").getJSONObject("properties").getLong("duration_time"))
+			val customProperties = received.getValue("level_complete").getJSONObject("properties")
+			assertEquals(7, customProperties.getInt("level_id"))
+			assertEquals("bonus", customProperties.getString("value"))
+			assertEquals("gems", customProperties.getString("currency"))
 			withTimeout(5_000) {
 				while (store.peek(identity, 100, Int.MAX_VALUE).isNotEmpty()) delay(25)
 			}
+
+			// 具名配置允许自定义事件，并过滤未启用的事件。
+			LogConfig.netEvents = listOf("purchase_success")
+			LogUtil.log("disabled_custom_event", commonParams)
+			LogUtil.log("purchase_success", commonParams + ("item_id" to "item-中文&=+"))
+			val namedRequest = server.nextReport(System.nanoTime() + TimeUnit.SECONDS.toNanos(5))
+			val namedEvents = JSONArray(namedRequest.form.getValue("data"))
+			assertEquals(1, namedEvents.length())
+			assertEquals("purchase_success", namedEvents.getJSONObject(0).getString("#event_name"))
+			inspect(namedRequest)
+			assertEquals("item-中文&=+", received.getValue("purchase_success").getJSONObject("properties").getString("item_id"))
+			withTimeout(5_000) {
+				while (store.peek(identity, 100, Int.MAX_VALUE).isNotEmpty()) delay(25)
+			}
+			assertNull("未启用的事件不应触发上报", server.pollReport(500))
 
 			val reportCount = server.reportCount.get()
 			val validEvent = JSONArray().put(received.getValue("ad_impression"))
@@ -264,6 +307,8 @@ class AdEventReporterIntegrationTest {
 		fun assertHealthy() {
 			failure.get()?.let { throw AssertionError("Local HTTP responder failed", it) }
 		}
+
+		fun pollReport(timeoutMillis: Long): RecordedRequest? = reports.poll(timeoutMillis, TimeUnit.MILLISECONDS)
 
 		private fun respond(connection: Socket) {
 			try {

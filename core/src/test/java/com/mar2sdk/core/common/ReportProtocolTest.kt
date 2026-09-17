@@ -61,6 +61,34 @@ class ReportProtocolTest {
 	}
 
 	@Test
+	fun acceptsCustomEventsAndPreservesTheirPropertiesWithoutRevenueValidation() {
+		val appStart = event("app_start").apply {
+			getJSONObject("properties").put("launch_source", "notification")
+		}
+		val purchase = event("purchase").apply {
+			getJSONObject("properties")
+				.put("value", "premium")
+				.put("currency", "credits")
+				.put("items", JSONArray().put(JSONObject().put("sku", "item-001").put("quantity", 2)))
+		}
+		val source = JSONArray().put(appStart).put(purchase)
+		val original = source.toString()
+
+		val sent = JSONArray(fields(createRequest(source)).getValue("data"))
+
+		assertEquals(2, sent.length())
+		for (index in 0 until source.length()) {
+			val expected = source.getJSONObject(index)
+			val actual = sent.getJSONObject(index)
+			assertEquals(expected.getString("#event_name"), actual.getString("#event_name"))
+			assertEquals(expected.getJSONObject("properties").toString(), actual.getJSONObject("properties").toString())
+		}
+		assertFalse(sent.getJSONObject(0).getJSONObject("properties").has("value"))
+		assertFalse(sent.getJSONObject(0).getJSONObject("properties").has("currency"))
+		assertEquals(original, source.toString())
+	}
+
+	@Test
 	fun signsExactlyTheSubmittedJsonAndEncodesFormValuesOnce() {
 		val source = JSONArray().put(event("ad_revenue").apply {
 			getJSONObject("properties").put("campaign_name", "中文+广告&variant=1")
@@ -149,8 +177,14 @@ class ReportProtocolTest {
 		assertThrows(IllegalArgumentException::class.java) {
 			createRequest(JSONArray().put(event().put("#type", "user_set")))
 		}
-		assertThrows(IllegalArgumentException::class.java) {
-			createRequest(JSONArray().put(event("purchase")))
+	}
+
+	@Test
+	fun rejectsBlankAndNonStringEventNames() {
+		for (name in listOf("", " ", "\t\n", JSONObject.NULL, 123, true, JSONObject(), JSONArray())) {
+			assertThrows(IllegalArgumentException::class.java) {
+				createRequest(JSONArray().put(event().put("#event_name", name)))
+			}
 		}
 	}
 

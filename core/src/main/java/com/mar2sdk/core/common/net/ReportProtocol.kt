@@ -6,7 +6,6 @@ import org.json.JSONObject
 
 internal object ReportProtocol {
 	const val PATH = "/report/data/report"
-	private val eventNames = setOf("ad_revenue", "ad_impression", "ad_click")
 	private val currencyPattern = Regex("[A-Za-z]{3}")
 
 	fun createRequest(
@@ -26,7 +25,7 @@ internal object ReportProtocol {
 			val event = batch.optJSONObject(index)
 				?: throw IllegalArgumentException("Report event must be an object")
 			val eventName = event.opt("#event_name") as? String
-			require(eventName in eventNames) { "Unsupported report event" }
+			require(!eventName.isNullOrBlank()) { "Report event name is required" }
 			require(event.opt("#type") == "track") { "Report event type must be track" }
 			for (field in listOf("#time", "#distinct_id", "#uuid")) {
 				require((event.opt(field) as? String)?.isNotBlank() == true) { "$field is required" }

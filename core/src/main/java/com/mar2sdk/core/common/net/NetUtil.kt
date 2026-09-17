@@ -439,13 +439,13 @@ object NetUtil {
 					events = JSONArray(snapshot),
 				)
 				requestReport(request)
-				Log.d(TAG, "Event report accepted")
+				Log.e(TAG, "Event report accepted")
 				Result.success(Unit)
 			} catch (exception: CancellationException) {
 				throw exception
 			} catch (exception: Exception) {
 				val code = (exception as? ServerApiException)?.code
-				Log.w(TAG, "Event report failed: code=$code, error=${exception.javaClass.simpleName}")
+				Log.e(TAG, "Event report failed: code=$code, error=${exception.javaClass.simpleName}")
 				Result.failure(exception)
 			}
 		}

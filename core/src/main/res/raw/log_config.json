@@ -3,6 +3,6 @@
   "localEvents": ["*"],
   "thEvents": ["*"],
   "netEvents": ["ad_revenue","ad_impression","ad_click"],
-  "reportBatchSize": 20,
+  "reportBatchSize": 1,
   "reportFlushIntervalMillis": 5000
 }

@@ -67,6 +67,8 @@ object Core {
 		AppNotificationUtil.init()
 		// 开始监听手机状态
 		AppObs.init()
+		// 每次初始化均上报设备信息，无需等待用户登录。
+		NetUtil.initLog()
 		// 游客登录
 		if (CommonConfig.isAutoLogin) {
 			NetUtil.login()

@@ -13,6 +13,8 @@
 
 数组中的 `"*"` 表示启用该渠道的全部事件；填写事件名列表时仅启用列表中的事件。空数组表示不启用任何事件。示例资源：[`log_config.json`](../../core/src/main/res/raw/log_config.json)。
 
+`BaseScreen` 和 `ContentActivity` 自动记录页面打开 `screen_open`、关闭 `screen_close` 及通过导航包装器执行的跳转 `screen_navigate`，参数包含页面或来源/目标路由、触发原因及容器类型（`compose` / `activity`）。`ContentActivity` 的系统返回也记录跳转事件；Compose 直接调用 `popBackStack()` 或系统返回仅触发生命周期事件。打包资源中的 `thEvents: ["*"]` 已包含这些事件；使用事件白名单时需显式加入三个页面事件，Remote Config 示例已同步配置。
+
 `netEvents` 支持任意非空白事件名。默认仅启用广告收入、展示和点击；在 `log_config.json` 中设为 `"netEvents": ["*"]` 可启用通过 `LogUtil.log` 记录的全部事件，也可使用 `"netEvents": ["app_start", "level_complete", "ad_revenue"]` 只启用指定事件。例如调用 `LogUtil.log("level_complete", mapOf("level" to 3))` 后，该事件会按配置进入批量上报队列。
 
 仅 `ad_revenue` 要求 `value` 为有限数值、`currency` 为三个 ASCII 字母的币种代码；其他事件不要求这两个属性，也不对同名属性应用收入校验。所有事件仍需满足登录账号、包名、事件标识和完整事件格式的校验。

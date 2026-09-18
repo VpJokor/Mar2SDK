@@ -8,6 +8,7 @@ import com.mar2sdk.core.ad.callback.ShowCallback
 import com.mar2sdk.core.ad.status.AdFormat
 import com.mar2sdk.core.ad.status.AdShowStatus
 import com.mar2sdk.core.firebase.FirebaseUtil
+import com.mar2sdk.core.firebase.InstallReferrerUtil
 import com.mar2sdk.core.firebase.SingularUtil
 import com.mar2sdk.core.log.LogUtil
 import com.mar2sdk.core.log.ThinkingUtil
@@ -59,6 +60,7 @@ object Core {
 		SingularUtil.init()
 		// 初始化数数
 		ThinkingUtil.init()
+		InstallReferrerUtil.init()
 		// 风控辅助初始化
 		RiskUtil.init()
 		// 上报appMod

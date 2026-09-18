@@ -59,8 +59,8 @@ class AdmobInterVideoShowerTest {
 		replace(AppStatus::isShowingAd, false)
 		replace(AdConfig::showMinTime, 0L)
 		replace(AdConfig::showMaxTime, 1_000L)
-		replace(AdmobConfig::interPoolSize, 0)
-		replace(AdmobConfig::videoPoolSize, 0)
+		replace(AdmobConfig::interConfig, AdmobConfig.interConfig.copy(poolSize = 0))
+		replace(AdmobConfig::videoConfig, AdmobConfig.videoConfig.copy(poolSize = 0))
 		replace(LogConfig::fbEvents, emptyList())
 		replace(LogConfig::thEvents, emptyList())
 		replace(LogConfig::localEvents, emptyList())
@@ -255,7 +255,7 @@ class AdmobInterVideoShowerTest {
 		try {
 			assertTrue(AppStatus.isShowingAd)
 			assertEquals(0, inter.shows)
-			AdmobLoader.interPool[inter] = System.currentTimeMillis() - AdmobConfig.interTimeout - 1L
+			AdmobLoader.interPool[inter] = System.currentTimeMillis() - AdmobConfig.interConfig.timeout - 1L
 			assertEquals(AdShowStatus.SHOW_SUCCESS, waiting.await())
 			assertEquals(0, inter.shows)
 			assertEquals(1, video.shows)

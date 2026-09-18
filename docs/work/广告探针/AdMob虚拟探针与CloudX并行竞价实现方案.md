@@ -373,7 +373,7 @@ CloudX 报价也应通过十进制定点数严格转换为 eCPM 微单位。非�
 
 - 采用单调时钟和统一绝对截止时间；不为两侧依次等待完整超时。统一候选状态变更到同一串行上下文，GMA 加载与展示遵循主线程要求。
 - 状态建议为 `LOADING → DECIDED → SHOWING → FINISHED`，另有 `CANCELLED`；最终选择只提交一次，迟到的加载回调不能改写胜者。
-- 广告及报价 TTL 与本次等待时间分开配置。现有 `AdmobConfig.interTimeout/videoTimeout` 是缓存有效期，不是网络超时；`ad_config.showMaxTime` 是既有展示等待上限，新截止时间应受其剩余预算约束。
+- 广告及报价 TTL 与本次等待时间分开配置。现有 `AdmobConfig.interConfig.timeout` 和 `AdmobConfig.videoConfig.timeout` 是缓存有效期，不是网络超时；`ad_config.showMaxTime` 是既有展示等待上限，新截止时间应受其剩余预算约束。
 - PDF 的美国 1500 ms、其他地区 2000 ms 仅作为待测试起点，不是通用最低标准。预加载、地区网络与业务广告时机应分别测量。
 - 胜者确定后保留所选对象，禁止展示函数再次从池中取另一条广告。未胜出的对象按各 SDK 约定缓存或释放，不能假设有通用 `destroy()` API。
 - 展示前检查 Activity 状态、广告有效期及已有全屏广告状态。页面退出或取消后不得继续展示。

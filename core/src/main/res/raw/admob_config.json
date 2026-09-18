@@ -1,11 +1,92 @@
 {
-  "releaseOpenID": "ca-app-pub-3940256099942544/9257395921",
-  "releaseInterID": "ca-app-pub-3940256099942544/9257395921",
-  "releaseVideoID": "ca-app-pub-3940256099942544/9257395921",
-  "openTimeout": 12600000,
-  "interTimeout": 3000000,
-  "videoTimeout": 3000000,
-  "openPoolSize": 1,
-  "interPoolSize": 1,
-  "videoPoolSize": 1
+  "openConfig": {
+    "id": "ca-app-pub-3940256099942544/9257395921",
+    "timeout": 12600000,
+    "poolSize": 1,
+    "probeConfig": {
+      "mod": "Reflect",
+      "timeout": 3000,
+      "currency": "USD",
+      "instances": [
+        {
+          "instanceId": "instanceA",
+          "label": "labelA",
+          "ecpm": 200.00,
+          "param": ""
+        },
+        {
+          "instanceId": "instanceB",
+          "label": "labelB",
+          "ecpm": 210.00,
+          "param": ""
+        },
+        {
+          "instanceId": "instanceC",
+          "label": "labelC",
+          "ecpm": 220.00,
+          "param": ""
+        }
+      ]
+    }
+  },
+  "interConfig": {
+    "id": "ca-app-pub-3940256099942544/9257395921",
+    "timeout": 3000000,
+    "poolSize": 1,
+    "probeConfig": {
+      "mod": "Reflect",
+      "timeout": 3000,
+      "currency": "USD",
+      "instances": [
+        {
+          "instanceId": "instanceA",
+          "label": "labelA",
+          "ecpm": 200.00,
+          "param": ""
+        },
+        {
+          "instanceId": "instanceB",
+          "label": "labelB",
+          "ecpm": 210.00,
+          "param": ""
+        },
+        {
+          "instanceId": "instanceC",
+          "label": "labelC",
+          "ecpm": 220.00,
+          "param": ""
+        }
+      ]
+    }
+  },
+  "videoConfig": {
+    "id": "ca-app-pub-3940256099942544/9257395921",
+    "timeout": 3000000,
+    "poolSize": 1,
+    "probeConfig": {
+      "mod": "Reflect",
+      "timeout": 3000,
+      "currency": "USD",
+      "instances": [
+        {
+          "instanceId": "instanceA",
+          "label": "labelA",
+          "ecpm": 200.00,
+          "param": ""
+        },
+        {
+          "instanceId": "instanceB",
+          "label": "labelB",
+          "ecpm": 210.00,
+          "param": ""
+        },
+        {
+          "instanceId": "instanceC",
+          "label": "labelC",
+          "ecpm": 220.00,
+          "param": ""
+        }
+      ]
+    }
+  }
 }

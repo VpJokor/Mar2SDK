@@ -25,8 +25,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import java.util.Collections
-import java.util.WeakHashMap
 
 /**
  * admob的广告加载器
@@ -69,12 +67,6 @@ object AdmobLoader {
 	val openPool = mutableMapOf<AppOpenAd, Long>()
 	val interPool = mutableMapOf<InterstitialAd, Long>()
 	val videoPool = mutableMapOf<RewardedAd, Long>()
-
-	// 价格快照不持有广告强引用，广告离开池并被释放后可一起回收。
-	private val loadedPrices = Collections.synchronizedMap(WeakHashMap<Any, AdmobPrice>())
-
-	/** 获取加载成功时的探价快照；null 表示未获取到有效价格。 */
-	fun getLoadedPrice(ad: Any): AdmobPrice? = loadedPrices[ad]
 
 	// 正在加载中的 开屏/插屏/视频 广告
 	var isLoadingOpen = false
@@ -155,7 +147,9 @@ object AdmobLoader {
 			logLoad(LogAdEvent.ad_start_loading, loadContext)
 			val loadCallback = object : AppOpenAd.AppOpenAdLoadCallback() {
 				override fun onAdLoaded(openAd: AppOpenAd) {
-					cacheLoadedAd(openAd, openPool, loadContext, "open") {
+					val price = AdmobReflectProbe.read(openAd)
+					openAd.reflectPrice = price
+					cacheLoadedAd(openAd, openPool, loadContext, "open", price) {
 						completeLoad(loadDeferred, OpenLoadResult.Loaded(openAd))
 					}
 				}
@@ -211,7 +205,9 @@ object AdmobLoader {
 			logLoad(LogAdEvent.ad_start_loading, loadContext)
 			val loadCallback = object : InterstitialAdLoadCallback() {
 				override fun onAdLoaded(interstitialAd: InterstitialAd) {
-					cacheLoadedAd(interstitialAd, interPool, loadContext, "interstitial") {
+					val price = AdmobReflectProbe.read(interstitialAd)
+					interstitialAd.reflectPrice = price
+					cacheLoadedAd(interstitialAd, interPool, loadContext, "interstitial", price) {
 						completeLoad(loadDeferred, InterLoadResult.Loaded(interstitialAd))
 					}
 				}
@@ -267,7 +263,9 @@ object AdmobLoader {
 			logLoad(LogAdEvent.ad_start_loading, loadContext)
 			val loadCallback = object : RewardedAdLoadCallback() {
 				override fun onAdLoaded(rewardedAd: RewardedAd) {
-					cacheLoadedAd(rewardedAd, videoPool, loadContext, "rewarded") {
+					val price = AdmobReflectProbe.read(rewardedAd)
+					rewardedAd.reflectPrice = price
+					cacheLoadedAd(rewardedAd, videoPool, loadContext, "rewarded", price) {
 						completeLoad(loadDeferred, VideoLoadResult.Loaded(rewardedAd))
 					}
 				}
@@ -341,10 +339,9 @@ object AdmobLoader {
 		pool: MutableMap<T, Long>,
 		adContext: ScreenAdContext,
 		adName: String,
+		price: AdmobPrice?,
 		complete: () -> Unit,
 	) {
-		val price = AdmobReflectProbe.read(ad)
-		if (price != null) loadedPrices[ad] = price
 		try {
 			logLoad(LogAdEvent.ad_finish_loading, adContext, price)
 		} catch (error: Exception) {

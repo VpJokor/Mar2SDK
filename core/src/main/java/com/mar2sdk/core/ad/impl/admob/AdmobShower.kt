@@ -43,6 +43,13 @@ object AdmobShower {
 	private const val TAG = "AdmobShower"
 	private val adScope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
 
+	private fun reflectPriceMicros(ad: Any): Long? = when (ad) {
+		is AppOpenAd -> ad.reflectPrice
+		is InterstitialAd -> ad.reflectPrice
+		is RewardedAd -> ad.reflectPrice
+		else -> null
+	}?.valueMicros
+
 	private suspend fun waitForMinimumShowTime(startedAtMs: Long, minimumTimeMs: Long) {
 		val elapsedMs = (SystemClock.elapsedRealtime() - startedAtMs).coerceAtLeast(0L)
 		val remainingMs = minimumTimeMs - elapsedMs
@@ -109,10 +116,10 @@ object AdmobShower {
 			AdmobLoader.checkPool(AdFormat.OPEN)
 			AdmobLoader.checkPool(AdFormat.INTER)
 			fun bestOpenAd() = AdmobLoader.openPool.keys.maxByOrNull {
-				AdmobLoader.getLoadedPrice(it)?.valueMicros ?: Long.MIN_VALUE
+				it.reflectPrice?.valueMicros ?: Long.MIN_VALUE
 			}
 			fun bestInterAd() = AdmobLoader.interPool.keys.maxByOrNull {
-				AdmobLoader.getLoadedPrice(it)?.valueMicros ?: Long.MIN_VALUE
+				it.reflectPrice?.valueMicros ?: Long.MIN_VALUE
 			}
 			val selection = selectAdPair<Any>(
 				primaryAd = bestOpenAd(),
@@ -158,7 +165,7 @@ object AdmobShower {
 						AdmobLoader.InterLoadResult.PoolFull -> AdmobLoader.interPool.keys.firstOrNull()
 					}
 				},
-				priceMicros = { AdmobLoader.getLoadedPrice(it)?.valueMicros },
+				priceMicros = ::reflectPriceMicros,
 			)
 			fun noAvailableAd(): AdShowStatus {
 				if (selection.timedOut) {
@@ -180,7 +187,7 @@ object AdmobShower {
 			AdmobLoader.checkPool(AdFormat.OPEN)
 			AdmobLoader.checkPool(AdFormat.INTER)
 			val ad = higherPricedAd<Any>(bestOpenAd(), bestInterAd()) {
-				AdmobLoader.getLoadedPrice(it)?.valueMicros
+				reflectPriceMicros(it)
 			} ?: return@withContext noAvailableAd()
 			when (ad) {
 				is AppOpenAd -> {
@@ -345,10 +352,10 @@ object AdmobShower {
 			AdmobLoader.checkPool(AdFormat.INTER)
 			AdmobLoader.checkPool(AdFormat.VIDEO)
 			fun bestInterAd() = AdmobLoader.interPool.keys.maxByOrNull {
-				AdmobLoader.getLoadedPrice(it)?.valueMicros ?: Long.MIN_VALUE
+				it.reflectPrice?.valueMicros ?: Long.MIN_VALUE
 			}
 			fun bestVideoAd() = AdmobLoader.videoPool.keys.maxByOrNull {
-				AdmobLoader.getLoadedPrice(it)?.valueMicros ?: Long.MIN_VALUE
+				it.reflectPrice?.valueMicros ?: Long.MIN_VALUE
 			}
 			val selection = selectAdPair<Any>(
 				primaryAd = bestInterAd(),
@@ -394,7 +401,7 @@ object AdmobShower {
 						AdmobLoader.VideoLoadResult.PoolFull -> AdmobLoader.videoPool.keys.firstOrNull()
 					}
 				},
-				priceMicros = { AdmobLoader.getLoadedPrice(it)?.valueMicros },
+				priceMicros = ::reflectPriceMicros,
 			)
 			fun noAvailableAd(): AdShowStatus {
 				if (selection.timedOut) {
@@ -416,7 +423,7 @@ object AdmobShower {
 			AdmobLoader.checkPool(AdFormat.INTER)
 			AdmobLoader.checkPool(AdFormat.VIDEO)
 			val ad = higherPricedAd<Any>(bestInterAd(), bestVideoAd()) {
-				AdmobLoader.getLoadedPrice(it)?.valueMicros
+				reflectPriceMicros(it)
 			} ?: return@withContext noAvailableAd()
 			when (ad) {
 				is InterstitialAd -> {

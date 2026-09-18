@@ -37,6 +37,7 @@ import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
@@ -47,10 +48,6 @@ import org.junit.runner.RunWith
 class AdmobInterVideoShowerTest {
 
 	private val restore = mutableListOf<() -> Unit>()
-	@Suppress("UNCHECKED_CAST")
-	private val prices: MutableMap<Any, AdmobPrice>
-		get() = AdmobLoader::class.java.getDeclaredField("loadedPrices")
-			.apply { isAccessible = true }.get(null) as MutableMap<Any, AdmobPrice>
 
 	@Before
 	fun setUp() = onMain {
@@ -70,7 +67,6 @@ class AdmobInterVideoShowerTest {
 		replace(LogConfig::netEvents, emptyList())
 		clearForTest(AdmobLoader.interPool)
 		clearForTest(AdmobLoader.videoPool)
-		clearForTest(prices)
 		for (name in listOf("interLoadDeferred", "videoLoadDeferred")) {
 			val field = AdmobLoader::class.java.getDeclaredField(name).apply { isAccessible = true }
 			val previous = field.get(null)
@@ -83,6 +79,20 @@ class AdmobInterVideoShowerTest {
 	fun tearDown() = onMain {
 		restore.asReversed().forEach { it() }
 		restore.clear()
+	}
+
+	@Test
+	fun sameAdUnitInstancesKeepIndependentPrices() = onMain {
+		val first = FakeInter("same-inter")
+		val second = FakeInter("same-inter")
+		cache(first, 10)
+		cache(second, 20)
+
+		assertEquals(AdmobPrice(10, "USD", 1), first.reflectPrice)
+		assertEquals(AdmobPrice(20, "USD", 1), second.reflectPrice)
+		first.reflectPrice = null
+		assertNull(first.reflectPrice)
+		assertEquals(AdmobPrice(20, "USD", 1), second.reflectPrice)
 	}
 
 	@Test
@@ -268,12 +278,12 @@ class AdmobInterVideoShowerTest {
 
 	private fun cache(ad: FakeInter, price: Long?) {
 		AdmobLoader.interPool[ad] = System.currentTimeMillis()
-		if (price != null) prices[ad] = AdmobPrice(price, "USD", 1)
+		replace(ad::reflectPrice, price?.let { AdmobPrice(it, "USD", 1) })
 	}
 
 	private fun cache(ad: FakeVideo, price: Long?) {
 		AdmobLoader.videoPool[ad] = System.currentTimeMillis()
-		if (price != null) prices[ad] = AdmobPrice(price, "USD", 1)
+		replace(ad::reflectPrice, price?.let { AdmobPrice(it, "USD", 1) })
 	}
 
 	private fun <T> replace(property: KMutableProperty0<T>, value: T) {

@@ -7,12 +7,23 @@
 `AdmobLoader` 在开屏/插屏/激励视频的 `onAdLoaded` 中读取一次价格，并按广告实例保存快照。可通过广告池中的实例查询：
 
 ```kotlin
+import com.mar2sdk.core.ad.impl.admob.reflectPrice
+
 val ad = AdmobLoader.openPool.keys.firstOrNull()
-val price = ad?.let { AdmobLoader.getLoadedPrice(it) }
+val price = ad?.reflectPrice
 val ecpm: Double? = price?.ecpm // 美元 / 千次展示
 ```
 
-若广告由调用方自行加载，可在 `onAdLoaded` 中使用 `AdmobReflectProbe.read(ad)`。应在主线程、广告展示前读取。返回 `null` 表示没有有效价格，不能解释为零价。快照使用弱引用关联广告，不延长广告实例的生命周期。
+`AppOpenAd`、`InterstitialAd`、`RewardedAd` 均提供扩展属性 `reflectPrice`。快照通过私有弱引用缓存关联广告实例，不延长广告的生命周期。读取属性不会触发反射；赋值为 `null` 会清除该实例的快照。未保存快照或未获取到有效价格时返回 `null`，不能解释为零价。
+
+若广告由调用方自行加载，在主线程的 `onAdLoaded` 中保存一次即可：
+
+```kotlin
+ad.reflectPrice = AdmobReflectProbe.read(ad)
+val ecpm = ad.reflectPrice?.ecpm
+```
+
+应在广告展示前读取并保存价格。`AdmobReflectProbe.read` 只返回读取结果，保存由属性赋值完成。
 
 价格字段：
 

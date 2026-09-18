@@ -19,6 +19,7 @@ import com.mar2sdk.core.AppStatus
 import com.mar2sdk.core.Core
 import com.mar2sdk.core.ad.AdConfig
 import com.mar2sdk.core.ad.callback.ShowCallback
+import com.mar2sdk.core.ad.impl.admob.probe.AdmobPrice
 import com.mar2sdk.core.ad.policy.ScreenAdContext
 import com.mar2sdk.core.ad.policy.ScreenAdTrigger
 import com.mar2sdk.core.ad.status.AdFormat

@@ -9,6 +9,8 @@ import com.google.android.gms.ads.interstitial.InterstitialAdLoadCallback
 import com.google.android.gms.ads.rewarded.RewardedAd
 import com.google.android.gms.ads.rewarded.RewardedAdLoadCallback
 import com.mar2sdk.core.Core
+import com.mar2sdk.core.ad.impl.admob.probe.AdmobPrice
+import com.mar2sdk.core.ad.impl.admob.probe.AdmobPriceProbe
 import com.mar2sdk.core.ad.policy.ScreenAdContext
 import com.mar2sdk.core.ad.policy.ScreenAdTrigger
 import com.mar2sdk.core.ad.status.AdFormat

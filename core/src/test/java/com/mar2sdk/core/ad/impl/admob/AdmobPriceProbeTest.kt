@@ -1,5 +1,10 @@
 package com.mar2sdk.core.ad.impl.admob
 
+import com.mar2sdk.core.ad.impl.admob.probe.AdmobPrice
+import com.mar2sdk.core.ad.impl.admob.probe.AdmobPriceEventFields
+import com.mar2sdk.core.ad.impl.admob.probe.AdmobPriceExtractor
+import com.mar2sdk.core.ad.impl.admob.probe.AdmobPriceField
+import com.mar2sdk.core.ad.impl.admob.probe.AdmobPriceProbe
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Test
@@ -23,7 +28,12 @@ class AdmobPriceProbeTest {
 		val extractor = AdmobPriceExtractor(
 			emptyList(),
 			DynamiteEvent::class.java.name,
-			AdmobPriceEventFields(eventType = "a", precision = "b", currency = "c", valueMicros = "d")
+			AdmobPriceEventFields(
+				eventType = "a",
+				precision = "b",
+				currency = "c",
+				valueMicros = "d"
+			)
 		)
 
 		assertEquals(AdmobPrice(12_345L, "USD", 1), extractor.read(DynamiteEvent()))
@@ -109,7 +119,11 @@ class AdmobPriceProbeTest {
 			)
 		}
 		val wrongIntermediateRuntime = stateField.copy(runtimeClassName = Ad::class.java.name)
-		assertNull(AdmobPriceExtractor(listOf(adField, wrongIntermediateRuntime), Event::class.java.name).read(ad))
+		assertNull(
+			AdmobPriceExtractor(
+				listOf(adField, wrongIntermediateRuntime),
+				Event::class.java.name
+			).read(ad))
 		assertNull(AdmobPriceExtractor(listOf(adField, stateField), Any::class.java.name).read(ad))
 	}
 
@@ -140,7 +154,8 @@ class AdmobPriceProbeTest {
 		assertNull(AdmobPriceProbe.read(Any(), "25.3.0"))
 	}
 
-	private fun extractor() = AdmobPriceExtractor(listOf(adField, stateField), Event::class.java.name)
+	private fun extractor() =
+		AdmobPriceExtractor(listOf(adField, stateField), Event::class.java.name)
 
 	private val adField = field(Ad::class.java, Ad::class.java, "state", State::class.java)
 	private val stateField = field(State::class.java, State::class.java, "event", Event::class.java)

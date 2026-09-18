@@ -29,7 +29,7 @@ AdMob 提供公开的展示级收益接口（ILRD）。本方案解决的是“�
 | 现有文件 | 当前作用 | 本方案的接入建议 |
 | --- | --- | --- |
 | [core/build.gradle.kts](../../../core/build.gradle.kts) | GMA SDK、广告适配器依赖，配置 consumer ProGuard 规则 | 引入经确认的 CloudX 依赖；保留虚拟探针适配器类 |
-| [AdmobPriceProbe.kt](../../../core/src/main/java/com/mar2sdk/core/ad/impl/admob/AdmobPriceProbe.kt) | 使用针对 SDK 25.3.0 的字段链反射读取展示前价格 | 与本方案分开命名、存储；它不是瀑布流虚拟探针 |
+| [AdmobReflectProbe.kt](../../../core/src/main/java/com/mar2sdk/core/ad/impl/admob/probe/AdmobReflectProbe.kt) | 使用针对 SDK 25.3.0 的字段链反射读取展示前价格 | 与本方案分开命名、存储；它不是瀑布流虚拟探针 |
 | [AdmobLoader.kt](../../../core/src/main/java/com/mar2sdk/core/ad/impl/admob/AdmobLoader.kt) | 加载广告、保存价格快照、写入缓存池 | 在成功加载后读取 ResponseInfo，为广告对象绑定独立代理价快照 |
 | [AdmobShower.kt](../../../core/src/main/java/com/mar2sdk/core/ad/impl/admob/AdmobShower.kt) | 选择缓存广告、控制展示和回调 | 在同格式候选广告上接入协调器，只展示最终选中的对象 |
 | [AdShower.kt](../../../core/src/main/java/com/mar2sdk/core/ad/AdShower.kt)、[AdLoader.kt](../../../core/src/main/java/com/mar2sdk/core/ad/AdLoader.kt) | 平台展示与预加载路由，当前实际实现以 AdMob 为主 | 接入 CloudX 加载及统一选择入口 |

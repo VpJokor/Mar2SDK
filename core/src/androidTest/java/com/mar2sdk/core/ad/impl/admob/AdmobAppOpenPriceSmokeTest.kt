@@ -14,7 +14,7 @@ import com.google.android.gms.ads.appopen.AppOpenAd
 import com.mar2sdk.core.ad.impl.admob.probe.AdmobPrice
 import com.mar2sdk.core.ad.impl.admob.probe.AdmobPriceEventFields
 import com.mar2sdk.core.ad.impl.admob.probe.AdmobPriceField
-import com.mar2sdk.core.ad.impl.admob.probe.AdmobPriceProbe
+import com.mar2sdk.core.ad.impl.admob.probe.AdmobReflectProbe
 import java.lang.reflect.Modifier
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
@@ -83,9 +83,9 @@ class AdmobAppOpenPriceSmokeTest {
 		assertEquals("Official app-open test ad failed to load: ${failure.get()}", null, failure.get())
 		val ad = loadedAd.get()
 		assertNotNull("The load callback did not provide an app-open ad", ad)
-		assertEquals(AdmobPriceProbe.openPath.first().runtimeClassName, ad.javaClass.name)
+		assertEquals(AdmobReflectProbe.openPath.first().runtimeClassName, ad.javaClass.name)
 
-		val local = observePath(ad, AdmobPriceProbe.openPath)
+		val local = observePath(ad, AdmobReflectProbe.openPath)
 		Log.i(TAG, "localClasses=${local.classes}, localFields=${local.fields}")
 		val binder = (local.terminal as? IInterface)?.asBinder()
 		var supportedDynamiteModule = false
@@ -110,7 +110,7 @@ class AdmobAppOpenPriceSmokeTest {
 				moduleVersion == 260480602 && sameLoader
 		}
 		val dynamite = if (!local.complete && binder != null) {
-			observePath(ad, AdmobPriceProbe.dynamiteOpenPath).also {
+			observePath(ad, AdmobReflectProbe.dynamiteOpenPath).also {
 				Log.i(TAG, "dynamiteClasses=${it.classes}, dynamiteFields=${it.fields}")
 			}
 		} else {
@@ -119,8 +119,8 @@ class AdmobAppOpenPriceSmokeTest {
 		val observation = dynamite ?: local
 		val event = observation.terminal
 		val eventFields = when (event?.javaClass?.name) {
-			AdmobPriceProbe.EVENT_CLASS_NAME -> AdmobPriceEventFields()
-			AdmobPriceProbe.DYNAMITE_EVENT_CLASS_NAME -> AdmobPriceProbe.dynamiteEventFields
+			AdmobReflectProbe.EVENT_CLASS_NAME -> AdmobPriceEventFields()
+			AdmobReflectProbe.DYNAMITE_EVENT_CLASS_NAME -> AdmobReflectProbe.dynamiteEventFields
 			else -> null
 		}
 		fun eventField(name: String?): Any? = if (event == null || name == null) null else {
@@ -130,7 +130,7 @@ class AdmobAppOpenPriceSmokeTest {
 		val precision = eventField(eventFields?.precision) as? Int
 		val currency = eventField(eventFields?.currency) as? String
 		val valueMicros = eventField(eventFields?.valueMicros) as? Long
-		val price = AdmobPriceProbe.read(ad)
+		val price = AdmobReflectProbe.read(ad)
 		Log.i(
 			TAG,
 			"eventClass=${event?.javaClass?.name}, eventType=$eventType, precision=$precision, " +

@@ -12,7 +12,7 @@ val price = ad?.let { AdmobLoader.getLoadedPrice(it) }
 val ecpm: Double? = price?.ecpm // 美元 / 千次展示
 ```
 
-若广告由调用方自行加载，可在 `onAdLoaded` 中使用 `AdmobPriceProbe.read(ad)`。应在主线程、广告展示前读取。返回 `null` 表示没有有效价格，不能解释为零价。快照使用弱引用关联广告，不延长广告实例的生命周期。
+若广告由调用方自行加载，可在 `onAdLoaded` 中使用 `AdmobReflectProbe.read(ad)`。应在主线程、广告展示前读取。返回 `null` 表示没有有效价格，不能解释为零价。快照使用弱引用关联广告，不延长广告实例的生命周期。
 
 价格字段：
 

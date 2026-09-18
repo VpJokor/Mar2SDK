@@ -5,7 +5,7 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.google.android.gms.ads.MobileAds
 import com.mar2sdk.core.ad.impl.admob.probe.AdmobPrice
 import com.mar2sdk.core.ad.impl.admob.probe.AdmobPriceExtractor
-import com.mar2sdk.core.ad.impl.admob.probe.AdmobPriceProbe
+import com.mar2sdk.core.ad.impl.admob.probe.AdmobReflectProbe
 import java.io.StringReader
 import java.lang.reflect.Modifier
 import org.junit.Assert.assertEquals
@@ -16,16 +16,16 @@ import org.junit.Test
 import org.junit.runner.RunWith
 
 @RunWith(AndroidJUnit4::class)
-class AdmobPriceProbeInstrumentedTest {
+class AdmobReflectProbeInstrumentedTest {
 
 	@Test
 	fun bundledSdkMatchesAllSupportedReflectionPaths() {
 		assertEquals("25.3.0", MobileAds.getVersion().toString())
 
 		for (path in listOf(
-			AdmobPriceProbe.interstitialPath,
-			AdmobPriceProbe.rewardedPath,
-			AdmobPriceProbe.openPath,
+			AdmobReflectProbe.interstitialPath,
+			AdmobReflectProbe.rewardedPath,
+			AdmobReflectProbe.openPath,
 		)) {
 			assertFalse("The ad path must reach a revenue event", path.isEmpty())
 			for ((index, signature) in path.withIndex()) {
@@ -36,7 +36,7 @@ class AdmobPriceProbeInstrumentedTest {
 				assertEquals(signature.toString(), signature.fieldTypeName, field.type.name)
 				assertFalse(signature.toString(), Modifier.isStatic(field.modifiers))
 				val nextRuntimeClass = Class.forName(
-					path.getOrNull(index + 1)?.runtimeClassName ?: AdmobPriceProbe.EVENT_CLASS_NAME
+					path.getOrNull(index + 1)?.runtimeClassName ?: AdmobReflectProbe.EVENT_CLASS_NAME
 				)
 				assertTrue(
 					"${signature.fieldTypeName} must accept ${nextRuntimeClass.name}",
@@ -48,7 +48,7 @@ class AdmobPriceProbeInstrumentedTest {
 
 	@Test
 	fun decodesTheBundledSdkRevenueEvent() {
-		val eventClass = Class.forName(AdmobPriceProbe.EVENT_CLASS_NAME)
+		val eventClass = Class.forName(AdmobReflectProbe.EVENT_CLASS_NAME)
 		val constructor = eventClass.getDeclaredConstructor(
 			Int::class.javaPrimitiveType,
 			Int::class.javaPrimitiveType,
@@ -65,14 +65,14 @@ class AdmobPriceProbeInstrumentedTest {
 
 	@Test
 	fun readsRevenueParsedByTheBundledSdkFromAnAppOpenResponse() {
-		val responseNode = AdmobPriceProbe.openPath.last()
+		val responseNode = AdmobReflectProbe.openPath.last()
 		val constructor = Class.forName(responseNode.runtimeClassName)
 			.getDeclaredConstructor(JsonReader::class.java)
 			.apply { isAccessible = true }
 		fun parseResponse(json: String): Any = JsonReader(StringReader(json)).use { reader ->
 			constructor.newInstance(reader)
 		}
-		val extractor = AdmobPriceExtractor(listOf(responseNode), AdmobPriceProbe.EVENT_CLASS_NAME)
+		val extractor = AdmobPriceExtractor(listOf(responseNode), AdmobReflectProbe.EVENT_CLASS_NAME)
 		val pricedResponse = parseResponse(
 			"""{
 				"ad_type": "app_open_ad",

@@ -24,7 +24,7 @@ data class AdmobPrice internal constructor(
  * 远程 Binder、版本/结构变化或没有有效价格时返回 null。
  * 字段链依赖 SDK 内部实现，读取结果仅供观察，不作为竞价或收入上报依据。
  */
-object AdmobPriceProbe {
+object AdmobReflectProbe {
 	private const val SDK_VERSION = "25.3.0"
 	private const val ADS = "com.google.android.gms.internal.ads."
 	private const val CLIENT = "com.google.android.gms.ads.internal.client."

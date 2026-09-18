@@ -10,7 +10,7 @@ import com.google.android.gms.ads.rewarded.RewardedAd
 import com.google.android.gms.ads.rewarded.RewardedAdLoadCallback
 import com.mar2sdk.core.Core
 import com.mar2sdk.core.ad.impl.admob.probe.AdmobPrice
-import com.mar2sdk.core.ad.impl.admob.probe.AdmobPriceProbe
+import com.mar2sdk.core.ad.impl.admob.probe.AdmobReflectProbe
 import com.mar2sdk.core.ad.policy.ScreenAdContext
 import com.mar2sdk.core.ad.policy.ScreenAdTrigger
 import com.mar2sdk.core.ad.status.AdFormat
@@ -343,7 +343,7 @@ object AdmobLoader {
 		adName: String,
 		complete: () -> Unit,
 	) {
-		val price = AdmobPriceProbe.read(ad)
+		val price = AdmobReflectProbe.read(ad)
 		if (price != null) loadedPrices[ad] = price
 		try {
 			logLoad(LogAdEvent.ad_finish_loading, adContext, price)

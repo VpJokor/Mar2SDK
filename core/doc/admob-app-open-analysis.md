@@ -2,7 +2,7 @@
 
 ## 结论
 
-开屏广告存在通往加载响应中价格事件的对象链，可复用插屏和激励视频的价格校验与换算逻辑。`AdmobPriceProbe` 已接入 AAR 的本地实现，以及设备实际加载的 AdsDynamite 260480602 实现；`AdmobLoader` 原有的统一加载成功入口会自动保存开屏价格快照。
+开屏广告存在通往加载响应中价格事件的对象链，可复用插屏和激励视频的价格校验与换算逻辑。`AdmobReflectProbe` 已接入 AAR 的本地实现，以及设备实际加载的 AdsDynamite 260480602 实现；`AdmobLoader` 原有的统一加载成功入口会自动保存开屏价格快照。
 
 分析对象是 Gradle 实际依赖的 `com.google.android.gms:play-services-ads:25.3.0` 和 `play-services-ads-api:25.3.0` 的 `classes.jar`，使用 `javap -p -c` 检查字节码。不是 Google 发布的原始源码。提取后文件的 SHA-256：
 
@@ -76,7 +76,7 @@
 
 ```powershell
 .\gradlew.bat :core:connectedDebugAndroidTest `
-  '-Pandroid.testInstrumentationRunnerArguments.class=com.mar2sdk.core.ad.impl.admob.AdmobPriceProbeInstrumentedTest,com.mar2sdk.core.ad.impl.admob.AdmobAppOpenPriceSmokeTest' `
+  '-Pandroid.testInstrumentationRunnerArguments.class=com.mar2sdk.core.ad.impl.admob.AdmobReflectProbeInstrumentedTest,com.mar2sdk.core.ad.impl.admob.AdmobAppOpenPriceSmokeTest' `
   '-Pandroid.testInstrumentationRunnerArguments.admobAppOpenSmoke=true'
 adb logcat -d -s AdmobAppOpenSmoke:I '*:S'
 ```

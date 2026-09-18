@@ -4,12 +4,12 @@ import com.mar2sdk.core.ad.impl.admob.probe.AdmobPrice
 import com.mar2sdk.core.ad.impl.admob.probe.AdmobPriceEventFields
 import com.mar2sdk.core.ad.impl.admob.probe.AdmobPriceExtractor
 import com.mar2sdk.core.ad.impl.admob.probe.AdmobPriceField
-import com.mar2sdk.core.ad.impl.admob.probe.AdmobPriceProbe
+import com.mar2sdk.core.ad.impl.admob.probe.AdmobReflectProbe
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Test
 
-class AdmobPriceProbeTest {
+class AdmobReflectProbeTest {
 
 	@Test
 	fun readsPrivateFieldsAndConvertsImpressionRevenueToEcpm() {
@@ -149,9 +149,9 @@ class AdmobPriceProbeTest {
 	@Test
 	fun returnsNullForUnsupportedSdkVersionsAndAdClasses() {
 		for (version in listOf("", "25.2.0", "25.3.1", "26.0.0")) {
-			assertNull(AdmobPriceProbe.read(Ad(State(Event())), version))
+			assertNull(AdmobReflectProbe.read(Ad(State(Event())), version))
 		}
-		assertNull(AdmobPriceProbe.read(Any(), "25.3.0"))
+		assertNull(AdmobReflectProbe.read(Any(), "25.3.0"))
 	}
 
 	private fun extractor() =

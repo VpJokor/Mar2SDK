@@ -3,6 +3,7 @@ package com.mar2sdk.core.ad.impl.admob
 import android.content.SharedPreferences
 import com.mar2sdk.core.AppMod
 import com.mar2sdk.core.Core
+import com.mar2sdk.core.ad.impl.admob.AdmobConfig.ProbeMod
 import com.mar2sdk.core.common.PreferenceUtil
 import java.io.File
 import java.lang.reflect.Modifier
@@ -61,7 +62,7 @@ class AdmobConfigTest {
 		AdmobConfig.applyConfig(config)
 		val replacement = JSONObject("""
 			{"id":"updated-open","timeout":9876,"poolSize":7,
-			 "probeConfig":{"mod":"updated-mode","timeout":654,"currency":"CNY","instances":[]}}
+			 "probeConfig":{"mod":"ADAPTER_L","timeout":654,"currency":"CNY","instances":[]}}
 		""")
 
 		AdmobConfig.applyConfig(JSONObject().put("openConfig", replacement))
@@ -111,17 +112,46 @@ class AdmobConfigTest {
 	}
 
 	@Test
-	fun persistsAndReloadsAllFormatAndProbeFields() {
+	fun persistsAndReloadsAllProbeModesAndFormatFields() {
 		val field = PreferenceUtil::class.java.getDeclaredField("sharedPreferences").apply { isAccessible = true }
-		field.set(null, inMemoryPreferences())
+		val preferences = inMemoryPreferences()
+		field.set(null, preferences)
 		val resetConfig = snapshotFields(AdmobConfig::class.java)
+
+		for (mode in ProbeMod.entries) {
+			val config = distinctConfig().apply {
+				listOf("open", "inter", "video").forEach { format ->
+					getJSONObject("${format}Config").getJSONObject("probeConfig").put("mod", mode.name)
+				}
+			}
+
+			AdmobConfig.applyConfig(config)
+			assertEquals(List(3) { mode }, formatConfigs().map { it.probeConfig.mod })
+			listOf(AdmobKey.KEY_OPEN_CONFIG, AdmobKey.KEY_INTER_CONFIG, AdmobKey.KEY_VIDEO_CONFIG).forEach { key ->
+				val stored = JSONObject(preferences.getString(key, null)!!)
+				assertEquals(mode.name, stored.getJSONObject("probeConfig").getString("mod"))
+			}
+			resetConfig()
+			AdmobConfig.loadConfigFromPreference()
+
+			assertMatches(config)
+		}
+	}
+
+	@Test(expected = IllegalArgumentException::class)
+	fun rejectsUnknownProbeModes() {
 		val config = distinctConfig()
+		config.getJSONObject("openConfig").getJSONObject("probeConfig").put("mod", "UNKNOWN")
 
 		AdmobConfig.applyConfig(config)
-		resetConfig()
-		AdmobConfig.loadConfigFromPreference()
+	}
 
-		assertMatches(config)
+	@Test(expected = IllegalArgumentException::class)
+	fun rejectsLegacyProbeModeNames() {
+		val config = distinctConfig()
+		config.getJSONObject("openConfig").getJSONObject("probeConfig").put("mod", "Reflect")
+
+		AdmobConfig.applyConfig(config)
 	}
 
 	@Test
@@ -150,7 +180,7 @@ class AdmobConfigTest {
 				put("timeout", (index + 1) * 1000L)
 				put("poolSize", index + 2)
 				put("probeConfig", JSONObject().apply {
-					put("mod", "$format-mode")
+					put("mod", ProbeMod.entries[index].name)
 					put("timeout", (index + 1) * 100L)
 					put("currency", listOf("USD", "EUR", "JPY")[index])
 					put("instances", JSONArray().put(JSONObject().apply {
@@ -174,7 +204,7 @@ class AdmobConfigTest {
 			val probe = expected.getJSONObject("probeConfig")
 			val instances = probe.getJSONArray("instances")
 			assertEquals(format, AdmobConfig.ProbeConfig(
-				mod = probe.getString("mod"),
+				mod = ProbeMod.valueOf(probe.getString("mod")),
 				timeout = probe.getLong("timeout"),
 				currency = probe.getString("currency"),
 				instances = List(instances.length()) { instanceIndex ->

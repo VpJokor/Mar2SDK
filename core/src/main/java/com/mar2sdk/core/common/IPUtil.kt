@@ -33,7 +33,6 @@ object IPUtil {
 	private val googleCidrs by lazy { loadCidrsFromRaw(R.raw.google) }
 
 	fun checkIpInfo() {
-		if (UserInfo.riskIP != RiskType.UNKNOW) return
 		if (!requestInFlight.compareAndSet(false, true)) return
 		scope.launch {
 			try {

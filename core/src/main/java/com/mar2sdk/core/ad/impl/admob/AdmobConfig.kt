@@ -21,6 +21,18 @@ object AdmobConfig {
 		val probeConfig: ProbeConfig
 	)
 
+	// 广告探价模式
+	// REFLECT 反射取价
+	// ADAPTER_H 探针向上取价
+	// ADAPTER_M 探针居中取价
+	// ADAPTER_L 探针向下取价
+	enum class ProbeMod{
+		REFLECT,
+		ADAPTER_H,
+		ADAPTER_M,
+		ADAPTER_L,
+	}
+
 	// mod：探价模式
 	// timeout：探价超时时间，单位毫秒
 	// currency：探价币种

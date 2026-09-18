@@ -4,7 +4,7 @@
     "timeout": 12600000,
     "poolSize": 1,
     "probeConfig": {
-      "mod": "Reflect",
+      "mod": "REFLECT",
       "timeout": 3000,
       "currency": "USD",
       "instances": [
@@ -34,7 +34,7 @@
     "timeout": 3000000,
     "poolSize": 1,
     "probeConfig": {
-      "mod": "Reflect",
+      "mod": "REFLECT",
       "timeout": 3000,
       "currency": "USD",
       "instances": [
@@ -64,7 +64,7 @@
     "timeout": 3000000,
     "poolSize": 1,
     "probeConfig": {
-      "mod": "Reflect",
+      "mod": "REFLECT",
       "timeout": 3000,
       "currency": "USD",
       "instances": [

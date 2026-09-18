@@ -26,7 +26,7 @@ object AdmobConfig {
 	// ADAPTER_H 探针向上取价
 	// ADAPTER_M 探针居中取价
 	// ADAPTER_L 探针向下取价
-	enum class ProbeMod{
+	enum class ProbeMod {
 		REFLECT,
 		ADAPTER_H,
 		ADAPTER_M,
@@ -38,7 +38,7 @@ object AdmobConfig {
 	// currency：探价币种
 	// instances：探价实例
 	data class ProbeConfig(
-		val mod: String,
+		val mod: ProbeMod,
 		val timeout: Long,
 		val currency: String,
 		val instances: List<ProbeInstance>
@@ -55,9 +55,9 @@ object AdmobConfig {
 	val testInterID = "ca-app-pub-3940256099942544/1033173712"
 	val testVideoID = "ca-app-pub-3940256099942544/5224354917"
 
-	var openConfig = AdUnitConfig("", 12600000L, 1, ProbeConfig("Reflect", 3000L, "USD", emptyList()))
-	var interConfig = AdUnitConfig("", 3000000L, 1, ProbeConfig("Reflect", 3000L, "USD", emptyList()))
-	var videoConfig = AdUnitConfig("", 3000000L, 1, ProbeConfig("Reflect", 3000L, "USD", emptyList()))
+	var openConfig = AdUnitConfig("", 12600000L, 1, ProbeConfig(ProbeMod.REFLECT, 3000L, "USD", emptyList()))
+	var interConfig = AdUnitConfig("", 3000000L, 1, ProbeConfig(ProbeMod.REFLECT, 3000L, "USD", emptyList()))
+	var videoConfig = AdUnitConfig("", 3000000L, 1, ProbeConfig(ProbeMod.REFLECT, 3000L, "USD", emptyList()))
 
 	private val isTest: Boolean
 		get() = Core.appMod == AppMod.TEST || Core.appMod == AppMod.DEBUG
@@ -131,7 +131,7 @@ object AdmobConfig {
 
 	private fun JSONObject.toProbeConfig(): ProbeConfig =
 		ProbeConfig(
-			getString("mod"),
+			ProbeMod.valueOf(getString("mod")),
 			getLong("timeout"),
 			getString("currency"),
 			getJSONArray("instances").toProbeInstances()
@@ -155,7 +155,7 @@ object AdmobConfig {
 			put("timeout", timeout)
 			put("poolSize", poolSize)
 			put("probeConfig", JSONObject().apply {
-				put("mod", probeConfig.mod)
+				put("mod", probeConfig.mod.name)
 				put("timeout", probeConfig.timeout)
 				put("currency", probeConfig.currency)
 				put("instances", JSONArray().apply {

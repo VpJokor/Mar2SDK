@@ -17,7 +17,7 @@
 | `id` | 字符串 | 示例测试 ID | 正式广告位 ID。 |
 | `timeout` | 整数（毫秒） | 开屏 `12600000`，其他 `3000000` | 广告缓存有效期。 |
 | `poolSize` | 整数 | `1` | 广告缓存池容量。 |
-| `probeConfig.mod` | 字符串 | `Reflect` | 探价模式。 |
+| `probeConfig.mod` | 字符串（枚举名称） | `REFLECT` | 探价模式：`REFLECT` 反射取价、`ADAPTER_H` 探针向上取价、`ADAPTER_M` 探针居中取价、`ADAPTER_L` 探针向下取价。区分大小写，非法值会导致配置解析失败。 |
 | `probeConfig.timeout` | 整数（毫秒） | `3000` | 探价超时时间。 |
 | `probeConfig.currency` | 字符串 | `USD` | 探价币种。 |
 | `probeConfig.instances` | 数组 | 三个示例实例 | 探价实例列表，可使用空数组。 |
@@ -27,6 +27,8 @@
 | `probeConfig.instances[].param` | 字符串 | 空字符串 | 实例参数。 |
 
 Kotlin 中通过 `AdmobConfig.openConfig`、`interConfig`、`videoConfig` 访问配置，修改时使用数据类的 `copy()` 后调用 `saveAdmobConfig()`。`openID`、`interID`、`videoID` 根据当前运行模式返回实际使用的广告位 ID。
+
+`ProbeConfig.mod` 的 Kotlin 类型为 `AdmobConfig.ProbeMod`，JSON 和本地持久化统一使用枚举名称，例如 `REFLECT`。
 
 Remote Config 可只提供需要更新的顶层广告配置对象；提供的对象必须包含完整字段，并整体替换对应配置。本地按 `openConfig`、`interConfig`、`videoConfig` 三个键保存 JSON，不再读取旧版平铺字段及其存储键。
 

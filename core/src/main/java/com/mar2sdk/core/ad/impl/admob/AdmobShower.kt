@@ -530,6 +530,14 @@ object AdmobShower {
 	}
 
 	/**
+	 * 广告展示（视频 & 插屏），等待和比价规则与 showInterVideo 一致。同价格视频优先
+	 */
+//	suspend fun showInterVideo(activity: Activity, callback: ShowCallback): AdShowStatus = withContext(Dispatchers.Main.immediate) {
+//
+//
+//	}
+
+	/**
 	 *  广告展示（开屏/插屏/视频）
 	 *  限制：
 	 *  1. 整个APP只允许同时展示1个全屏广告(开屏/插屏/视频)，使用 AppStatus.isShowingAd 控制

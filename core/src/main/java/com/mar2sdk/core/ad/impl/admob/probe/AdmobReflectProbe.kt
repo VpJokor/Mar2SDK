@@ -1,4 +1,4 @@
-package com.mar2sdk.core.ad.impl.admob
+package com.mar2sdk.core.ad.impl.admob.probe
 
 import com.google.android.gms.ads.AdValue
 import com.google.android.gms.ads.MobileAds

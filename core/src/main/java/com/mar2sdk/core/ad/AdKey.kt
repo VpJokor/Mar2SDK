@@ -5,6 +5,8 @@ object AdKey {
 	const val KEY_DEFAULT_PLATFORM = "mar2sdk.ad_config.defaultPlatform"
 	const val KEY_ACTIVE_PLATFORMS = "mar2sdk.ad_config.activePlatforms"
 	const val KEY_EXPLORE_PLATFORMS = "mar2sdk.ad_config.explorePlatforms"
+	const val KEY_PRICE_MULTIPLIER = "mar2sdk.ad_config.priceMultiplier"
+	const val KEY_PRICE_OFFSET = "mar2sdk.ad_config.priceOffset"
 	const val KEY_IS_OPEN = "mar2sdk.ad_config.isOpen"
 	const val KEY_SHOW_MAX_TIME = "mar2sdk.ad_config.showMaxTime"
 	const val KEY_SHOW_MIN_TIME = "mar2sdk.ad_config.showMinTime"

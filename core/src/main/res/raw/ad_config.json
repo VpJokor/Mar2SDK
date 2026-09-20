@@ -2,6 +2,8 @@
   "defaultPlatform": "ADMOB",
   "activePlatforms": ["TRADPLUS","TOPON"],
   "explorePlatforms": "TRADPLUS",
+  "priceMultiplier": 1.0,
+  "priceOffset": 0.0,
   "showMaxTime": 10000,
   "showMinTime": 500,
   "isOpen": true,

@@ -39,6 +39,10 @@ object AdConfig {
 	var defaultPlatform = AdPlatform.ADMOB
 	var activePlatforms = mutableSetOf<AdPlatform>()
 	var explorePlatforms = AdPlatform.TRADPLUS
+	// 价格倍率
+	var priceMultiplier = 1.0
+	// 价格偏移量
+	var priceOffset = 0.0
 	// 全局广告总开关
 	var isOpen = true
 	// 广告展示超时时间，单位毫秒
@@ -71,6 +75,8 @@ object AdConfig {
 			defaultPlatform = AdPlatform.valueOf(getString("defaultPlatform"))
 			activePlatforms = getJSONArray("activePlatforms").toAdPlatforms()
 			explorePlatforms = AdPlatform.valueOf(getString("explorePlatforms"))
+			priceMultiplier = optDouble("priceMultiplier", priceMultiplier)
+			priceOffset = optDouble("priceOffset", priceOffset)
 			isOpen = optBoolean("isOpen", isOpen)
 			showMaxTime = optLong("showMaxTime", showMaxTime)
 			showMinTime = optLong("showMinTime", showMinTime)
@@ -94,6 +100,8 @@ object AdConfig {
 			explorePlatforms = AdPlatform.valueOf(
 				PreferenceUtil.getString(KEY_EXPLORE_PLATFORMS, explorePlatforms.name)
 			)
+			priceMultiplier = PreferenceUtil.getDouble(KEY_PRICE_MULTIPLIER, priceMultiplier)
+			priceOffset = PreferenceUtil.getDouble(KEY_PRICE_OFFSET, priceOffset)
 			isOpen = PreferenceUtil.getBoolean(KEY_IS_OPEN, isOpen)
 			showMaxTime = PreferenceUtil.getLong(KEY_SHOW_MAX_TIME, showMaxTime)
 			showMinTime = PreferenceUtil.getLong(KEY_SHOW_MIN_TIME, showMinTime)
@@ -113,6 +121,8 @@ object AdConfig {
 			PreferenceUtil.commitString(KEY_DEFAULT_PLATFORM, defaultPlatform.name)
 			PreferenceUtil.commitString(KEY_ACTIVE_PLATFORMS, activePlatforms.toJson())
 			PreferenceUtil.commitString(KEY_EXPLORE_PLATFORMS, explorePlatforms.name)
+			PreferenceUtil.commitDouble(KEY_PRICE_MULTIPLIER, priceMultiplier)
+			PreferenceUtil.commitDouble(KEY_PRICE_OFFSET, priceOffset)
 			PreferenceUtil.commitBoolean(KEY_IS_OPEN, isOpen)
 			PreferenceUtil.commitLong(KEY_SHOW_MAX_TIME, showMaxTime)
 			PreferenceUtil.commitLong(KEY_SHOW_MIN_TIME, showMinTime)
@@ -130,6 +140,8 @@ object AdConfig {
 			if (has("defaultPlatform")) defaultPlatform = AdPlatform.valueOf(getString("defaultPlatform"))
 			if (has("activePlatforms")) activePlatforms = getJSONArray("activePlatforms").toAdPlatforms()
 			if (has("explorePlatforms")) explorePlatforms = AdPlatform.valueOf(getString("explorePlatforms"))
+			priceMultiplier = optDouble("priceMultiplier", priceMultiplier)
+			priceOffset = optDouble("priceOffset", priceOffset)
 			isOpen = optBoolean("isOpen", isOpen)
 			showMaxTime = optLong("showMaxTime", showMaxTime)
 			showMinTime = optLong("showMinTime", showMinTime)

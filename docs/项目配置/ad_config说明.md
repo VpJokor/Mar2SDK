@@ -9,6 +9,8 @@
 | `defaultPlatform` | 字符串 | `ADMOB` | 默认广告平台，可选 `ADMOB`、`MAX`、`UNITY`、`TRADPLUS`、`TOPON`。 |
 | `activePlatforms` | 字符串数组 | `[TRADPLUS, TOPON]` | 额外启用的平台列表。 |
 | `explorePlatforms` | 字符串 | `TRADPLUS` | 探索广告平台，使用 `AdPlatform` 枚举名称。 |
+| `priceMultiplier` | 数值 | `1.0` | 价格倍率。 |
+| `priceOffset` | 数值 | `0.0` | 价格偏移量。 |
 | `isOpen` | 布尔值 | `true` | 广告展示总开关。 |
 | `showMaxTime` | 整数（毫秒） | `10000` | 广告加载等待的最长时间。 |
 | `showMinTime` | 整数（毫秒） | `500` | 展示广告前的最短等待时间。 |

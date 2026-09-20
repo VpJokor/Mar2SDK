@@ -4,6 +4,7 @@ import android.app.Activity
 import android.app.Application
 import com.mar2sdk.core.ad.AdIniter
 import com.mar2sdk.core.ad.AdShower
+import com.mar2sdk.core.ad.UMPUtil
 import com.mar2sdk.core.ad.callback.ShowCallback
 import com.mar2sdk.core.ad.status.AdFormat
 import com.mar2sdk.core.ad.status.AdShowStatus
@@ -106,6 +107,40 @@ object Core {
 	// 设置可覆盖用户属性
 	fun setUserAttr(key: String, value: Any) {
 		ThinkingUtil.setUserAttr(key, value)
+	}
+
+	/** Initializes Google UMP consent state. Returns true when a recent result was cached. */
+	fun initConsent(activity: Activity, onComplete: (success: Boolean) -> Unit): Boolean {
+		return UMPUtil.initUMP(activity, onComplete)
+	}
+
+	/** Shows the UMP consent form during the startup flow, then invokes [onComplete]. */
+	fun showSplashConsent(activity: Activity, onComplete: () -> Unit) {
+		UMPUtil.showSplashUMP(activity, onComplete)
+	}
+
+	/** Opens the UMP privacy options form. */
+	fun showPrivacyOptions(activity: Activity) {
+		UMPUtil.showUMP(activity)
+	}
+
+	/** Whether UMP requires a privacy options entry point. */
+	val isPrivacyOptionsRequired: Boolean
+		get() = UMPUtil.isPrivacyOptionsRequired
+
+	/** Direct UMP-named alias for [initConsent]. */
+	fun initUMP(activity: Activity, onComplete: (success: Boolean) -> Unit): Boolean {
+		return initConsent(activity, onComplete)
+	}
+
+	/** Direct UMP-named alias for [showSplashConsent]. */
+	fun showSplashUMP(activity: Activity, onComplete: () -> Unit) {
+		showSplashConsent(activity, onComplete)
+	}
+
+	/** Direct UMP-named alias for [showPrivacyOptions]. */
+	fun showUMP(activity: Activity) {
+		showPrivacyOptions(activity)
 	}
 
 	// 批量设置可覆盖用户属性，一次提交整组属性。

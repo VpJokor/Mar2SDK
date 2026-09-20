@@ -7,49 +7,50 @@ import com.mar2sdk.core.common.PreferenceUtil
 import org.json.JSONArray
 import org.json.JSONObject
 
+
+// id：正式广告位 ID
+// timeout：广告缓存有效期，单位毫秒
+// poolSize：广告缓存池容量
+// probeConfig：探价配置
+data class AdUnitConfig(
+	val id: String,
+	val timeout: Long,
+	val poolSize: Int,
+	val probeConfig: ProbeConfig
+)
+
+// 广告探价模式
+// REFLECT 反射取价
+// ADAPTER_H 探针向上取价
+// ADAPTER_M 探针居中取价
+// ADAPTER_L 探针向下取价
+enum class ProbeMod {
+	REFLECT,
+	ADAPTER_H,
+	ADAPTER_M,
+	ADAPTER_L,
+}
+
+// mod：探价模式
+// timeout：探价超时时间，单位毫秒
+// currency：探价币种
+// instances：探价实例
+data class ProbeConfig(
+	val mod: ProbeMod,
+	val timeout: Long,
+	val currency: String,
+	val instances: List<ProbeInstance>
+)
+
+data class ProbeInstance(
+	val instanceId: String,
+	val label: String,
+	val ecpm: Double,
+	val param: String
+)
+
 // AdMob 广告配置
 object AdmobConfig {
-
-	// id：正式广告位 ID
-	// timeout：广告缓存有效期，单位毫秒
-	// poolSize：广告缓存池容量
-	// probeConfig：探价配置
-	data class AdUnitConfig(
-		val id: String,
-		val timeout: Long,
-		val poolSize: Int,
-		val probeConfig: ProbeConfig
-	)
-
-	// 广告探价模式
-	// REFLECT 反射取价
-	// ADAPTER_H 探针向上取价
-	// ADAPTER_M 探针居中取价
-	// ADAPTER_L 探针向下取价
-	enum class ProbeMod {
-		REFLECT,
-		ADAPTER_H,
-		ADAPTER_M,
-		ADAPTER_L,
-	}
-
-	// mod：探价模式
-	// timeout：探价超时时间，单位毫秒
-	// currency：探价币种
-	// instances：探价实例
-	data class ProbeConfig(
-		val mod: ProbeMod,
-		val timeout: Long,
-		val currency: String,
-		val instances: List<ProbeInstance>
-	)
-
-	data class ProbeInstance(
-		val instanceId: String,
-		val label: String,
-		val ecpm: Double,
-		val param: String
-	)
 
 	val testOpenID = "ca-app-pub-3940256099942544/9257395921"
 	val testInterID = "ca-app-pub-3940256099942544/1033173712"

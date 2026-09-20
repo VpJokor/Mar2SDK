@@ -8,6 +8,7 @@ import com.mar2sdk.core.common.PreferenceUtil
 import org.json.JSONArray
 import org.json.JSONObject
 
+// 广告比价博士
 enum class ShowMod {
 	MODE_555,
 	MODE_666,
@@ -15,25 +16,25 @@ enum class ShowMod {
 	MODE_888
 }
 
+// rate: 广告展示概率
+// max1H：每小时最大展示数
+// max24H：滚动24小时最大展示数
+// interval：与上次展示的时间间隔，单位秒
+// format：广告展示类型
+// fromRoutes：允许展示广告的来源路由
+// toRoutes：允许展示广告的目标路由
+data class AdUnitConfig(
+	val rate: Double,
+	val max1H: Int,
+	val max24H: Int,
+	val interval: Int,
+	val format: AdFormat,
+	val fromRoutes: List<String>,
+	val toRoutes: List<String>
+)
+
 // 广告配置
 object AdConfig {
-
-	// rate: 广告展示概率
-	// max1H：每小时最大展示数
-	// max24H：滚动24小时最大展示数
-	// interval：与上次展示的时间间隔，单位秒
-	// format：广告展示类型
-	// fromRoutes：允许展示广告的来源路由
-	// toRoutes：允许展示广告的目标路由
-	data class AdUnitConfig(
-		val rate: Double,
-		val max1H: Int,
-		val max24H: Int,
-		val interval: Int,
-		val format: AdFormat,
-		val fromRoutes: List<String>,
-		val toRoutes: List<String>
-	)
 
 	var defaultPlatform = AdPlatform.ADMOB
 	var activePlatforms = mutableSetOf<AdPlatform>()

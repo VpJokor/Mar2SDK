@@ -27,6 +27,15 @@ object AdShower {
 		}
 	}
 
+	// 视频插屏比价，同价或缺少有效价格时视频优先
+	suspend fun showVideoInter(activity: Activity, callback: ShowCallback): AdShowStatus {
+		return when(callback.adContext.adPlatform) {
+			AdPlatform.ADMOB -> AdmobShower.showVideoInter(activity, callback)
+			// TODO implement Max/UNITY/TRADPLUS/TOPON
+			else -> AdmobShower.showVideoInter(activity, callback)
+		}
+	}
+
 	// 一直等待到 AdmobShower.showOpen 返回结果再返回
 	suspend fun showOpen(activity: Activity, callback: ShowCallback): AdShowStatus {
 		// TODO: 执行比价算法，确定播哪个平台的广告

@@ -306,7 +306,21 @@ object AdmobShower {
 	 * 5. 加载耗时计入最小等待时间，展示前重新检查广告有效性；只消费并补充胜出广告的池。
 	 * 6. 视频奖励通过 SDK 奖励回调转发给 onReward。
 	 */
-	suspend fun showInterVideo(activity: Activity, callback: ShowCallback): AdShowStatus = withContext(Dispatchers.Main.immediate) {
+	suspend fun showInterVideo(activity: Activity, callback: ShowCallback): AdShowStatus =
+		showInterVideoInternal(activity, callback, preferVideoOnTie = false)
+
+	/**
+	 * 广告展示（视频 & 插屏），等待和比价规则与 showInterVideo 一致。
+	 * 同价或缺少有效价格时优先视频。
+	 */
+	suspend fun showVideoInter(activity: Activity, callback: ShowCallback): AdShowStatus =
+		showInterVideoInternal(activity, callback, preferVideoOnTie = true)
+
+	private suspend fun showInterVideoInternal(
+		activity: Activity,
+		callback: ShowCallback,
+		preferVideoOnTie: Boolean,
+	): AdShowStatus = withContext(Dispatchers.Main.immediate) {
 		LogUtil.log(LogAdEvent.ad_occur, callback.adContext.toAdLogParams())
 		if (AppStatus.isShowingAd) {
 			callback.showFailed(ShowFailResult.OTHER_AD_IS_SHOWING)
@@ -357,50 +371,52 @@ object AdmobShower {
 			fun bestVideoAd() = AdmobLoader.videoPool.keys.maxByOrNull {
 				it.reflectPrice?.valueMicros ?: Long.MIN_VALUE
 			}
+			suspend fun loadInterAd(): InterstitialAd? {
+				val result = try {
+					AdmobLoader.loadInterResult(callback.adContext.copy(
+						adFormat = AdFormat.INTER, adUnitId = AdmobConfig.interID,
+					))
+				} catch (e: CancellationException) {
+					throw e
+				} catch (e: Exception) {
+					AdmobLoader.InterLoadResult.Failed(exception = e)
+				}
+				return when (result) {
+					is AdmobLoader.InterLoadResult.Loaded -> result.ad
+					is AdmobLoader.InterLoadResult.Failed -> {
+						if (result.loadError == null) loadFailure = ShowFailResult.LOAD_AD_EXCEPTION
+						Log.e(TAG, "Interstitial ad load failed: ${result.loadError?.message}", result.exception)
+						null
+					}
+					AdmobLoader.InterLoadResult.PoolFull -> AdmobLoader.interPool.keys.firstOrNull()
+				}
+			}
+			suspend fun loadVideoAd(): RewardedAd? {
+				val result = try {
+					AdmobLoader.loadVideoResult(callback.adContext.copy(
+						adFormat = AdFormat.VIDEO, adUnitId = AdmobConfig.videoID,
+					))
+				} catch (e: CancellationException) {
+					throw e
+				} catch (e: Exception) {
+					AdmobLoader.VideoLoadResult.Failed(exception = e)
+				}
+				return when (result) {
+					is AdmobLoader.VideoLoadResult.Loaded -> result.ad
+					is AdmobLoader.VideoLoadResult.Failed -> {
+						if (result.loadError == null) loadFailure = ShowFailResult.LOAD_AD_EXCEPTION
+						Log.e(TAG, "Rewarded ad load failed: ${result.loadError?.message}", result.exception)
+						null
+					}
+					AdmobLoader.VideoLoadResult.PoolFull -> AdmobLoader.videoPool.keys.firstOrNull()
+				}
+			}
 			val selection = selectAdPair<Any>(
-				primaryAd = bestInterAd(),
-				secondaryAd = bestVideoAd(),
+				primaryAd = if (preferVideoOnTie) bestVideoAd() else bestInterAd(),
+				secondaryAd = if (preferVideoOnTie) bestInterAd() else bestVideoAd(),
 				maxWaitTimeMs = (maximumWaitTime - (SystemClock.elapsedRealtime() - startShowTime)).coerceAtLeast(0L),
-				loadPrimary = {
-					val result = try {
-						AdmobLoader.loadInterResult(callback.adContext.copy(
-							adFormat = AdFormat.INTER, adUnitId = AdmobConfig.interID,
-						))
-					} catch (e: CancellationException) {
-						throw e
-					} catch (e: Exception) {
-						AdmobLoader.InterLoadResult.Failed(exception = e)
-					}
-					when (result) {
-						is AdmobLoader.InterLoadResult.Loaded -> result.ad
-						is AdmobLoader.InterLoadResult.Failed -> {
-							if (result.loadError == null) loadFailure = ShowFailResult.LOAD_AD_EXCEPTION
-							Log.e(TAG, "Interstitial ad load failed: ${result.loadError?.message}", result.exception)
-							null
-						}
-						AdmobLoader.InterLoadResult.PoolFull -> AdmobLoader.interPool.keys.firstOrNull()
-					}
-				},
-				loadSecondary = {
-					val result = try {
-						AdmobLoader.loadVideoResult(callback.adContext.copy(
-							adFormat = AdFormat.VIDEO, adUnitId = AdmobConfig.videoID,
-						))
-					} catch (e: CancellationException) {
-						throw e
-					} catch (e: Exception) {
-						AdmobLoader.VideoLoadResult.Failed(exception = e)
-					}
-					when (result) {
-						is AdmobLoader.VideoLoadResult.Loaded -> result.ad
-						is AdmobLoader.VideoLoadResult.Failed -> {
-							if (result.loadError == null) loadFailure = ShowFailResult.LOAD_AD_EXCEPTION
-							Log.e(TAG, "Rewarded ad load failed: ${result.loadError?.message}", result.exception)
-							null
-						}
-						AdmobLoader.VideoLoadResult.PoolFull -> AdmobLoader.videoPool.keys.firstOrNull()
-					}
-				},
+				loadPrimary = { if (preferVideoOnTie) loadVideoAd() else loadInterAd() },
+				loadSecondary = { if (preferVideoOnTie) loadInterAd() else loadVideoAd() },
 				priceMicros = ::reflectPriceMicros,
 			)
 			fun noAvailableAd(): AdShowStatus {
@@ -422,8 +438,10 @@ object AdmobShower {
 			// 等待期间缓存可能过期或被后台补池替换，展示前重新比价。
 			AdmobLoader.checkPool(AdFormat.INTER)
 			AdmobLoader.checkPool(AdFormat.VIDEO)
-			val ad = higherPricedAd<Any>(bestInterAd(), bestVideoAd()) {
-				reflectPriceMicros(it)
+			val ad = if (preferVideoOnTie) {
+				higherPricedAd<Any>(bestVideoAd(), bestInterAd()) { reflectPriceMicros(it) }
+			} else {
+				higherPricedAd<Any>(bestInterAd(), bestVideoAd()) { reflectPriceMicros(it) }
 			} ?: return@withContext noAvailableAd()
 			when (ad) {
 				is InterstitialAd -> {
@@ -519,7 +537,7 @@ object AdmobShower {
 		} catch (e: CancellationException) {
 			throw e
 		} catch (e: Exception) {
-			Log.e(TAG, "showInterVideo failed", e)
+			Log.e(TAG, "${if (preferVideoOnTie) "showVideoInter" else "showInterVideo"} failed", e)
 			fail(ShowFailResult.SHOW_AD_EXCEPTION)
 		} finally {
 			if (!showCommitted && finished.compareAndSet(false, true)) {
@@ -528,14 +546,6 @@ object AdmobShower {
 		}
 
 	}
-
-	/**
-	 * 广告展示（视频 & 插屏），等待和比价规则与 showInterVideo 一致。同价格视频优先
-	 */
-//	suspend fun showInterVideo(activity: Activity, callback: ShowCallback): AdShowStatus = withContext(Dispatchers.Main.immediate) {
-//
-//
-//	}
 
 	/**
 	 *  广告展示（开屏/插屏/视频）

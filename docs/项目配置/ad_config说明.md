@@ -23,10 +23,10 @@
 | `rate` | 小数 | 展示概率，范围 `0.0`–`1.0`。 |
 | `1HMax` / `24HMax` | 整数 | 该点位滚动 1 小时 / 24 小时展示次数上限。 |
 | `interval` | 整数（秒） | 该点位两次展示之间的最小间隔。 |
-| `format` | 字符串 | `OPEN`、`INTER`、`VIDEO`，或暂作为占位的组合值 `OPEN_INTER`、`INTER_VIDEO`。 |
+| `format` | 字符串 | `OPEN`、`INTER`、`VIDEO`，或比价组合值 `OPEN_INTER`、`INTER_VIDEO`、`VIDEO_INTER`；同价或任一价格缺失时优先选择名称中的第一种格式。 |
 | `fromRoutes` / `toRoutes` | 字符串数组 | 允许的来源 / 目标路由；单独使用 `"*"` 表示任意路由。 |
 
-路由按完整字符串匹配，不支持部分通配；两组路由都匹配后才进入概率判断。当前广告填充实现主要支持 AdMob，组合格式仍是占位实现。
+路由按完整字符串匹配，不支持部分通配；两组路由都匹配后才进入概率判断。当前广告填充及组合格式比价展示主要支持 AdMob。
 
 示例资源：[`ad_config.json`](../../core/src/main/res/raw/ad_config.json)。
 

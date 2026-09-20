@@ -31,11 +31,13 @@ import com.mar2sdk.core.ad.status.AdShowStatus
 import com.mar2sdk.core.ad.status.ShowFailResult
 import com.mar2sdk.core.log.LogConfig
 import kotlin.reflect.KMutableProperty0
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.cancelAndJoin
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.yield
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -51,6 +53,10 @@ import org.junit.runner.RunWith
 class AdmobInterVideoShowerTest {
 
 	private val restore = mutableListOf<() -> Unit>()
+	private val pairShowers: List<suspend (Activity, ShowCallback) -> AdShowStatus> = listOf(
+		AdmobShower::showInterVideo,
+		AdmobShower::showVideoInter,
+	)
 
 	@Before
 	fun setUp() = onMain {
@@ -148,30 +154,34 @@ class AdmobInterVideoShowerTest {
 
 	@Test
 	fun highestInterstitialWinsAndOnlyWinningAdIsConsumed() = runBlocking(Dispatchers.Main) {
-		val lowerInter = FakeInter("lower-inter")
-		val inter = FakeInter("winning-inter")
-		val video = FakeVideo()
-		cache(lowerInter, 10)
-		cache(inter, 30)
-		cache(video, 20)
-		val callback = RecordingCallback()
+		for (showPair in pairShowers) {
+			AdmobLoader.interPool.clear()
+			AdmobLoader.videoPool.clear()
+			val lowerInter = FakeInter("lower-inter")
+			val inter = FakeInter("winning-inter")
+			val video = FakeVideo()
+			cache(lowerInter, 10)
+			cache(inter, 30)
+			cache(video, 20)
+			val callback = RecordingCallback()
 
-		assertEquals(AdShowStatus.SHOW_SUCCESS, AdmobShower.showInterVideo(Activity(), callback))
+			assertEquals(AdShowStatus.SHOW_SUCCESS, showPair(Activity(), callback))
 
-		assertEquals(1, inter.shows)
-		assertEquals(0, lowerInter.shows)
-		assertEquals(0, video.shows)
-		assertEquals(setOf(lowerInter), AdmobLoader.interPool.keys)
-		assertEquals(setOf(video), AdmobLoader.videoPool.keys)
-		assertEquals(AdFormat.INTER, callback.adContext.adFormat)
-		assertEquals("winning-inter", callback.adContext.adUnitId)
-		assertNotNull(inter.onPaidEventListener)
-		assertTrue(AppStatus.isShowingAd)
-		inter.fullScreenContentCallback!!.onAdImpression()
-		assertEquals(1, callback.successes)
-		inter.fullScreenContentCallback!!.onAdDismissedFullScreenContent()
-		assertEquals(1, callback.closes)
-		assertFalse(AppStatus.isShowingAd)
+			assertEquals(1, inter.shows)
+			assertEquals(0, lowerInter.shows)
+			assertEquals(0, video.shows)
+			assertEquals(setOf(lowerInter), AdmobLoader.interPool.keys)
+			assertEquals(setOf(video), AdmobLoader.videoPool.keys)
+			assertEquals(AdFormat.INTER, callback.adContext.adFormat)
+			assertEquals("winning-inter", callback.adContext.adUnitId)
+			assertNotNull(inter.onPaidEventListener)
+			assertTrue(AppStatus.isShowingAd)
+			inter.fullScreenContentCallback!!.onAdImpression()
+			assertEquals(1, callback.successes)
+			inter.fullScreenContentCallback!!.onAdDismissedFullScreenContent()
+			assertEquals(1, callback.closes)
+			assertFalse(AppStatus.isShowingAd)
+		}
 	}
 
 	@Test
@@ -216,6 +226,113 @@ class AdmobInterVideoShowerTest {
 			assertEquals("Prices: $interPrice / $videoPrice", 1, inter.shows)
 			assertEquals(0, video.shows)
 			inter.fullScreenContentCallback!!.onAdDismissedFullScreenContent()
+		}
+	}
+
+	@Test
+	fun equalOrUnknownPricesPreferVideoAndForwardReward() = runBlocking(Dispatchers.Main) {
+		for ((interPrice, videoPrice) in listOf(10L to 10L, null to 20L, 10L to null, null to null)) {
+			AdmobLoader.interPool.clear()
+			AdmobLoader.videoPool.clear()
+			val inter = FakeInter()
+			val video = FakeVideo()
+			cache(inter, interPrice)
+			cache(video, videoPrice)
+			val callback = RecordingCallback(AdFormat.VIDEO_INTER)
+
+			assertEquals(AdShowStatus.SHOW_SUCCESS, AdmobShower.showVideoInter(Activity(), callback))
+			assertEquals("Prices: $interPrice / $videoPrice", 1, video.shows)
+			assertEquals(0, inter.shows)
+			assertEquals(setOf(inter), AdmobLoader.interPool.keys)
+			assertTrue(AdmobLoader.videoPool.isEmpty())
+			assertEquals(AdFormat.VIDEO, callback.adContext.adFormat)
+			video.rewardListener!!.onUserEarnedReward(RewardItem.DEFAULT_REWARD)
+			assertEquals(1, callback.rewards)
+			video.fullScreenContentCallback!!.onAdDismissedFullScreenContent()
+			assertEquals(1, callback.closes)
+			assertFalse(AppStatus.isShowingAd)
+		}
+	}
+
+	@Test
+	fun videoFirstSelectsHighestVideoAndConsumesOnlyWinner() = runBlocking(Dispatchers.Main) {
+		val inter = FakeInter()
+		val lowerVideo = FakeVideo("lower-video")
+		val winningVideo = FakeVideo("winning-video")
+		cache(inter, 20)
+		cache(lowerVideo, 10)
+		cache(winningVideo, 30)
+		val callback = RecordingCallback(AdFormat.VIDEO_INTER)
+
+		assertEquals(AdShowStatus.SHOW_SUCCESS, AdmobShower.showVideoInter(Activity(), callback))
+
+		assertEquals(0, inter.shows)
+		assertEquals(0, lowerVideo.shows)
+		assertEquals(1, winningVideo.shows)
+		assertEquals(setOf(inter), AdmobLoader.interPool.keys)
+		assertEquals(setOf(lowerVideo), AdmobLoader.videoPool.keys)
+		assertEquals(AdFormat.VIDEO, callback.adContext.adFormat)
+		assertEquals("winning-video", callback.adContext.adUnitId)
+		winningVideo.fullScreenContentCallback!!.onAdDismissedFullScreenContent()
+	}
+
+	@Test
+	fun coreRoutesVideoInterToVideoFirstSelection() = runBlocking(Dispatchers.Main) {
+		val inter = FakeInter()
+		val video = FakeVideo()
+		cache(inter, 10)
+		cache(video, 10)
+		val callback = RecordingCallback(AdFormat.VIDEO_INTER)
+
+		assertEquals(AdShowStatus.SHOW_SUCCESS, Core.showAd(Activity(), callback))
+
+		assertEquals(0, inter.shows)
+		assertEquals(1, video.shows)
+		assertEquals(AdFormat.VIDEO, callback.adContext.adFormat)
+		video.fullScreenContentCallback!!.onAdDismissedFullScreenContent()
+	}
+
+	@Test
+	fun videoFirstWaitsForMissingFormatAndComparesLoadedAd() = runBlocking(Dispatchers.Main) {
+		for (missingVideo in listOf(false, true)) {
+			AdmobLoader.interPool.clear()
+			AdmobLoader.videoPool.clear()
+			val inter = FakeInter()
+			val video = FakeVideo()
+			if (missingVideo) cache(inter, 10) else cache(video, 10)
+			val pendingInter = CompletableDeferred<AdmobLoader.InterLoadResult>()
+			val pendingVideo = CompletableDeferred<AdmobLoader.VideoLoadResult>()
+			val loadField = AdmobLoader::class.java.getDeclaredField(
+				if (missingVideo) "videoLoadDeferred" else "interLoadDeferred"
+			).apply { isAccessible = true }
+			loadField.set(null, if (missingVideo) pendingVideo else pendingInter)
+			val callback = RecordingCallback(AdFormat.VIDEO_INTER)
+			val waiting = async(start = CoroutineStart.UNDISPATCHED) {
+				AdmobShower.showVideoInter(Activity(), callback)
+			}
+			try {
+				yield()
+				assertFalse("Must wait for missing format; missingVideo=$missingVideo", waiting.isCompleted)
+				assertTrue(AppStatus.isShowingAd)
+				// Mirror the loader clearing its in-flight handle before publishing the loaded ad.
+				loadField.set(null, null)
+				if (missingVideo) {
+					cache(video, 20)
+					pendingVideo.complete(AdmobLoader.VideoLoadResult.Loaded(video))
+				} else {
+					cache(inter, 20)
+					pendingInter.complete(AdmobLoader.InterLoadResult.Loaded(inter))
+				}
+				assertEquals(AdShowStatus.SHOW_SUCCESS, waiting.await())
+				assertEquals(if (missingVideo) 0 else 1, inter.shows)
+				assertEquals(if (missingVideo) 1 else 0, video.shows)
+				assertEquals(if (missingVideo) AdFormat.VIDEO else AdFormat.INTER, callback.adContext.adFormat)
+				if (missingVideo) video.fullScreenContentCallback!!.onAdDismissedFullScreenContent()
+				else inter.fullScreenContentCallback!!.onAdDismissedFullScreenContent()
+			} finally {
+				loadField.set(null, null)
+				waiting.cancelAndJoin()
+			}
 		}
 	}
 
@@ -266,65 +383,78 @@ class AdmobInterVideoShowerTest {
 
 	@Test
 	fun minimumWaitBlocksOtherFormatsAndCancellationReleasesLockWithoutConsumingAds() = runBlocking(Dispatchers.Main) {
-		AdConfig.showMinTime = 60_000L
-		val inter = FakeInter()
-		val video = FakeVideo()
-		cache(inter, 20)
-		cache(video, 10)
-		val callback = RecordingCallback()
-		val waiting = async(start = CoroutineStart.UNDISPATCHED) {
-			AdmobShower.showInterVideo(Activity(), callback)
+		for (showPair in pairShowers) {
+			AdmobLoader.interPool.clear()
+			AdmobLoader.videoPool.clear()
+			AdConfig.showMinTime = 60_000L
+			val inter = FakeInter()
+			val video = FakeVideo()
+			cache(inter, 20)
+			cache(video, 10)
+			val callback = RecordingCallback()
+			val waiting = async(start = CoroutineStart.UNDISPATCHED) {
+				showPair(Activity(), callback)
+			}
+			try {
+				assertTrue(AppStatus.isShowingAd)
+				val otherCallback = RecordingCallback()
+				assertEquals(AdShowStatus.OTHER_AD_IS_SHOWING, AdmobShower.showOpenInter(Activity(), otherCallback))
+				assertEquals(listOf(ShowFailResult.OTHER_AD_IS_SHOWING), otherCallback.failures)
+				assertTrue(AppStatus.isShowingAd)
+			} finally {
+				waiting.cancelAndJoin()
+			}
+			assertFalse(AppStatus.isShowingAd)
+			assertEquals(0, inter.shows)
+			assertEquals(0, video.shows)
+			assertEquals(setOf(inter), AdmobLoader.interPool.keys)
+			assertEquals(setOf(video), AdmobLoader.videoPool.keys)
+			assertTrue(callback.failures.isEmpty())
 		}
-		try {
-			assertTrue(AppStatus.isShowingAd)
-			val otherCallback = RecordingCallback()
-			assertEquals(AdShowStatus.OTHER_AD_IS_SHOWING, AdmobShower.showOpenInter(Activity(), otherCallback))
-			assertEquals(listOf(ShowFailResult.OTHER_AD_IS_SHOWING), otherCallback.failures)
-			assertTrue(AppStatus.isShowingAd)
-		} finally {
-			waiting.cancelAndJoin()
-		}
-		assertFalse(AppStatus.isShowingAd)
-		assertEquals(0, inter.shows)
-		assertEquals(0, video.shows)
-		assertEquals(setOf(inter), AdmobLoader.interPool.keys)
-		assertEquals(setOf(video), AdmobLoader.videoPool.keys)
-		assertTrue(callback.failures.isEmpty())
 	}
 
 	@Test
 	fun expiredWinnerIsReplacedByRemainingVideoAfterMinimumWait() = runBlocking(Dispatchers.Main) {
-		AdConfig.showMinTime = 100L
-		val inter = FakeInter()
-		val video = FakeVideo()
-		cache(inter, 20)
-		cache(video, 10)
-		val callback = RecordingCallback()
-		val waiting = async(start = CoroutineStart.UNDISPATCHED) {
-			AdmobShower.showInterVideo(Activity(), callback)
-		}
-		try {
-			assertTrue(AppStatus.isShowingAd)
-			assertEquals(0, inter.shows)
-			AdmobLoader.interPool[inter] = System.currentTimeMillis() - AdmobConfig.interConfig.timeout - 1L
-			assertEquals(AdShowStatus.SHOW_SUCCESS, waiting.await())
-			assertEquals(0, inter.shows)
-			assertEquals(1, video.shows)
-			assertEquals(AdFormat.VIDEO, callback.adContext.adFormat)
-			assertEquals("fake-video", callback.adContext.adUnitId)
-		} finally {
-			waiting.cancelAndJoin()
+		for (showPair in pairShowers) {
+			AdmobLoader.interPool.clear()
+			AdmobLoader.videoPool.clear()
+			AdConfig.showMinTime = 100L
+			val inter = FakeInter()
+			val video = FakeVideo()
+			cache(inter, 20)
+			cache(video, 10)
+			val callback = RecordingCallback()
+			val waiting = async(start = CoroutineStart.UNDISPATCHED) {
+				showPair(Activity(), callback)
+			}
+			try {
+				assertTrue(AppStatus.isShowingAd)
+				assertEquals(0, inter.shows)
+				AdmobLoader.interPool[inter] = System.currentTimeMillis() - AdmobConfig.interConfig.timeout - 1L
+				assertEquals(AdShowStatus.SHOW_SUCCESS, waiting.await())
+				assertEquals(0, inter.shows)
+				assertEquals(1, video.shows)
+				assertEquals(AdFormat.VIDEO, callback.adContext.adFormat)
+				assertEquals("fake-video", callback.adContext.adUnitId)
+			} finally {
+				waiting.cancelAndJoin()
+			}
+			video.fullScreenContentCallback!!.onAdDismissedFullScreenContent()
 		}
 	}
 
 	@Test
 	fun emptyPoolsWithNoWaitReturnTimeoutAndReleaseLock() = runBlocking(Dispatchers.Main) {
-		AdConfig.showMaxTime = 0L
-		val callback = RecordingCallback()
+		for (showPair in pairShowers) {
+			AdmobLoader.interPool.clear()
+			AdmobLoader.videoPool.clear()
+			AdConfig.showMaxTime = 0L
+			val callback = RecordingCallback()
 
-		assertEquals(AdShowStatus.TIMEOUT, AdmobShower.showInterVideo(Activity(), callback))
-		assertEquals(listOf(ShowFailResult.LOAD_TIMEOUT), callback.failures)
-		assertFalse(AppStatus.isShowingAd)
+			assertEquals(AdShowStatus.TIMEOUT, showPair(Activity(), callback))
+			assertEquals(listOf(ShowFailResult.LOAD_TIMEOUT), callback.failures)
+			assertFalse(AppStatus.isShowingAd)
+		}
 	}
 
 	private fun cache(ad: FakeInter, price: Long?) {
@@ -351,9 +481,9 @@ class AdmobInterVideoShowerTest {
 
 	private fun onMain(block: () -> Unit) = InstrumentationRegistry.getInstrumentation().runOnMainSync(block)
 
-	private class RecordingCallback : ShowCallback {
+	private class RecordingCallback(format: AdFormat = AdFormat.INTER_VIDEO) : ShowCallback {
 		override val adContext = ScreenAdContext(
-			adFormat = AdFormat.INTER_VIDEO,
+			adFormat = format,
 			adPlatform = AdPlatform.ADMOB,
 			trigger = ScreenAdTrigger.ENTER,
 		)
@@ -400,7 +530,7 @@ class AdmobInterVideoShowerTest {
 		override fun setPlacementId(placementId: Long) { placement = placementId }
 	}
 
-	private class FakeVideo : RewardedAd() {
+	private class FakeVideo(private val unitId: String = "fake-video") : RewardedAd() {
 		var shows = 0
 		var onShow: () -> Unit = {}
 		var rewardListener: OnUserEarnedRewardListener? = null
@@ -408,7 +538,7 @@ class AdmobInterVideoShowerTest {
 		private var paid: OnPaidEventListener? = null
 		private var metadata: OnAdMetadataChangedListener? = null
 		private var placement = 0L
-		override fun getAdUnitId() = "fake-video"
+		override fun getAdUnitId() = unitId
 		override fun show(activity: Activity, listener: OnUserEarnedRewardListener) {
 			shows++
 			rewardListener = listener

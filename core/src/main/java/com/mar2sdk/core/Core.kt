@@ -80,11 +80,12 @@ object Core {
 
 	suspend fun showAd(activity: Activity, callback: ShowCallback): AdShowStatus {
 		return when(callback.adContext.adFormat) {
-			AdFormat.OPEN_INTER -> AdShower.showOpenInter(activity, callback)
-			AdFormat.INTER_VIDEO -> AdShower.showInterVideo(activity, callback)
 			AdFormat.OPEN -> AdShower.showOpen(activity, callback)
 			AdFormat.INTER -> AdShower.showInter(activity, callback)
 			AdFormat.VIDEO -> AdShower.showVideo(activity, callback)
+			AdFormat.OPEN_INTER -> AdShower.showOpenInter(activity, callback)
+			AdFormat.INTER_VIDEO -> AdShower.showInterVideo(activity, callback)
+			AdFormat.VIDEO_INTER -> AdShower.showVideoInter(activity, callback)
 		}
 	}
 

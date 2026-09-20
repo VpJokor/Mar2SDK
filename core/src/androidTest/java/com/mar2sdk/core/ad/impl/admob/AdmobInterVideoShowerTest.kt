@@ -9,6 +9,7 @@ import com.google.android.gms.ads.FullScreenContentCallback
 import com.google.android.gms.ads.OnPaidEventListener
 import com.google.android.gms.ads.OnUserEarnedRewardListener
 import com.google.android.gms.ads.ResponseInfo
+import com.google.android.gms.ads.appopen.AppOpenAd
 import com.google.android.gms.ads.interstitial.InterstitialAd
 import com.google.android.gms.ads.rewarded.OnAdMetadataChangedListener
 import com.google.android.gms.ads.rewarded.RewardItem
@@ -19,6 +20,8 @@ import com.mar2sdk.core.AppStatus
 import com.mar2sdk.core.Core
 import com.mar2sdk.core.ad.AdConfig
 import com.mar2sdk.core.ad.callback.ShowCallback
+import com.mar2sdk.core.ad.impl.admob.probe.AdmobAdapterProbeResult
+import com.mar2sdk.core.ad.impl.admob.probe.AdmobAdapterProxyReader
 import com.mar2sdk.core.ad.impl.admob.probe.AdmobPrice
 import com.mar2sdk.core.ad.policy.ScreenAdContext
 import com.mar2sdk.core.ad.policy.ScreenAdTrigger
@@ -93,6 +96,54 @@ class AdmobInterVideoShowerTest {
 		first.reflectPrice = null
 		assertNull(first.reflectPrice)
 		assertEquals(AdmobPrice(20, "USD", 1), second.reflectPrice)
+	}
+
+	@Test
+	fun allFormatsKeepProbeResultsAndBoundsConsistentPerAd() = onMain {
+		val open = FakeOpen()
+		val inter = FakeInter("same-inter")
+		val secondInter = FakeInter("same-inter")
+		val video = FakeVideo()
+		val properties = listOf(
+			Triple(open::adapterProbeResult, open::adapterHPrice, open::adapterLPrice),
+			Triple(inter::adapterProbeResult, inter::adapterHPrice, inter::adapterLPrice),
+			Triple(secondInter::adapterProbeResult, secondInter::adapterHPrice, secondInter::adapterLPrice),
+			Triple(video::adapterProbeResult, video::adapterHPrice, video::adapterLPrice),
+		)
+		val result = AdmobAdapterProbeResult(
+			AdmobAdapterProbeResult.Status.BOUNDED, AdmobConfig.interConfig.probeConfig,
+			hPrice = 30_000_000, lPrice = 20_000_000,
+		)
+		properties.forEachIndexed { index, (snapshot, _, _) ->
+			snapshot.set(result.copy(hPrice = 30_000_000L + index))
+		}
+		properties.forEachIndexed { index, (snapshot, high, low) ->
+			assertEquals(30_000_000L + index, high.get())
+			assertEquals(20_000_000L, low.get())
+			high.set(40_000_000)
+			assertNull(snapshot.get())
+			assertEquals(20_000_000L, low.get())
+			snapshot.set(result.copy(status = AdmobAdapterProbeResult.Status.UPPER_BOUND_ONLY, lPrice = null))
+			assertEquals(30_000_000L, high.get())
+			assertNull(low.get())
+			low.set(10_000_000)
+			assertNull(snapshot.get())
+			assertEquals(30_000_000L, high.get())
+			snapshot.set(null)
+			assertNull(high.get())
+			assertNull(low.get())
+		}
+	}
+
+	@Test
+	fun emptySdkResponseDoesNotProduceProbePrices() {
+		val config = AdmobConfig.interConfig.probeConfig.copy(instances = listOf(
+			AdmobConfig.ProbeInstance("probe", "Probe_30", 30.0, ""),
+		))
+		val result = AdmobAdapterProxyReader.read(emptyResponseInfo(), config)
+		assertEquals(AdmobAdapterProbeResult.Status.MISSING_WINNER, result.status)
+		assertNull(result.hPrice)
+		assertNull(result.lPrice)
 	}
 
 	@Test
@@ -316,6 +367,19 @@ class AdmobInterVideoShowerTest {
 		override fun onAdClosed() { closes++ }
 		override fun onPaid() = Unit
 		override fun onReward() { rewards++ }
+	}
+
+	private class FakeOpen : AppOpenAd() {
+		override fun getAdUnitId() = "fake-open"
+		override fun show(activity: Activity) = Unit
+		override fun getResponseInfo(): ResponseInfo = emptyResponseInfo()
+		override fun setFullScreenContentCallback(callback: FullScreenContentCallback?) = Unit
+		override fun getFullScreenContentCallback(): FullScreenContentCallback? = null
+		override fun setOnPaidEventListener(listener: OnPaidEventListener?) = Unit
+		override fun getOnPaidEventListener(): OnPaidEventListener? = null
+		override fun setImmersiveMode(immersive: Boolean) = Unit
+		override fun getPlacementId() = 0L
+		override fun setPlacementId(placementId: Long) = Unit
 	}
 
 	private class FakeInter(private val unitId: String = "fake-inter") : InterstitialAd() {

@@ -9,6 +9,7 @@ import com.google.android.gms.ads.interstitial.InterstitialAdLoadCallback
 import com.google.android.gms.ads.rewarded.RewardedAd
 import com.google.android.gms.ads.rewarded.RewardedAdLoadCallback
 import com.mar2sdk.core.Core
+import com.mar2sdk.core.ad.impl.admob.probe.AdmobAdapterProxyReader
 import com.mar2sdk.core.ad.impl.admob.probe.AdmobPrice
 import com.mar2sdk.core.ad.impl.admob.probe.AdmobReflectProbe
 import com.mar2sdk.core.ad.policy.ScreenAdContext
@@ -140,6 +141,9 @@ object AdmobLoader {
 		adContext: ScreenAdContext
 	): CompletableDeferred<OpenLoadResult> {
 		val loadContext = adContext.copy()
+		val probeConfig = AdmobConfig.openConfig.probeConfig.let {
+			it.copy(instances = it.instances.toList())
+		}
 		val loadDeferred = CompletableDeferred<OpenLoadResult>()
 		openLoadDeferred = loadDeferred
 		isLoadingOpen = true
@@ -149,6 +153,7 @@ object AdmobLoader {
 				override fun onAdLoaded(openAd: AppOpenAd) {
 					val price = AdmobReflectProbe.read(openAd)
 					openAd.reflectPrice = price
+					openAd.adapterProbeResult = AdmobAdapterProxyReader.read(openAd.responseInfo, probeConfig)
 					cacheLoadedAd(openAd, openPool, loadContext, "open", price) {
 						completeLoad(loadDeferred, OpenLoadResult.Loaded(openAd))
 					}
@@ -198,6 +203,9 @@ object AdmobLoader {
 		adContext: ScreenAdContext
 	): CompletableDeferred<InterLoadResult> {
 		val loadContext = adContext.copy()
+		val probeConfig = AdmobConfig.interConfig.probeConfig.let {
+			it.copy(instances = it.instances.toList())
+		}
 		val loadDeferred = CompletableDeferred<InterLoadResult>()
 		interLoadDeferred = loadDeferred
 		isLoadingInter = true
@@ -207,6 +215,7 @@ object AdmobLoader {
 				override fun onAdLoaded(interstitialAd: InterstitialAd) {
 					val price = AdmobReflectProbe.read(interstitialAd)
 					interstitialAd.reflectPrice = price
+					interstitialAd.adapterProbeResult = AdmobAdapterProxyReader.read(interstitialAd.responseInfo, probeConfig)
 					cacheLoadedAd(interstitialAd, interPool, loadContext, "interstitial", price) {
 						completeLoad(loadDeferred, InterLoadResult.Loaded(interstitialAd))
 					}
@@ -256,6 +265,9 @@ object AdmobLoader {
 		adContext: ScreenAdContext
 	): CompletableDeferred<VideoLoadResult> {
 		val loadContext = adContext.copy()
+		val probeConfig = AdmobConfig.videoConfig.probeConfig.let {
+			it.copy(instances = it.instances.toList())
+		}
 		val loadDeferred = CompletableDeferred<VideoLoadResult>()
 		videoLoadDeferred = loadDeferred
 		isLoadingVideo = true
@@ -265,6 +277,7 @@ object AdmobLoader {
 				override fun onAdLoaded(rewardedAd: RewardedAd) {
 					val price = AdmobReflectProbe.read(rewardedAd)
 					rewardedAd.reflectPrice = price
+					rewardedAd.adapterProbeResult = AdmobAdapterProxyReader.read(rewardedAd.responseInfo, probeConfig)
 					cacheLoadedAd(rewardedAd, videoPool, loadContext, "rewarded", price) {
 						completeLoad(loadDeferred, VideoLoadResult.Loaded(rewardedAd))
 					}

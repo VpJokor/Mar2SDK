@@ -38,6 +38,7 @@ object AdConfig {
 
 	var defaultPlatform = AdPlatform.ADMOB
 	var activePlatforms = mutableSetOf<AdPlatform>()
+	var explorePlatforms = AdPlatform.TRADPLUS
 	// 全局广告总开关
 	var isOpen = true
 	// 广告展示超时时间，单位毫秒
@@ -69,6 +70,7 @@ object AdConfig {
 		with(config) {
 			defaultPlatform = AdPlatform.valueOf(getString("defaultPlatform"))
 			activePlatforms = getJSONArray("activePlatforms").toAdPlatforms()
+			explorePlatforms = AdPlatform.valueOf(getString("explorePlatforms"))
 			isOpen = optBoolean("isOpen", isOpen)
 			showMaxTime = optLong("showMaxTime", showMaxTime)
 			showMinTime = optLong("showMinTime", showMinTime)
@@ -89,6 +91,9 @@ object AdConfig {
 			activePlatforms = JSONArray(
 				PreferenceUtil.getString(KEY_ACTIVE_PLATFORMS, activePlatforms.toJson())
 			).toAdPlatforms()
+			explorePlatforms = AdPlatform.valueOf(
+				PreferenceUtil.getString(KEY_EXPLORE_PLATFORMS, explorePlatforms.name)
+			)
 			isOpen = PreferenceUtil.getBoolean(KEY_IS_OPEN, isOpen)
 			showMaxTime = PreferenceUtil.getLong(KEY_SHOW_MAX_TIME, showMaxTime)
 			showMinTime = PreferenceUtil.getLong(KEY_SHOW_MIN_TIME, showMinTime)
@@ -107,6 +112,7 @@ object AdConfig {
 		with(AdKey) {
 			PreferenceUtil.commitString(KEY_DEFAULT_PLATFORM, defaultPlatform.name)
 			PreferenceUtil.commitString(KEY_ACTIVE_PLATFORMS, activePlatforms.toJson())
+			PreferenceUtil.commitString(KEY_EXPLORE_PLATFORMS, explorePlatforms.name)
 			PreferenceUtil.commitBoolean(KEY_IS_OPEN, isOpen)
 			PreferenceUtil.commitLong(KEY_SHOW_MAX_TIME, showMaxTime)
 			PreferenceUtil.commitLong(KEY_SHOW_MIN_TIME, showMinTime)
@@ -123,6 +129,7 @@ object AdConfig {
 		with(config) {
 			if (has("defaultPlatform")) defaultPlatform = AdPlatform.valueOf(getString("defaultPlatform"))
 			if (has("activePlatforms")) activePlatforms = getJSONArray("activePlatforms").toAdPlatforms()
+			if (has("explorePlatforms")) explorePlatforms = AdPlatform.valueOf(getString("explorePlatforms"))
 			isOpen = optBoolean("isOpen", isOpen)
 			showMaxTime = optLong("showMaxTime", showMaxTime)
 			showMinTime = optLong("showMinTime", showMinTime)

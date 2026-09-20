@@ -43,12 +43,9 @@ object AdmobShower {
 	private const val TAG = "AdmobShower"
 	private val adScope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
 
-	private fun reflectPriceMicros(ad: Any): Long? = when (ad) {
-		is AppOpenAd -> ad.reflectPrice
-		is InterstitialAd -> ad.reflectPrice
-		is RewardedAd -> ad.reflectPrice
-		else -> null
-	}?.valueMicros
+	private fun <T : Any> bestPricedAd(ads: Collection<T>): T? = ads.maxByOrNull {
+		comparisonPriceEcpmMicros(it) ?: Long.MIN_VALUE
+	}
 
 	private suspend fun waitForMinimumShowTime(startedAtMs: Long, minimumTimeMs: Long) {
 		val elapsedMs = (SystemClock.elapsedRealtime() - startedAtMs).coerceAtLeast(0L)
@@ -115,12 +112,8 @@ object AdmobShower {
 			}
 			AdmobLoader.checkPool(AdFormat.OPEN)
 			AdmobLoader.checkPool(AdFormat.INTER)
-			fun bestOpenAd() = AdmobLoader.openPool.keys.maxByOrNull {
-				it.reflectPrice?.valueMicros ?: Long.MIN_VALUE
-			}
-			fun bestInterAd() = AdmobLoader.interPool.keys.maxByOrNull {
-				it.reflectPrice?.valueMicros ?: Long.MIN_VALUE
-			}
+			fun bestOpenAd() = bestPricedAd(AdmobLoader.openPool.keys)
+			fun bestInterAd() = bestPricedAd(AdmobLoader.interPool.keys)
 			val selection = selectAdPair<Any>(
 				primaryAd = bestOpenAd(),
 				secondaryAd = bestInterAd(),
@@ -142,7 +135,7 @@ object AdmobShower {
 							Log.e(TAG, "Open ad load failed: ${result.loadError?.message}", result.exception)
 							null
 						}
-						AdmobLoader.OpenLoadResult.PoolFull -> AdmobLoader.openPool.keys.firstOrNull()
+						AdmobLoader.OpenLoadResult.PoolFull -> bestPricedAd(AdmobLoader.openPool.keys)
 					}
 				},
 				loadSecondary = {
@@ -162,10 +155,10 @@ object AdmobShower {
 							Log.e(TAG, "Interstitial ad load failed: ${result.loadError?.message}", result.exception)
 							null
 						}
-						AdmobLoader.InterLoadResult.PoolFull -> AdmobLoader.interPool.keys.firstOrNull()
+						AdmobLoader.InterLoadResult.PoolFull -> bestPricedAd(AdmobLoader.interPool.keys)
 					}
 				},
-				priceMicros = ::reflectPriceMicros,
+				priceMicros = ::comparisonPriceEcpmMicros,
 			)
 			fun noAvailableAd(): AdShowStatus {
 				if (selection.timedOut) {
@@ -187,7 +180,7 @@ object AdmobShower {
 			AdmobLoader.checkPool(AdFormat.OPEN)
 			AdmobLoader.checkPool(AdFormat.INTER)
 			val ad = higherPricedAd<Any>(bestOpenAd(), bestInterAd()) {
-				reflectPriceMicros(it)
+				comparisonPriceEcpmMicros(it)
 			} ?: return@withContext noAvailableAd()
 			when (ad) {
 				is AppOpenAd -> {
@@ -288,7 +281,6 @@ object AdmobShower {
 				AppStatus.isShowingAd = false
 			}
 		}
-
 	}
 
 	/**
@@ -365,12 +357,8 @@ object AdmobShower {
 			}
 			AdmobLoader.checkPool(AdFormat.INTER)
 			AdmobLoader.checkPool(AdFormat.VIDEO)
-			fun bestInterAd() = AdmobLoader.interPool.keys.maxByOrNull {
-				it.reflectPrice?.valueMicros ?: Long.MIN_VALUE
-			}
-			fun bestVideoAd() = AdmobLoader.videoPool.keys.maxByOrNull {
-				it.reflectPrice?.valueMicros ?: Long.MIN_VALUE
-			}
+			fun bestInterAd() = bestPricedAd(AdmobLoader.interPool.keys)
+			fun bestVideoAd() = bestPricedAd(AdmobLoader.videoPool.keys)
 			suspend fun loadInterAd(): InterstitialAd? {
 				val result = try {
 					AdmobLoader.loadInterResult(callback.adContext.copy(
@@ -388,7 +376,7 @@ object AdmobShower {
 						Log.e(TAG, "Interstitial ad load failed: ${result.loadError?.message}", result.exception)
 						null
 					}
-					AdmobLoader.InterLoadResult.PoolFull -> AdmobLoader.interPool.keys.firstOrNull()
+					AdmobLoader.InterLoadResult.PoolFull -> bestPricedAd(AdmobLoader.interPool.keys)
 				}
 			}
 			suspend fun loadVideoAd(): RewardedAd? {
@@ -408,7 +396,7 @@ object AdmobShower {
 						Log.e(TAG, "Rewarded ad load failed: ${result.loadError?.message}", result.exception)
 						null
 					}
-					AdmobLoader.VideoLoadResult.PoolFull -> AdmobLoader.videoPool.keys.firstOrNull()
+					AdmobLoader.VideoLoadResult.PoolFull -> bestPricedAd(AdmobLoader.videoPool.keys)
 				}
 			}
 			val selection = selectAdPair<Any>(
@@ -417,7 +405,7 @@ object AdmobShower {
 				maxWaitTimeMs = (maximumWaitTime - (SystemClock.elapsedRealtime() - startShowTime)).coerceAtLeast(0L),
 				loadPrimary = { if (preferVideoOnTie) loadVideoAd() else loadInterAd() },
 				loadSecondary = { if (preferVideoOnTie) loadInterAd() else loadVideoAd() },
-				priceMicros = ::reflectPriceMicros,
+				priceMicros = ::comparisonPriceEcpmMicros,
 			)
 			fun noAvailableAd(): AdShowStatus {
 				if (selection.timedOut) {
@@ -439,9 +427,9 @@ object AdmobShower {
 			AdmobLoader.checkPool(AdFormat.INTER)
 			AdmobLoader.checkPool(AdFormat.VIDEO)
 			val ad = if (preferVideoOnTie) {
-				higherPricedAd<Any>(bestVideoAd(), bestInterAd()) { reflectPriceMicros(it) }
+				higherPricedAd<Any>(bestVideoAd(), bestInterAd()) { comparisonPriceEcpmMicros(it) }
 			} else {
-				higherPricedAd<Any>(bestInterAd(), bestVideoAd()) { reflectPriceMicros(it) }
+				higherPricedAd<Any>(bestInterAd(), bestVideoAd()) { comparisonPriceEcpmMicros(it) }
 			} ?: return@withContext noAvailableAd()
 			when (ad) {
 				is InterstitialAd -> {
@@ -691,7 +679,7 @@ object AdmobShower {
 		}
 
 		try {
-			val openAd = AdmobLoader.openPool.keys.firstOrNull() ?: when (
+			val openAd = bestPricedAd(AdmobLoader.openPool.keys) ?: when (
 				val loadResult = try {
 					withTimeoutOrNull(showMaxTime) {
 						AdmobLoader.loadOpenResult(adContext = callback.adContext)
@@ -720,7 +708,7 @@ object AdmobShower {
 					return@withContext fail(failResult, AdShowStatus.LOAD_FAIL)
 				}
 				AdmobLoader.OpenLoadResult.PoolFull ->
-					AdmobLoader.openPool.keys.firstOrNull() ?: return@withContext fail(
+					bestPricedAd(AdmobLoader.openPool.keys) ?: return@withContext fail(
 						ShowFailResult.LOAD_AD_EXCEPTION,
 						AdShowStatus.LOAD_FAIL,
 					)
@@ -864,7 +852,7 @@ object AdmobShower {
 		}
 
 		try {
-			val interAd = AdmobLoader.interPool.keys.firstOrNull() ?: when (
+			val interAd = bestPricedAd(AdmobLoader.interPool.keys) ?: when (
 				val loadResult = try {
 					withTimeoutOrNull(showMaxTime) {
 						AdmobLoader.loadInterResult(adContext = callback.adContext)
@@ -893,7 +881,7 @@ object AdmobShower {
 					return@withContext fail(failResult, AdShowStatus.LOAD_FAIL)
 				}
 				AdmobLoader.InterLoadResult.PoolFull ->
-					AdmobLoader.interPool.keys.firstOrNull() ?: return@withContext fail(
+					bestPricedAd(AdmobLoader.interPool.keys) ?: return@withContext fail(
 						ShowFailResult.LOAD_AD_EXCEPTION,
 						AdShowStatus.LOAD_FAIL,
 					)
@@ -1039,7 +1027,7 @@ object AdmobShower {
 		}
 
 		try {
-			val videoAd = AdmobLoader.videoPool.keys.firstOrNull() ?: when (
+			val videoAd = bestPricedAd(AdmobLoader.videoPool.keys) ?: when (
 				val loadResult = try {
 					withTimeoutOrNull(showMaxTime) {
 						AdmobLoader.loadVideoResult(adContext = callback.adContext)
@@ -1068,7 +1056,7 @@ object AdmobShower {
 					return@withContext fail(failResult, AdShowStatus.LOAD_FAIL)
 				}
 				AdmobLoader.VideoLoadResult.PoolFull ->
-					AdmobLoader.videoPool.keys.firstOrNull() ?: return@withContext fail(
+					bestPricedAd(AdmobLoader.videoPool.keys) ?: return@withContext fail(
 						ShowFailResult.LOAD_AD_EXCEPTION,
 						AdShowStatus.LOAD_FAIL,
 					)

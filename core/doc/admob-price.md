@@ -38,7 +38,9 @@ val ecpm = ad.reflectPrice?.ecpm
 
 例如 `valueMicros = 12345` 时，`revenue = 0.012345`、`ecpmMicros = 12345000`、`ecpm = 12.345`。
 
-成功读取时，`ad_finish_loading` 事件增加 `ad_price_micros`、`ad_price_currency`、`ad_price_precision`、`ad_ecpm`。未读取到价格时省略这些字段。
+成功读取时，`ad_finish_loading` 事件增加 `ad_price_micros`、`ad_price_currency`、`ad_price_precision`、`ad_ecpm`。未读取到价格时省略这些字段。`ad_price_micros` 始终保留反射结果的单次展示金额口径，不因比价模式或单位换算而改变。
+
+展示选择按每个广告加载时的 `probeConfig` 快照确定模式；没有快照时使用所属格式的当前配置。`REFLECT` 模式独立校验反射结果的 `currencyCode`，不受 `probeConfig.currency` 影响，并将 `valueMicros` 乘以 `1000`，统一为 USD eCPM 微单位后，与其他广告的反射价格或 `ADAPTER_H` / `ADAPTER_M` / `ADAPTER_L` 探针价格比较。反射结果非 USD、无有效价格或换算溢出时视为未知，不回退到其他模式。探针模式及缓存池选择规则见[探针价格区间](admob-proxy-adapter.md)。
 
 ## 支持范围
 
@@ -52,6 +54,6 @@ val ecpm = ad.reflectPrice?.ecpm
 
 最终读取本地 `zzt` 或已支持动态模块的 `q` 事件，要求事件类型为 3、精度有效、币种为 USD、金额为正数且转换为 eCPM micros 不溢出。版本不符、跨进程 Binder、字段变化、空值、非法数据或反射异常均返回 `null`，广告仍正常进入加载流程。
 
-源项目将这两条路径标记为 `SHADOW_ONLY`；此移植保留其观察用途，未接入竞价排序或用户价值判断，官方 `OnPaidEventListener` 仍负责实际收入上报。真实广告能否提供该字段取决于运行时 SDK 实现及返回的数据；结构验证和单测不代表真实广告一定能读到价格。
+源项目将这两条路径标记为 `SHADOW_ONLY`；本项目在 `REFLECT` 模式下将读取结果用于展示前比价，官方 `OnPaidEventListener` 仍负责实际收入上报。真实广告能否提供该字段取决于运行时 SDK 实现及返回的数据；结构验证和单测不代表真实广告一定能读到价格。
 
 `core/consumer-rules.keep` 包含精确的内部类/字段保留规则，通过 `consumerProguardFiles` 随 AAR 发布。升级广告 SDK 时，需要重新反编译确认路径、更新版本限制及规则，并验证真实广告加载；不能仅修改版本号。

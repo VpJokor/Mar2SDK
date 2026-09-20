@@ -4,7 +4,7 @@ import com.google.android.gms.ads.AdValue
 import com.google.android.gms.ads.MobileAds
 import java.lang.reflect.Modifier
 
-/** 展示前读取的价格快照，仅供观察；实际收入以 OnPaidEventListener 为准。 */
+/** 展示前读取的价格快照，可用于展示选择；实际收入以 OnPaidEventListener 为准。 */
 @ConsistentCopyVisibility
 data class AdmobPrice internal constructor(
 	/** 单次展示金额，单位为百万分之一美元。 */
@@ -22,7 +22,7 @@ data class AdmobPrice internal constructor(
  * 移植自 AdvertiseExample 的 AdMobVerifiedPriceExtractors（a3ae8e8f）。
  * 只读取 AdMob 25.3.0 开屏/插屏/激励广告的固定字段链，不调用 SDK 内部方法。
  * 远程 Binder、版本/结构变化或没有有效价格时返回 null。
- * 字段链依赖 SDK 内部实现，读取结果仅供观察，不作为竞价或收入上报依据。
+ * 字段链依赖 SDK 内部实现，读取结果用于 REFLECT 模式的展示选择，不作为收入上报依据。
  */
 object AdmobReflectProbe {
 	private const val SDK_VERSION = "25.3.0"

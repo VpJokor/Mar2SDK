@@ -57,9 +57,25 @@ val low: Long? = ad.adapterLPrice
 val result = ad.adapterProbeResult // 状态、responseId、配置快照、上下界探针 ID
 ```
 
-三种格式均会保存 H/L，不受 `ProbeMod` 影响，便于观察。当前展示选择仍使用已有的
-反射价格逻辑；此实现不增加 MPrice 选择策略。现有 `reflectPrice.valueMicros` 是单次
-展示金额微单位，与 H/L 相差 1000 倍，比较前必须统一单位与价格语义。
+三种格式均会保存 H/L，不受 `ProbeMod` 影响，便于观察。展示时按每个广告加载时保存的
+`probeConfig` 快照选择比价模式及探针币种；运行时修改配置不影响已有广告。自行加载等未保存
+配置快照的广告，使用所属格式的当前配置。
+
+| `ProbeMod` | 比较价格（USD eCPM 微单位） |
+| --- | --- |
+| `REFLECT` | `reflectPrice.valueMicros * 1000`，币种独立取反射结果的 `currencyCode` |
+| `ADAPTER_H` | HPrice |
+| `ADAPTER_M` | 两侧均有效时取 `LPrice + (HPrice - LPrice) / 2`，整数向下取整 |
+| `ADAPTER_L` | LPrice |
+
+`ADAPTER_M` 在比价时计算，不新增 MPrice 扩展属性。所选模式缺少必需的价格、探针结果
+异常、价格或区间无效、币种非 USD 时，比较价格为未知；不回退到反射价格或另一侧边界。
+不同格式可以使用不同模式，统一单位后比较。单个缓存池选已知价格最高的广告，同价保留
+最先缓存者；全部价格未知时选最先缓存者。组合格式的两个候选同价或任一价格未知时，
+仍优先选择名称中的第一种格式。
+
+探针读取同步完成，`probeConfig.timeout` 当前不产生额外等待。
 
 写入 `adapterProbeResult` 会一起替换 H/L，设为 null 会清除整个探针快照。
-为兼容现有接口，H/L 仍可单独写入，但手动改价会使原诊断结果失效。
+为兼容现有接口，H/L 仍可单独写入；手动改价会清除原诊断结果，但保留加载时的配置快照，
+后续比价仍按该快照选择模式及探针币种。

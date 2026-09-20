@@ -3,7 +3,7 @@ package com.mar2sdk.core.ad.impl.admob
 import android.content.SharedPreferences
 import com.mar2sdk.core.AppMod
 import com.mar2sdk.core.Core
-import com.mar2sdk.core.ad.impl.admob.AdmobConfig.ProbeMod
+import com.mar2sdk.core.ad.impl.admob.ProbeMod
 import com.mar2sdk.core.common.PreferenceUtil
 import java.io.File
 import java.lang.reflect.Modifier
@@ -13,6 +13,7 @@ import org.json.JSONException
 import org.json.JSONObject
 import org.junit.After
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertThrows
 import org.junit.Before
 import org.junit.Test
 
@@ -112,6 +113,31 @@ class AdmobConfigTest {
 	}
 
 	@Test
+	fun invalidLaterGroupPreservesAllCurrentAndPersistedConfig() {
+		val preferences = inMemoryPreferences()
+		PreferenceUtil::class.java.getDeclaredField("sharedPreferences").apply {
+			isAccessible = true
+			set(null, preferences)
+		}
+		val original = distinctConfig()
+		AdmobConfig.applyConfig(original)
+		val originalConfigs = formatConfigs()
+		val keys = listOf(AdmobKey.KEY_OPEN_CONFIG, AdmobKey.KEY_INTER_CONFIG, AdmobKey.KEY_VIDEO_CONFIG)
+		val originalStored = keys.associateWith { preferences.getString(it, null) }
+		val invalidUpdate = distinctConfig().apply {
+			getJSONObject("openConfig").put("id", "replacement-open")
+			getJSONObject("interConfig").remove("probeConfig")
+			getJSONObject("videoConfig").put("id", "replacement-video")
+		}
+
+		assertThrows(JSONException::class.java) { AdmobConfig.applyConfig(invalidUpdate) }
+
+		assertEquals(originalConfigs, formatConfigs())
+		assertMatches(original)
+		assertEquals(originalStored, keys.associateWith { preferences.getString(it, null) })
+	}
+
+	@Test
 	fun persistsAndReloadsAllProbeModesAndFormatFields() {
 		val field = PreferenceUtil::class.java.getDeclaredField("sharedPreferences").apply { isAccessible = true }
 		val preferences = inMemoryPreferences()
@@ -203,13 +229,13 @@ class AdmobConfigTest {
 			assertEquals(format, expected.getInt("poolSize"), formats[index].poolSize)
 			val probe = expected.getJSONObject("probeConfig")
 			val instances = probe.getJSONArray("instances")
-			assertEquals(format, AdmobConfig.ProbeConfig(
+			assertEquals(format, ProbeConfig(
 				mod = ProbeMod.valueOf(probe.getString("mod")),
 				timeout = probe.getLong("timeout"),
 				currency = probe.getString("currency"),
 				instances = List(instances.length()) { instanceIndex ->
 					val instance = instances.getJSONObject(instanceIndex)
-					AdmobConfig.ProbeInstance(instance.getString("instanceId"), instance.getString("label"),
+					ProbeInstance(instance.getString("instanceId"), instance.getString("label"),
 						instance.getDouble("ecpm"), instance.getString("param"))
 				},
 			), formats[index].probeConfig)

@@ -661,6 +661,12 @@ object AdmobShower {
 			if (activity.isFinishing || activity.isDestroyed) {
 				return fail(ShowFailResult.ACTIVITY_IS_FINISHING)
 			}
+			// 最小展示等待期间广告位可能已切换，已选中的旧广告不得继续展示。
+			if (ad.adUnitId != AdmobConfig.openID) {
+				AdmobLoader.openPool.remove(ad)
+				fillOpenPoolInBackground()
+				return fail(ShowFailResult.AD_CONFIG_CHANGED)
+			}
 			currentOpenAd = ad
 			showCommitted = true
 			val showStatus = try {
@@ -834,6 +840,12 @@ object AdmobShower {
 			if (activity.isFinishing || activity.isDestroyed) {
 				return fail(ShowFailResult.ACTIVITY_IS_FINISHING)
 			}
+			// 最小展示等待期间广告位可能已切换，已选中的旧广告不得继续展示。
+			if (ad.adUnitId != AdmobConfig.interID) {
+				AdmobLoader.interPool.remove(ad)
+				fillInterPoolInBackground()
+				return fail(ShowFailResult.AD_CONFIG_CHANGED)
+			}
 			currentInterAd = ad
 			showCommitted = true
 			val showStatus = try {
@@ -1006,6 +1018,12 @@ object AdmobShower {
 			waitForMinimumShowTime(startShowTime, minimumShowTime)
 			if (activity.isFinishing || activity.isDestroyed) {
 				return fail(ShowFailResult.ACTIVITY_IS_FINISHING)
+			}
+			// 最小展示等待期间广告位可能已切换，已选中的旧广告不得继续展示。
+			if (ad.adUnitId != AdmobConfig.videoID) {
+				AdmobLoader.videoPool.remove(ad)
+				fillVideoPoolInBackground()
+				return fail(ShowFailResult.AD_CONFIG_CHANGED)
 			}
 			currentVideoAd = ad
 			showCommitted = true

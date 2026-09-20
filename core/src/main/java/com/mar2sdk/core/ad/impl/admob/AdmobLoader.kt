@@ -1,6 +1,7 @@
 package com.mar2sdk.core.ad.impl.admob
 
 import android.util.Log
+import androidx.annotation.MainThread
 import com.google.android.gms.ads.AdRequest
 import com.google.android.gms.ads.LoadAdError
 import com.google.android.gms.ads.appopen.AppOpenAd
@@ -29,10 +30,11 @@ import kotlinx.coroutines.withContext
 
 /**
  * admob的广告加载器
- * 同一时间只能有1个开屏，1个插屏，1个视频广告加载
+ * 每种格式复用一个当前广告位的加载请求；切换后旧 SDK 请求可能仍返回，但不再使用。
  */
 object AdmobLoader {
 	private const val TAG = "AdmobLoader"
+	internal class AdUnitChangedException : IllegalStateException("AdMob ad unit changed during loading")
 
 	internal sealed interface OpenLoadResult {
 		data class Loaded(val ad: AppOpenAd) : OpenLoadResult
@@ -63,6 +65,20 @@ object AdmobLoader {
 	private var openLoadDeferred: CompletableDeferred<OpenLoadResult>? = null
 	private var interLoadDeferred: CompletableDeferred<InterLoadResult>? = null
 	private var videoLoadDeferred: CompletableDeferred<VideoLoadResult>? = null
+	private var openLoadingAdUnitId: String? = null
+	private var interLoadingAdUnitId: String? = null
+	private var videoLoadingAdUnitId: String? = null
+
+	// SDK 请求入口与请求状态分开，便于用可控回调验证配置切换期间的加载顺序。
+	internal var requestOpenAd: (String, AppOpenAd.AppOpenAdLoadCallback) -> Unit = { id, callback ->
+		AppOpenAd.load(Core.app, id, AdRequest.Builder().build(), callback)
+	}
+	internal var requestInterAd: (String, InterstitialAdLoadCallback) -> Unit = { id, callback ->
+		InterstitialAd.load(Core.app, id, AdRequest.Builder().build(), callback)
+	}
+	internal var requestVideoAd: (String, RewardedAdLoadCallback) -> Unit = { id, callback ->
+		RewardedAd.load(Core.app, id, AdRequest.Builder().build(), callback)
+	}
 
 	// 广告池，里面放已经加载成功的广告
 	val openPool = mutableMapOf<AppOpenAd, Long>()
@@ -134,23 +150,30 @@ object AdmobLoader {
 		currentLoad = { openLoadDeferred },
 		isPoolFull = { openPool.size >= AdmobConfig.openConfig.poolSize },
 		poolFull = OpenLoadResult.PoolFull,
+		isObsolete = { it is OpenLoadResult.Failed && it.exception is AdUnitChangedException },
 		startLoad = { startOpenLoad(adContext) },
 	)
 
 	private fun startOpenLoad(
 		adContext: ScreenAdContext
 	): CompletableDeferred<OpenLoadResult> {
-		val loadContext = adContext.copy()
+		val loadContext = adContext.copy(adUnitId = AdmobConfig.openID)
 		val probeConfig = AdmobConfig.openConfig.probeConfig.let {
 			it.copy(instances = it.instances.toList())
 		}
 		val loadDeferred = CompletableDeferred<OpenLoadResult>()
 		openLoadDeferred = loadDeferred
+		openLoadingAdUnitId = loadContext.adUnitId
 		isLoadingOpen = true
 		try {
 			logLoad(LogAdEvent.ad_start_loading, loadContext)
 			val loadCallback = object : AppOpenAd.AppOpenAdLoadCallback() {
 				override fun onAdLoaded(openAd: AppOpenAd) {
+					// 旧请求不能在切换后入池，也不能覆盖新请求的加载状态。
+					if (openLoadDeferred !== loadDeferred || loadContext.adUnitId != AdmobConfig.openID) {
+						completeLoad(loadDeferred, OpenLoadResult.Failed(exception = AdUnitChangedException()))
+						return
+					}
 					val price = AdmobReflectProbe.read(openAd)
 					openAd.reflectPrice = price
 					openAd.adapterProbeResult = AdmobAdapterProxyReader.read(openAd.responseInfo, probeConfig)
@@ -163,7 +186,7 @@ object AdmobLoader {
 					completeLoad(loadDeferred, OpenLoadResult.Failed(loadError = loadAdError))
 				}
 			}
-			AppOpenAd.load(Core.app, adContext.adUnitId, AdRequest.Builder().build(), loadCallback)
+			requestOpenAd(loadContext.adUnitId, loadCallback)
 		} catch (error: Exception) {
 			Log.e(TAG, "Failed to start loading open ad", error)
 			completeLoad(loadDeferred, OpenLoadResult.Failed(exception = error))
@@ -196,23 +219,29 @@ object AdmobLoader {
 		currentLoad = { interLoadDeferred },
 		isPoolFull = { interPool.size >= AdmobConfig.interConfig.poolSize },
 		poolFull = InterLoadResult.PoolFull,
+		isObsolete = { it is InterLoadResult.Failed && it.exception is AdUnitChangedException },
 		startLoad = { startInterLoad(adContext) },
 	)
 
 	private fun startInterLoad(
 		adContext: ScreenAdContext
 	): CompletableDeferred<InterLoadResult> {
-		val loadContext = adContext.copy()
+		val loadContext = adContext.copy(adUnitId = AdmobConfig.interID)
 		val probeConfig = AdmobConfig.interConfig.probeConfig.let {
 			it.copy(instances = it.instances.toList())
 		}
 		val loadDeferred = CompletableDeferred<InterLoadResult>()
 		interLoadDeferred = loadDeferred
+		interLoadingAdUnitId = loadContext.adUnitId
 		isLoadingInter = true
 		try {
 			logLoad(LogAdEvent.ad_start_loading, loadContext)
 			val loadCallback = object : InterstitialAdLoadCallback() {
 				override fun onAdLoaded(interstitialAd: InterstitialAd) {
+					if (interLoadDeferred !== loadDeferred || loadContext.adUnitId != AdmobConfig.interID) {
+						completeLoad(loadDeferred, InterLoadResult.Failed(exception = AdUnitChangedException()))
+						return
+					}
 					val price = AdmobReflectProbe.read(interstitialAd)
 					interstitialAd.reflectPrice = price
 					interstitialAd.adapterProbeResult = AdmobAdapterProxyReader.read(interstitialAd.responseInfo, probeConfig)
@@ -225,7 +254,7 @@ object AdmobLoader {
 					completeLoad(loadDeferred, InterLoadResult.Failed(loadError = loadAdError))
 				}
 			}
-			InterstitialAd.load(Core.app, adContext.adUnitId, AdRequest.Builder().build(), loadCallback)
+			requestInterAd(loadContext.adUnitId, loadCallback)
 		} catch (error: Exception) {
 			Log.e(TAG, "Failed to start loading interstitial ad", error)
 			completeLoad(loadDeferred, InterLoadResult.Failed(exception = error))
@@ -258,23 +287,29 @@ object AdmobLoader {
 		currentLoad = { videoLoadDeferred },
 		isPoolFull = { videoPool.size >= AdmobConfig.videoConfig.poolSize },
 		poolFull = VideoLoadResult.PoolFull,
+		isObsolete = { it is VideoLoadResult.Failed && it.exception is AdUnitChangedException },
 		startLoad = { startVideoLoad(adContext) },
 	)
 
 	private fun startVideoLoad(
 		adContext: ScreenAdContext
 	): CompletableDeferred<VideoLoadResult> {
-		val loadContext = adContext.copy()
+		val loadContext = adContext.copy(adUnitId = AdmobConfig.videoID)
 		val probeConfig = AdmobConfig.videoConfig.probeConfig.let {
 			it.copy(instances = it.instances.toList())
 		}
 		val loadDeferred = CompletableDeferred<VideoLoadResult>()
 		videoLoadDeferred = loadDeferred
+		videoLoadingAdUnitId = loadContext.adUnitId
 		isLoadingVideo = true
 		try {
 			logLoad(LogAdEvent.ad_start_loading, loadContext)
 			val loadCallback = object : RewardedAdLoadCallback() {
 				override fun onAdLoaded(rewardedAd: RewardedAd) {
+					if (videoLoadDeferred !== loadDeferred || loadContext.adUnitId != AdmobConfig.videoID) {
+						completeLoad(loadDeferred, VideoLoadResult.Failed(exception = AdUnitChangedException()))
+						return
+					}
 					val price = AdmobReflectProbe.read(rewardedAd)
 					rewardedAd.reflectPrice = price
 					rewardedAd.adapterProbeResult = AdmobAdapterProxyReader.read(rewardedAd.responseInfo, probeConfig)
@@ -287,7 +322,7 @@ object AdmobLoader {
 					completeLoad(loadDeferred, VideoLoadResult.Failed(loadError = loadAdError))
 				}
 			}
-			RewardedAd.load(Core.app, adContext.adUnitId, AdRequest.Builder().build(), loadCallback)
+			requestVideoAd(loadContext.adUnitId, loadCallback)
 		} catch (error: Exception) {
 			Log.e(TAG, "Failed to start loading rewarded ad", error)
 			completeLoad(loadDeferred, VideoLoadResult.Failed(exception = error))
@@ -302,14 +337,17 @@ object AdmobLoader {
 		when {
 			openLoadDeferred === loadDeferred -> {
 				openLoadDeferred = null
+				openLoadingAdUnitId = null
 				isLoadingOpen = false
 			}
 			interLoadDeferred === loadDeferred -> {
 				interLoadDeferred = null
+				interLoadingAdUnitId = null
 				isLoadingInter = false
 			}
 			videoLoadDeferred === loadDeferred -> {
 				videoLoadDeferred = null
+				videoLoadingAdUnitId = null
 				isLoadingVideo = false
 			}
 		}
@@ -321,12 +359,18 @@ object AdmobLoader {
 		currentLoad: () -> CompletableDeferred<R>?,
 		isPoolFull: () -> Boolean,
 		poolFull: R,
+		isObsolete: (R) -> Boolean,
 		startLoad: () -> CompletableDeferred<R>,
 	): R = withContext(Dispatchers.Main.immediate) {
-		checkPool()
-		currentLoad()?.let { return@withContext it.await() }
-		if (isPoolFull()) return@withContext poolFull
-		startLoad().await()
+		var result: R
+		do {
+			checkPool()
+			val pending = currentLoad()
+			if (pending == null && isPoolFull()) return@withContext poolFull
+			result = (pending ?: startLoad()).await()
+			// 配置切换唤醒旧请求的等待者，在原有展示超时预算内改用新 ID。
+		} while (isObsolete(result))
+		result
 	}
 
 	private fun defaultContext(adFormat: AdFormat, adUnitId: String) = ScreenAdContext(
@@ -367,20 +411,40 @@ object AdmobLoader {
 		}
 	}
 
-	// 检查并移除广告池过期广告
+	@MainThread
+	internal fun onConfigChanged() {
+		checkPool(AdFormat.OPEN)
+		checkPool(AdFormat.INTER)
+		checkPool(AdFormat.VIDEO)
+	}
+
+	// 清理过期或不属于当前广告位的广告，并解除对旧请求的等待。
+	@MainThread
 	fun checkPool(adFormat: AdFormat) {
 		when(adFormat) {
-			// 检查并移除开屏广告池过期广告
-			AdFormat.OPEN -> openPool.entries.removeIf { (_, time) ->
-				System.currentTimeMillis() - time > AdmobConfig.openConfig.timeout
+			AdFormat.OPEN -> {
+				openPool.entries.removeIf { (ad, time) ->
+					ad.adUnitId != AdmobConfig.openID || System.currentTimeMillis() - time > AdmobConfig.openConfig.timeout
+				}
+				openLoadDeferred?.takeIf { openLoadingAdUnitId != AdmobConfig.openID }?.let {
+					completeLoad(it, OpenLoadResult.Failed(exception = AdUnitChangedException()))
+				}
 			}
-			// 检查并移除视频广告池过期广告
-			AdFormat.VIDEO -> videoPool.entries.removeIf { (_, time) ->
-				System.currentTimeMillis() - time > AdmobConfig.videoConfig.timeout
+			AdFormat.VIDEO -> {
+				videoPool.entries.removeIf { (ad, time) ->
+					ad.adUnitId != AdmobConfig.videoID || System.currentTimeMillis() - time > AdmobConfig.videoConfig.timeout
+				}
+				videoLoadDeferred?.takeIf { videoLoadingAdUnitId != AdmobConfig.videoID }?.let {
+					completeLoad(it, VideoLoadResult.Failed(exception = AdUnitChangedException()))
+				}
 			}
-			// 检查并移除插屏广告池过期广告
-			else -> interPool.entries.removeIf { (_, time) ->
-				System.currentTimeMillis() - time > AdmobConfig.interConfig.timeout
+			else -> {
+				interPool.entries.removeIf { (ad, time) ->
+					ad.adUnitId != AdmobConfig.interID || System.currentTimeMillis() - time > AdmobConfig.interConfig.timeout
+				}
+				interLoadDeferred?.takeIf { interLoadingAdUnitId != AdmobConfig.interID }?.let {
+					completeLoad(it, InterLoadResult.Failed(exception = AdUnitChangedException()))
+				}
 			}
 		}
 	}

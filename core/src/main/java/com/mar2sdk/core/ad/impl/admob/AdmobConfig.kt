@@ -1,5 +1,6 @@
 package com.mar2sdk.core.ad.impl.admob
 
+import androidx.annotation.MainThread
 import com.mar2sdk.core.AppMod
 import com.mar2sdk.core.Core
 import com.mar2sdk.core.R
@@ -112,13 +113,17 @@ object AdmobConfig {
 		}
 	}
 
-	/** 应用 Remote Config 的 JSON 配置，并保存到本地供下次启动使用。 */
+	/** 与广告加载、展示同在主线程应用配置，并保存到本地供下次启动使用。 */
+	@MainThread
 	internal fun applyConfig(config: JSONObject) {
-		with(config) {
-			optJSONObject("openConfig")?.let { openConfig = it.toAdUnitConfig() }
-			optJSONObject("interConfig")?.let { interConfig = it.toAdUnitConfig() }
-			optJSONObject("videoConfig")?.let { videoConfig = it.toAdUnitConfig() }
-		}
+		// 先完整解析，避免某一组无效时只切换了部分广告位。
+		val nextOpen = config.optJSONObject("openConfig")?.toAdUnitConfig() ?: openConfig
+		val nextInter = config.optJSONObject("interConfig")?.toAdUnitConfig() ?: interConfig
+		val nextVideo = config.optJSONObject("videoConfig")?.toAdUnitConfig() ?: videoConfig
+		openConfig = nextOpen
+		interConfig = nextInter
+		videoConfig = nextVideo
+		AdmobLoader.onConfigChanged()
 		saveAdmobConfig()
 	}
 

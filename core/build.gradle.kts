@@ -3,7 +3,7 @@ plugins {
 	alias(libs.plugins.kotlin.parcelize)
 }
 
-version = "1.0.0"
+version = "1.1.0"
 
 android {
 	namespace = "com.mar2sdk.core"

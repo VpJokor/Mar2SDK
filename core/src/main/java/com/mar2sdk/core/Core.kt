@@ -7,6 +7,13 @@ import com.mar2sdk.core.ad.AdShower
 import com.mar2sdk.core.ad.callback.ShowCallback
 import com.mar2sdk.core.ad.status.AdFormat
 import com.mar2sdk.core.ad.status.AdShowStatus
+import com.mar2sdk.core.common.AppObs
+import com.mar2sdk.core.common.CommonConfig
+import com.mar2sdk.core.common.RiskUtil
+import com.mar2sdk.core.common.TestMod
+import com.mar2sdk.core.common.UserInfo
+import com.mar2sdk.core.common.net.NetUtil
+import com.mar2sdk.core.common.status.UserType
 import com.mar2sdk.core.firebase.FirebaseUtil
 import com.mar2sdk.core.firebase.InstallReferrerUtil
 import com.mar2sdk.core.firebase.SingularUtil
@@ -14,13 +21,6 @@ import com.mar2sdk.core.log.LogUtil
 import com.mar2sdk.core.log.ThinkingUtil
 import com.mar2sdk.core.notify.NotificationUtil
 import com.mar2sdk.core.notify.app.AppNotificationUtil
-import com.mar2sdk.core.common.RiskUtil
-import com.mar2sdk.core.common.TestMod
-import com.mar2sdk.core.common.UserInfo
-import com.mar2sdk.core.common.status.UserType
-import com.mar2sdk.core.common.AppObs
-import com.mar2sdk.core.common.CommonConfig
-import com.mar2sdk.core.common.net.NetUtil
 
 enum class AppMod {
 	DEBUG,
@@ -33,6 +33,8 @@ enum class AppMod {
  * 核心库入口
  */
 object Core {
+
+	private const val TAG = "Core"
 	// 由 core/build.gradle.kts 中的 version 在构建时生成。
 	const val SDK_VERSION = BuildConfig.SDK_VERSION
 

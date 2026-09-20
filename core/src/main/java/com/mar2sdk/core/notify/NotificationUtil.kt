@@ -8,6 +8,7 @@ import android.os.Build
 import androidx.activity.result.ActivityResultLauncher
 import androidx.core.app.NotificationManagerCompat
 import com.mar2sdk.core.Core
+import com.mar2sdk.core.log.LogAppParam
 import com.mar2sdk.core.log.LogNotifyEvent
 import com.mar2sdk.core.log.LogNotifyParam
 import com.mar2sdk.core.log.LogUtil
@@ -62,6 +63,11 @@ object NotificationUtil {
 			return false
 		}
 		return NotificationManagerCompat.from(context).areNotificationsEnabled()
+	}
+
+	// 初始化和页面恢复时同步，覆盖授权结果及系统设置中的通知开关变化。
+	internal fun reportNotificationPermission() {
+		ThinkingUtil.setUserAttr(LogAppParam.has_notification_permission, hasNotiAccess())
 	}
 
 	// 启动前台服务

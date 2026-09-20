@@ -64,6 +64,8 @@ object Core {
 		InstallReferrerUtil.init()
 		// 初始化数数
 		ThinkingUtil.init()
+		// 自动上报当前通知权限。
+		NotificationUtil.reportNotificationPermission()
 		// 风控辅助初始化
 		RiskUtil.init()
 		// 上报appMod

@@ -365,6 +365,7 @@ object AppObs {
 		}
 
 		override fun onActivityResumed(activity: Activity) {
+			NotificationUtil.reportNotificationPermission()
 			NotificationUtil.trackAppOpen(activity.intent)
 		}
 

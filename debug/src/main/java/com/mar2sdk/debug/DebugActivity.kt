@@ -16,8 +16,6 @@ import com.mar2sdk.core.ad.AdConfig
 import com.mar2sdk.core.ad.policy.ScreenAdContext
 import com.mar2sdk.core.ad.policy.ScreenAdTrigger
 import com.mar2sdk.core.ad.status.AdFormat
-import com.mar2sdk.core.log.LogAppParam
-import com.mar2sdk.core.log.ThinkingUtil
 import com.mar2sdk.core.notify.NotificationUtil
 import com.mar2sdk.core.notify.app.AppNotificationUtil
 import com.mar2sdk.core.common.TestMod
@@ -141,9 +139,6 @@ class DebugActivity : AppCompatActivity() {
 	}
 
 	private fun handleNotificationPermissionResult(granted: Boolean) {
-		// INFO: 通知权限打点
-		ThinkingUtil.setUserAttr(LogAppParam.has_notification_permission, granted)
-
 		if (granted) {
 			Toast.makeText(this, "通知权限请求成功", Toast.LENGTH_SHORT).show()
 		} else {

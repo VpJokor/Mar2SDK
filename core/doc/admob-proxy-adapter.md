@@ -58,8 +58,8 @@ val result = ad.adapterProbeResult // 状态、responseId、配置快照、上�
 ```
 
 三种格式均会保存 H/L，不受 `ProbeMod` 影响，便于观察。展示时按每个广告加载时保存的
-`probeConfig` 快照选择比价模式及探针币种；运行时修改配置不影响已有广告。自行加载等未保存
-配置快照的广告，使用所属格式的当前配置。
+`probeConfig` 快照选择比价模式及探针币种；运行时修改配置不影响已有广告。未保存
+配置快照的广告价格视为未知。
 
 | `ProbeMod` | 比较价格（USD eCPM 微单位） |
 | --- | --- |
@@ -77,5 +77,4 @@ val result = ad.adapterProbeResult // 状态、responseId、配置快照、上�
 探针读取同步完成，`probeConfig.timeout` 当前不产生额外等待。
 
 写入 `adapterProbeResult` 会一起替换 H/L，设为 null 会清除整个探针快照。
-为兼容现有接口，H/L 仍可单独写入；手动改价会清除原诊断结果，但保留加载时的配置快照，
-后续比价仍按该快照选择模式及探针币种。
+H/L 是探针结果的只读属性，不单独保存或写入；价格、诊断信息和加载配置来自同一份结果。

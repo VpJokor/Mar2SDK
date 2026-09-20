@@ -1,9 +1,9 @@
 package com.mar2sdk.core.ad.impl.admob
 
 import com.google.android.gms.ads.AdError
-import com.mar2sdk.core.ad.impl.admob.AdmobConfig.ProbeConfig
-import com.mar2sdk.core.ad.impl.admob.AdmobConfig.ProbeInstance
-import com.mar2sdk.core.ad.impl.admob.AdmobConfig.ProbeMod
+import com.mar2sdk.core.ad.impl.admob.ProbeConfig
+import com.mar2sdk.core.ad.impl.admob.ProbeInstance
+import com.mar2sdk.core.ad.impl.admob.ProbeMod
 import com.mar2sdk.core.ad.impl.admob.probe.AdmobAdapterProbeResult.Status
 import com.mar2sdk.core.ad.impl.admob.probe.AdmobAdapterProxyReader
 import com.mar2sdk.core.ad.impl.admob.probe.AdmobAdapterProxyReader.AdapterSnapshot

@@ -1,6 +1,6 @@
 package com.mar2sdk.core.ad.impl.admob.probe
 
-import com.mar2sdk.core.ad.impl.admob.AdmobConfig.ProbeConfig
+import com.mar2sdk.core.ad.impl.admob.ProbeConfig
 
 /**
  * 一次成功加载的广告在瀑布排序中的推断区间，单位为 USD eCPM 微单位。

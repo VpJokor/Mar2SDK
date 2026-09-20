@@ -28,12 +28,16 @@
 
 Kotlin 中通过 `AdmobConfig.openConfig`、`interConfig`、`videoConfig` 访问配置，修改时使用数据类的 `copy()` 后调用 `saveAdmobConfig()`。`openID`、`interID`、`videoID` 根据当前运行模式返回实际使用的广告位 ID。
 
-`ProbeConfig.mod` 的 Kotlin 类型为 `AdmobConfig.ProbeMod`，JSON 和本地持久化统一使用枚举名称，例如 `REFLECT`。
+`ProbeConfig.mod` 的 Kotlin 类型为 `ProbeMod`，JSON 和本地持久化统一使用枚举名称，例如 `REFLECT`。
 
-加载时为每个广告保存 `probeConfig` 快照，比价使用该快照的模式及探针币种，后续配置修改不影响已有广告；没有快照时使用所属格式的当前配置。三种格式可以分别配置不同模式。比较价格统一为 USD eCPM 微单位：`REFLECT` 使用 `valueMicros * 1000`，并独立校验反射结果的 `currencyCode` 为 USD；`ADAPTER_H` / `ADAPTER_L` 使用对应边界，`ADAPTER_M` 要求上下界均有效，按 `L + (H - L) / 2` 计算并向下取整。所需价格缺失、无效或探针异常时视为未知，不回退到其他模式或另一侧边界。
+加载时为每个广告保存 `probeConfig` 快照，比价使用该快照的模式及探针币种，后续配置修改不影响已有广告；没有快照时价格视为未知。三种格式可以分别配置不同模式。比较价格统一为 USD eCPM 微单位：`REFLECT` 使用 `valueMicros * 1000`，并独立校验反射结果的 `currencyCode` 为 USD；`ADAPTER_H` / `ADAPTER_L` 使用对应边界，`ADAPTER_M` 要求上下界均有效，按 `L + (H - L) / 2` 计算并向下取整。所需价格缺失、无效或探针异常时视为未知，不回退到其他模式或另一侧边界。
 
 单个缓存池优先选已知价格最高的广告，同价或全部未知时选最先缓存者。组合格式的候选同价或任一价格未知时，优先选择格式名称中的第一种。探针实例配置及结果读取见[AdMob 探针价格区间](../../core/doc/admob-proxy-adapter.md)。
 
 Remote Config 可只提供需要更新的顶层广告配置对象；提供的对象必须包含完整字段，并整体替换对应配置。本地按 `openConfig`、`interConfig`、`videoConfig` 三个键保存 JSON，不再读取旧版平铺字段及其存储键。
+
+配置在主线程完整解析成功后应用；任一提供的广告配置对象解析失败时，整次更新不生效。实际广告位 ID 变化会清理对应旧广告缓存，并解除对旧加载请求的等待；旧 SDK 请求即使随后返回成功，也不会重新进入广告池或覆盖新请求状态。等待加载的展示流程会在原有超时预算内转向新 ID。已经选中广告、正在等待最小展示时间的单格式流程会在实际展示前再次检查 ID，若已变化则返回 `AD_CONFIG_CHANGED` 并后台补池；组合格式会重新从有效缓存中选广告。已经开始展示的广告会正常结束。
+
+仅修改探价参数、池容量等且实际 ID 不变时，不会因 ID 切换而丢弃广告；缓存有效期仍按最新 `timeout` 检查。TEST/DEBUG 使用固定测试 ID，因此修改配置中的正式 ID 不会触发测试广告的切换。后续若接入自有服务端下发，应在主线程统一调用 `AdmobConfig.applyConfig()`，沿用同一套更新规则。
 
 示例资源：[`admob_config.json`](../../core/src/main/res/raw/admob_config.json)。广告位 ID 应替换为发行版后台创建的值；超时时间和池容量应使用非负数。

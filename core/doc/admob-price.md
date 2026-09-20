@@ -40,7 +40,7 @@ val ecpm = ad.reflectPrice?.ecpm
 
 成功读取时，`ad_finish_loading` 事件增加 `ad_price_micros`、`ad_price_currency`、`ad_price_precision`、`ad_ecpm`。未读取到价格时省略这些字段。`ad_price_micros` 始终保留反射结果的单次展示金额口径，不因比价模式或单位换算而改变。
 
-展示选择按每个广告加载时的 `probeConfig` 快照确定模式；没有快照时使用所属格式的当前配置。`REFLECT` 模式独立校验反射结果的 `currencyCode`，不受 `probeConfig.currency` 影响，并将 `valueMicros` 乘以 `1000`，统一为 USD eCPM 微单位后，与其他广告的反射价格或 `ADAPTER_H` / `ADAPTER_M` / `ADAPTER_L` 探针价格比较。反射结果非 USD、无有效价格或换算溢出时视为未知，不回退到其他模式。探针模式及缓存池选择规则见[探针价格区间](admob-proxy-adapter.md)。
+展示选择按每个广告加载时的 `probeConfig` 快照确定模式；没有快照时价格视为未知。`REFLECT` 模式独立校验反射结果的 `currencyCode`，不受 `probeConfig.currency` 影响，并将 `valueMicros` 乘以 `1000`，统一为 USD eCPM 微单位后，与其他广告的反射价格或 `ADAPTER_H` / `ADAPTER_M` / `ADAPTER_L` 探针价格比较。反射结果非 USD、无有效价格或换算溢出时视为未知，不回退到其他模式。探针模式及缓存池选择规则见[探针价格区间](admob-proxy-adapter.md)。
 
 ## 支持范围
 

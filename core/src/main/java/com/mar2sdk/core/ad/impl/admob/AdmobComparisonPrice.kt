@@ -1,7 +1,7 @@
 package com.mar2sdk.core.ad.impl.admob
 
-import com.mar2sdk.core.ad.impl.admob.AdmobConfig.ProbeConfig
-import com.mar2sdk.core.ad.impl.admob.AdmobConfig.ProbeMod
+import com.mar2sdk.core.ad.impl.admob.ProbeConfig
+import com.mar2sdk.core.ad.impl.admob.ProbeMod
 import com.mar2sdk.core.ad.impl.admob.probe.AdmobPrice
 
 /** 展示选择统一使用 USD eCPM 微单位；缺少当前模式所需价格时返回 null。 */

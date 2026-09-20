@@ -1,6 +1,6 @@
 package com.mar2sdk.core.ad.impl.admob
 
-import com.mar2sdk.core.ad.impl.admob.AdmobConfig.ProbeMod
+import com.mar2sdk.core.ad.impl.admob.ProbeMod
 import com.mar2sdk.core.ad.impl.admob.probe.AdmobPrice
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
@@ -107,7 +107,7 @@ class AdmobComparisonPriceTest {
 		resolveComparisonPriceEcpmMicros(config(mode), reflectedPrice, high, low)
 
 	private fun config(mode: ProbeMod, currency: String = "USD") =
-		AdmobConfig.ProbeConfig(mode, 3_000, currency, emptyList())
+		ProbeConfig(mode, 3_000, currency, emptyList())
 
 	private val reflectedPrice = AdmobPrice(25_000, "USD", 1)
 	private val adapterModes = listOf(ProbeMod.ADAPTER_H, ProbeMod.ADAPTER_M, ProbeMod.ADAPTER_L)

@@ -4,8 +4,8 @@ import com.google.android.gms.ads.AdError
 import com.google.android.gms.ads.AdapterResponseInfo
 import com.google.android.gms.ads.ResponseInfo
 import com.google.android.gms.ads.mediation.MediationConfiguration
-import com.mar2sdk.core.ad.impl.admob.AdmobConfig.ProbeConfig
-import com.mar2sdk.core.ad.impl.admob.AdmobConfig.ProbeInstance
+import com.mar2sdk.core.ad.impl.admob.ProbeConfig
+import com.mar2sdk.core.ad.impl.admob.ProbeInstance
 import com.mar2sdk.core.ad.impl.admob.probe.AdmobAdapterProbeResult.Status
 import java.math.BigDecimal
 

@@ -58,9 +58,10 @@ object Core {
 		FirebaseUtil.init()
 		// 初始化Singular
 		SingularUtil.init()
+		// 初始化InstallRefer
+		InstallReferrerUtil.init()
 		// 初始化数数
 		ThinkingUtil.init()
-		InstallReferrerUtil.init()
 		// 风控辅助初始化
 		RiskUtil.init()
 		// 上报appMod

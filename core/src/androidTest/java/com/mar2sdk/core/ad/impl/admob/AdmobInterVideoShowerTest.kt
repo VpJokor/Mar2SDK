@@ -7,6 +7,7 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import com.google.android.gms.ads.AdError
 import com.google.android.gms.ads.FullScreenContentCallback
+import com.google.android.gms.ads.LoadAdError
 import com.google.android.gms.ads.OnPaidEventListener
 import com.google.android.gms.ads.OnUserEarnedRewardListener
 import com.google.android.gms.ads.ResponseInfo
@@ -38,7 +39,10 @@ import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.cancelAndJoin
+import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withTimeout
 import kotlinx.coroutines.yield
 import org.junit.After
 import org.junit.Assert.assertEquals
@@ -358,41 +362,200 @@ class AdmobInterVideoShowerTest {
 	}
 
 	@Test
-	fun singleFormatShowersRejectIdsChangedDuringMinimumWait() = runBlocking(Dispatchers.Main) {
+	fun singleFormatShowersLoadNewIdsAfterMinimumWaitWithoutWaitingMinimumAgain() = runBlocking(Dispatchers.Main) {
+		val requested = Channel<CapturedRequest>(Channel.UNLIMITED)
+		captureAdRequests { requested.trySend(it) }
 		for (format in listOf(AdFormat.OPEN, AdFormat.INTER, AdFormat.VIDEO)) {
 			AdConfig.showMinTime = 100L
-			val open = FakeOpen()
-			val inter = FakeInter()
-			val video = FakeVideo()
-			cache(open, 10)
-			cache(inter, 10)
-			cache(video, 10)
+			AdConfig.showMaxTime = 5_000L
+			val oldAd = cacheFake(format)
 			val callback = RecordingCallback(format)
 			val waiting = async(start = CoroutineStart.UNDISPATCHED) {
-				when (format) {
-					AdFormat.OPEN -> AdmobShower.showOpen(Activity(), callback)
-					AdFormat.INTER -> AdmobShower.showInter(Activity(), callback)
-					else -> AdmobShower.showVideo(Activity(), callback)
-				}
+				showSingle(format, callback)
 			}
 			try {
 				assertTrue(AppStatus.isShowingAd)
 				assertFalse(waiting.isCompleted)
-				val (key, config) = when (format) {
-					AdFormat.OPEN -> "openConfig" to AdmobConfig.openConfig
-					AdFormat.INTER -> "interConfig" to AdmobConfig.interConfig
-					else -> "videoConfig" to AdmobConfig.videoConfig
-				}
-				AdmobConfig.applyConfig(JSONObject().put(key, adUnitJson(config.copy(id = "new-${format.name}"))))
+				changeId(format, "new-${format.name}", poolSize = 1)
+				val replacement = withTimeout(5_000L) { requested.receive() }
+				assertEquals("new-${format.name}", replacement.id)
+				assertEquals(replacement.id, callback.adContext.adUnitId)
+				assertTrue(AppStatus.isShowingAd)
+				assertEquals(0, shows(oldAd))
+				// Disable background refill so it cannot leave a request in the next iteration.
+				val property = configProperty(format)
+				property.set(property.get().copy(poolSize = 0))
+				replacement.succeed()
+				yield()
 
-				assertEquals(AdShowStatus.SHOW_FAIL, waiting.await())
-				assertEquals(listOf(ShowFailResult.AD_CONFIG_CHANGED), callback.failures)
+				assertTrue("$format must not restart its minimum wait", waiting.isCompleted)
+				assertEquals(AdShowStatus.SHOW_SUCCESS, waiting.await())
+				assertEquals(0, shows(oldAd))
+				assertEquals(1, shows(replacement.ad))
+				assertTrue(callback.failures.isEmpty())
+				assertTrue(poolAds(format).isEmpty())
+				dismiss(replacement.ad)
 				assertFalse(AppStatus.isShowingAd)
-				assertEquals(0, open.shows)
-				assertEquals(0, inter.shows)
-				assertEquals(0, video.shows)
 			} finally {
 				waiting.cancelAndJoin()
+			}
+		}
+	}
+
+	@Test
+	fun singleFormatShowersUseCachedReplacementEvenWhenNoLoadBudgetRemains() = runBlocking(Dispatchers.Main) {
+		val requests = captureAdRequests()
+		for (format in listOf(AdFormat.OPEN, AdFormat.INTER, AdFormat.VIDEO)) {
+			AdConfig.showMinTime = 100L
+			AdConfig.showMaxTime = 0L
+			val oldAd = cacheFake(format)
+			val callback = RecordingCallback(format)
+			val waiting = async(start = CoroutineStart.UNDISPATCHED) { showSingle(format, callback) }
+			try {
+				changeId(format, "cached-${format.name}")
+				val replacement = cacheFake(format)
+
+				assertEquals(AdShowStatus.SHOW_SUCCESS, waiting.await())
+				assertEquals(0, shows(oldAd))
+				assertEquals(1, shows(replacement))
+				assertEquals("cached-${format.name}", callback.adContext.adUnitId)
+				assertTrue(callback.failures.isEmpty())
+				assertTrue(requests.isEmpty())
+				dismiss(replacement)
+				assertFalse(AppStatus.isShowingAd)
+			} finally {
+				waiting.cancelAndJoin()
+			}
+		}
+	}
+
+	@Test
+	fun singleFormatShowersTimeOutWhenIdChangesAfterLoadBudgetIsExhausted() = runBlocking(Dispatchers.Main) {
+		val requests = captureAdRequests()
+		for (format in listOf(AdFormat.OPEN, AdFormat.INTER, AdFormat.VIDEO)) {
+			AdConfig.showMinTime = 100L
+			AdConfig.showMaxTime = 0L
+			val oldAd = cacheFake(format)
+			val callback = RecordingCallback(format)
+			val waiting = async(start = CoroutineStart.UNDISPATCHED) { showSingle(format, callback) }
+			try {
+				changeId(format, "uncached-${format.name}", poolSize = 1)
+
+				assertEquals(AdShowStatus.TIMEOUT, waiting.await())
+				assertEquals(listOf(ShowFailResult.LOAD_TIMEOUT), callback.failures)
+				assertEquals(0, shows(oldAd))
+				assertFalse(AppStatus.isShowingAd)
+				assertTrue(requests.isEmpty())
+			} finally {
+				waiting.cancelAndJoin()
+			}
+		}
+	}
+
+	@Test
+	fun repeatedSingleFormatIdChangesShareOriginalTimeoutAndLateSuccessOnlyCaches() = runBlocking(Dispatchers.Main) {
+		val requested = Channel<CapturedRequest>(Channel.UNLIMITED)
+		captureAdRequests { requested.trySend(it) }
+		for (format in listOf(AdFormat.OPEN, AdFormat.INTER, AdFormat.VIDEO)) {
+			AdConfig.showMinTime = 1_000L
+			AdConfig.showMaxTime = 3_000L
+			val oldAd = cacheFake(format)
+			val callback = RecordingCallback(format)
+			val waiting = async(start = CoroutineStart.UNDISPATCHED) { showSingle(format, callback) }
+			try {
+				changeId(format, "first-${format.name}", poolSize = 1)
+				val firstRequest = withTimeout(5_000L) { requested.receive() }
+				delay(1_000L)
+				changeId(format, "second-${format.name}", poolSize = 1)
+				val secondRequest = withTimeout(1_000L) { requested.receive() }
+				assertEquals("second-${format.name}", secondRequest.id)
+				firstRequest.succeed()
+				assertTrue(poolAds(format).isEmpty())
+				assertFalse(waiting.isCompleted)
+
+				// About two seconds have elapsed. A fresh three-second budget would fail this bound.
+				assertEquals(AdShowStatus.TIMEOUT, withTimeout(1_500L) { waiting.await() })
+				assertEquals(listOf(ShowFailResult.LOAD_TIMEOUT), callback.failures)
+				assertFalse(AppStatus.isShowingAd)
+				assertEquals(0, shows(oldAd))
+				assertEquals(0, shows(firstRequest.ad))
+				assertTrue(isLoading(format))
+
+				secondRequest.succeed()
+				yield()
+				assertEquals(setOf(secondRequest.ad), poolAds(format))
+				assertEquals(0, shows(secondRequest.ad))
+				assertFalse(isLoading(format))
+				assertFalse(AppStatus.isShowingAd)
+				assertEquals(listOf(ShowFailResult.LOAD_TIMEOUT), callback.failures)
+			} finally {
+				waiting.cancelAndJoin()
+			}
+		}
+	}
+
+	@Test
+	fun cancellingSingleFormatReplacementWaitReleasesLockAndLateSuccessOnlyCaches() = runBlocking(Dispatchers.Main) {
+		val requested = Channel<CapturedRequest>(Channel.UNLIMITED)
+		captureAdRequests { requested.trySend(it) }
+		for (format in listOf(AdFormat.OPEN, AdFormat.INTER, AdFormat.VIDEO)) {
+			AdConfig.showMinTime = 100L
+			AdConfig.showMaxTime = 5_000L
+			val oldAd = cacheFake(format)
+			val callback = RecordingCallback(format)
+			val waiting = async(start = CoroutineStart.UNDISPATCHED) { showSingle(format, callback) }
+			try {
+				changeId(format, "cancelled-${format.name}", poolSize = 1)
+				val replacement = withTimeout(5_000L) { requested.receive() }
+				assertTrue(AppStatus.isShowingAd)
+				waiting.cancelAndJoin()
+
+				assertTrue(waiting.isCancelled)
+				assertFalse(AppStatus.isShowingAd)
+				assertTrue(callback.failures.isEmpty())
+				assertEquals(0, shows(oldAd))
+				replacement.succeed()
+				yield()
+				assertEquals(setOf(replacement.ad), poolAds(format))
+				assertEquals(0, shows(replacement.ad))
+				assertFalse(AppStatus.isShowingAd)
+				assertTrue(callback.failures.isEmpty())
+			} finally {
+				waiting.cancelAndJoin()
+			}
+		}
+	}
+
+	@Test
+	fun singleFormatReplacementLoadFailuresKeepTheirOriginalReason() = runBlocking(Dispatchers.Main) {
+		val requested = Channel<CapturedRequest>(Channel.UNLIMITED)
+		var throwOnRequest = false
+		captureAdRequests {
+			requested.trySend(it)
+			if (throwOnRequest) throw IllegalStateException("fake replacement request exception")
+		}
+		for (reason in listOf(ShowFailResult.LOAD_FAILED, ShowFailResult.LOAD_AD_EXCEPTION)) {
+			throwOnRequest = reason == ShowFailResult.LOAD_AD_EXCEPTION
+			for (format in listOf(AdFormat.OPEN, AdFormat.INTER, AdFormat.VIDEO)) {
+				AdConfig.showMinTime = 100L
+				AdConfig.showMaxTime = 5_000L
+				val oldAd = cacheFake(format)
+				val callback = RecordingCallback(format)
+				val waiting = async(start = CoroutineStart.UNDISPATCHED) { showSingle(format, callback) }
+				try {
+					changeId(format, "failed-${reason.name}-${format.name}", poolSize = 1)
+					val replacement = withTimeout(5_000L) { requested.receive() }
+					if (!throwOnRequest) replacement.fail()
+
+					assertEquals(AdShowStatus.LOAD_FAIL, waiting.await())
+					assertEquals(listOf(reason), callback.failures)
+					assertFalse(AppStatus.isShowingAd)
+					assertFalse(isLoading(format))
+					assertEquals(0, shows(oldAd))
+					assertEquals(0, shows(replacement.ad))
+				} finally {
+					waiting.cancelAndJoin()
+				}
 			}
 		}
 	}
@@ -1008,23 +1171,68 @@ class AdmobInterVideoShowerTest {
 		val video: CompletableDeferred<AdmobLoader.VideoLoadResult>,
 	)
 
-	private data class CapturedRequest(val id: String, val ad: Any, val succeed: () -> Unit)
+	private data class CapturedRequest(
+		val id: String,
+		val ad: Any,
+		val succeed: () -> Unit,
+		val fail: () -> Unit,
+	)
 
-	private fun captureAdRequests(): MutableList<CapturedRequest> {
+	private fun captureAdRequests(onRequest: (CapturedRequest) -> Unit = {}): MutableList<CapturedRequest> {
 		val requests = mutableListOf<CapturedRequest>()
+		val error = LoadAdError(0, "fake load failure", "test", null, null)
+		fun record(request: CapturedRequest) {
+			requests += request
+			onRequest(request)
+		}
 		replace(AdmobLoader::requestOpenAd, { id, callback ->
 			val ad = FakeOpen(id)
-			requests += CapturedRequest(id, ad) { callback.onAdLoaded(ad) }
+			record(CapturedRequest(id, ad, { callback.onAdLoaded(ad) }, { callback.onAdFailedToLoad(error) }))
 		})
 		replace(AdmobLoader::requestInterAd, { id, callback ->
 			val ad = FakeInter(id)
-			requests += CapturedRequest(id, ad) { callback.onAdLoaded(ad) }
+			record(CapturedRequest(id, ad, { callback.onAdLoaded(ad) }, { callback.onAdFailedToLoad(error) }))
 		})
 		replace(AdmobLoader::requestVideoAd, { id, callback ->
 			val ad = FakeVideo(id)
-			requests += CapturedRequest(id, ad) { callback.onAdLoaded(ad) }
+			record(CapturedRequest(id, ad, { callback.onAdLoaded(ad) }, { callback.onAdFailedToLoad(error) }))
 		})
 		return requests
+	}
+
+	private suspend fun showSingle(format: AdFormat, callback: ShowCallback) = when (format) {
+		AdFormat.OPEN -> AdmobShower.showOpen(Activity(), callback)
+		AdFormat.INTER -> AdmobShower.showInter(Activity(), callback)
+		else -> AdmobShower.showVideo(Activity(), callback)
+	}
+
+	private fun changeId(format: AdFormat, id: String, poolSize: Int = 0) {
+		val property = configProperty(format)
+		AdmobConfig.applyConfig(JSONObject().put(property.name,
+			adUnitJson(property.get().copy(id = id, poolSize = poolSize))))
+	}
+
+	private fun cacheFake(format: AdFormat): Any = when (format) {
+		AdFormat.OPEN -> FakeOpen(AdmobConfig.openID).also { cache(it, 10) }
+		AdFormat.INTER -> FakeInter(AdmobConfig.interID).also { cache(it, 10) }
+		else -> FakeVideo(AdmobConfig.videoID).also { cache(it, 10) }
+	}
+
+	private fun shows(ad: Any): Int = when (ad) {
+		is FakeOpen -> ad.shows
+		is FakeInter -> ad.shows
+		is FakeVideo -> ad.shows
+		else -> error("Unsupported fake ad: $ad")
+	}
+
+	private fun dismiss(ad: Any) {
+		val content = when (ad) {
+			is FakeOpen -> ad.fullScreenContentCallback
+			is FakeInter -> ad.fullScreenContentCallback
+			is FakeVideo -> ad.fullScreenContentCallback
+			else -> error("Unsupported fake ad: $ad")
+		}
+		content!!.onAdDismissedFullScreenContent()
 	}
 
 	private fun configProperty(format: AdFormat) = when (format) {

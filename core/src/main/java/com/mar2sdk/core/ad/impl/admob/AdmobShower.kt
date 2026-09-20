@@ -564,6 +564,7 @@ object AdmobShower {
 		AppStatus.isShowingAd = true
 		val startShowTime = SystemClock.elapsedRealtime()
 		val minimumShowTime = showMinTime.coerceAtLeast(0L)
+		val maximumWaitTime = showMaxTime.coerceAtLeast(0L)
 		var currentOpenAd: AppOpenAd? = null
 		val showFailed = AtomicBoolean(false)
 		val fillOpenPoolStarted = AtomicBoolean(false)
@@ -651,22 +652,7 @@ object AdmobShower {
 			callback.onPaid()
 		}
 
-		suspend fun show(ad: AppOpenAd): AdShowStatus {
-			currentCoroutineContext().ensureActive()
-			callback.adContext.adUnitId = ad.adUnitId
-			if (activity.isFinishing || activity.isDestroyed) {
-				return fail(ShowFailResult.ACTIVITY_IS_FINISHING)
-			}
-			waitForMinimumShowTime(startShowTime, minimumShowTime)
-			if (activity.isFinishing || activity.isDestroyed) {
-				return fail(ShowFailResult.ACTIVITY_IS_FINISHING)
-			}
-			// 最小展示等待期间广告位可能已切换，已选中的旧广告不得继续展示。
-			if (ad.adUnitId != AdmobConfig.openID) {
-				AdmobLoader.openPool.remove(ad)
-				fillOpenPoolInBackground()
-				return fail(ShowFailResult.AD_CONFIG_CHANGED)
-			}
+		fun show(ad: AppOpenAd): AdShowStatus {
 			currentOpenAd = ad
 			showCommitted = true
 			val showStatus = try {
@@ -685,40 +671,56 @@ object AdmobShower {
 		}
 
 		try {
-			val openAd = bestPricedAd(AdmobLoader.openPool.keys) ?: when (
-				val loadResult = try {
-					withTimeoutOrNull(showMaxTime) {
-						AdmobLoader.loadOpenResult(adContext = callback.adContext)
-					}
-				} catch (e: CancellationException) {
-					throw e
-				} catch (e: Exception) {
-					AdmobLoader.OpenLoadResult.Failed(exception = e)
+			var openAd: AppOpenAd
+			do {
+				currentCoroutineContext().ensureActive()
+				if (activity.isFinishing || activity.isDestroyed) {
+					return@withContext fail(ShowFailResult.ACTIVITY_IS_FINISHING)
 				}
-			) {
-				null -> {
-					logShowEventSafely(LogAdEvent.ad_show_timeout, "Failed to log open ad timeout")
-					return@withContext fail(ShowFailResult.LOAD_TIMEOUT, AdShowStatus.TIMEOUT)
-				}
-				is AdmobLoader.OpenLoadResult.Loaded -> loadResult.ad
-				is AdmobLoader.OpenLoadResult.Failed -> {
-					val failResult = if (loadResult.loadError != null) {
-						Log.e(TAG, "Open ad load failed: ${loadResult.loadError.message}")
-						ShowFailResult.LOAD_FAILED
-					} else {
-						loadResult.exception?.let {
-							Log.e(TAG, "showOpen: ", it)
+				AdmobLoader.checkPool(AdFormat.OPEN)
+				callback.adContext.adUnitId = AdmobConfig.openID
+				openAd = bestPricedAd(AdmobLoader.openPool.keys) ?: when (
+					val loadResult = try {
+						withTimeoutOrNull((maximumWaitTime - (SystemClock.elapsedRealtime() - startShowTime)).coerceAtLeast(0L)) {
+							AdmobLoader.loadOpenResult(adContext = callback.adContext)
 						}
-						ShowFailResult.LOAD_AD_EXCEPTION
+					} catch (e: CancellationException) {
+						throw e
+					} catch (e: Exception) {
+						AdmobLoader.OpenLoadResult.Failed(exception = e)
 					}
-					return@withContext fail(failResult, AdShowStatus.LOAD_FAIL)
+				) {
+					null -> {
+						logShowEventSafely(LogAdEvent.ad_show_timeout, "Failed to log open ad timeout")
+						return@withContext fail(ShowFailResult.LOAD_TIMEOUT, AdShowStatus.TIMEOUT)
+					}
+					is AdmobLoader.OpenLoadResult.Loaded -> loadResult.ad
+					is AdmobLoader.OpenLoadResult.Failed -> {
+						val failResult = if (loadResult.loadError != null) {
+							Log.e(TAG, "Open ad load failed: ${loadResult.loadError.message}")
+							ShowFailResult.LOAD_FAILED
+						} else {
+							loadResult.exception?.let {
+								Log.e(TAG, "showOpen: ", it)
+							}
+							ShowFailResult.LOAD_AD_EXCEPTION
+						}
+						return@withContext fail(failResult, AdShowStatus.LOAD_FAIL)
+					}
+					AdmobLoader.OpenLoadResult.PoolFull ->
+						bestPricedAd(AdmobLoader.openPool.keys) ?: return@withContext fail(
+							ShowFailResult.LOAD_AD_EXCEPTION,
+							AdShowStatus.LOAD_FAIL,
+						)
 				}
-				AdmobLoader.OpenLoadResult.PoolFull ->
-					bestPricedAd(AdmobLoader.openPool.keys) ?: return@withContext fail(
-						ShowFailResult.LOAD_AD_EXCEPTION,
-						AdShowStatus.LOAD_FAIL,
-					)
-			}
+				callback.adContext.adUnitId = openAd.adUnitId
+				waitForMinimumShowTime(startShowTime, minimumShowTime)
+				currentCoroutineContext().ensureActive()
+				if (activity.isFinishing || activity.isDestroyed) {
+					return@withContext fail(ShowFailResult.ACTIVITY_IS_FINISHING)
+				}
+				// ID 切换后重选或加载新广告，沿用本次展示的剩余等待预算。
+			} while (openAd.adUnitId != AdmobConfig.openID)
 			show(openAd)
 		} catch (e: CancellationException) {
 			if (!showCommitted) {
@@ -743,6 +745,7 @@ object AdmobShower {
 		AppStatus.isShowingAd = true
 		val startShowTime = SystemClock.elapsedRealtime()
 		val minimumShowTime = showMinTime.coerceAtLeast(0L)
+		val maximumWaitTime = showMaxTime.coerceAtLeast(0L)
 		var currentInterAd: InterstitialAd? = null
 		val showFailed = AtomicBoolean(false)
 		val fillInterPoolStarted = AtomicBoolean(false)
@@ -830,22 +833,7 @@ object AdmobShower {
 			callback.onPaid()
 		}
 
-		suspend fun show(ad: InterstitialAd): AdShowStatus {
-			currentCoroutineContext().ensureActive()
-			callback.adContext.adUnitId = ad.adUnitId
-			if (activity.isFinishing || activity.isDestroyed) {
-				return fail(ShowFailResult.ACTIVITY_IS_FINISHING)
-			}
-			waitForMinimumShowTime(startShowTime, minimumShowTime)
-			if (activity.isFinishing || activity.isDestroyed) {
-				return fail(ShowFailResult.ACTIVITY_IS_FINISHING)
-			}
-			// 最小展示等待期间广告位可能已切换，已选中的旧广告不得继续展示。
-			if (ad.adUnitId != AdmobConfig.interID) {
-				AdmobLoader.interPool.remove(ad)
-				fillInterPoolInBackground()
-				return fail(ShowFailResult.AD_CONFIG_CHANGED)
-			}
+		fun show(ad: InterstitialAd): AdShowStatus {
 			currentInterAd = ad
 			showCommitted = true
 			val showStatus = try {
@@ -864,40 +852,56 @@ object AdmobShower {
 		}
 
 		try {
-			val interAd = bestPricedAd(AdmobLoader.interPool.keys) ?: when (
-				val loadResult = try {
-					withTimeoutOrNull(showMaxTime) {
-						AdmobLoader.loadInterResult(adContext = callback.adContext)
-					}
-				} catch (e: CancellationException) {
-					throw e
-				} catch (e: Exception) {
-					AdmobLoader.InterLoadResult.Failed(exception = e)
+			var interAd: InterstitialAd
+			do {
+				currentCoroutineContext().ensureActive()
+				if (activity.isFinishing || activity.isDestroyed) {
+					return@withContext fail(ShowFailResult.ACTIVITY_IS_FINISHING)
 				}
-			) {
-				null -> {
-					logShowEventSafely(LogAdEvent.ad_show_timeout, "Failed to log interstitial ad timeout")
-					return@withContext fail(ShowFailResult.LOAD_TIMEOUT, AdShowStatus.TIMEOUT)
-				}
-				is AdmobLoader.InterLoadResult.Loaded -> loadResult.ad
-				is AdmobLoader.InterLoadResult.Failed -> {
-					val failResult = if (loadResult.loadError != null) {
-						Log.e(TAG, "Interstitial ad load failed: ${loadResult.loadError.message}")
-						ShowFailResult.LOAD_FAILED
-					} else {
-						loadResult.exception?.let {
-							Log.e(TAG, "showInter: ", it)
+				AdmobLoader.checkPool(AdFormat.INTER)
+				callback.adContext.adUnitId = AdmobConfig.interID
+				interAd = bestPricedAd(AdmobLoader.interPool.keys) ?: when (
+					val loadResult = try {
+						withTimeoutOrNull((maximumWaitTime - (SystemClock.elapsedRealtime() - startShowTime)).coerceAtLeast(0L)) {
+							AdmobLoader.loadInterResult(adContext = callback.adContext)
 						}
-						ShowFailResult.LOAD_AD_EXCEPTION
+					} catch (e: CancellationException) {
+						throw e
+					} catch (e: Exception) {
+						AdmobLoader.InterLoadResult.Failed(exception = e)
 					}
-					return@withContext fail(failResult, AdShowStatus.LOAD_FAIL)
+				) {
+					null -> {
+						logShowEventSafely(LogAdEvent.ad_show_timeout, "Failed to log interstitial ad timeout")
+						return@withContext fail(ShowFailResult.LOAD_TIMEOUT, AdShowStatus.TIMEOUT)
+					}
+					is AdmobLoader.InterLoadResult.Loaded -> loadResult.ad
+					is AdmobLoader.InterLoadResult.Failed -> {
+						val failResult = if (loadResult.loadError != null) {
+							Log.e(TAG, "Interstitial ad load failed: ${loadResult.loadError.message}")
+							ShowFailResult.LOAD_FAILED
+						} else {
+							loadResult.exception?.let {
+								Log.e(TAG, "showInter: ", it)
+							}
+							ShowFailResult.LOAD_AD_EXCEPTION
+						}
+						return@withContext fail(failResult, AdShowStatus.LOAD_FAIL)
+					}
+					AdmobLoader.InterLoadResult.PoolFull ->
+						bestPricedAd(AdmobLoader.interPool.keys) ?: return@withContext fail(
+							ShowFailResult.LOAD_AD_EXCEPTION,
+							AdShowStatus.LOAD_FAIL,
+						)
 				}
-				AdmobLoader.InterLoadResult.PoolFull ->
-					bestPricedAd(AdmobLoader.interPool.keys) ?: return@withContext fail(
-						ShowFailResult.LOAD_AD_EXCEPTION,
-						AdShowStatus.LOAD_FAIL,
-					)
-			}
+				callback.adContext.adUnitId = interAd.adUnitId
+				waitForMinimumShowTime(startShowTime, minimumShowTime)
+				currentCoroutineContext().ensureActive()
+				if (activity.isFinishing || activity.isDestroyed) {
+					return@withContext fail(ShowFailResult.ACTIVITY_IS_FINISHING)
+				}
+				// ID 切换后重选或加载新广告，沿用本次展示的剩余等待预算。
+			} while (interAd.adUnitId != AdmobConfig.interID)
 			show(interAd)
 		} catch (e: CancellationException) {
 			if (!showCommitted) {
@@ -922,6 +926,7 @@ object AdmobShower {
 		AppStatus.isShowingAd = true
 		val startShowTime = SystemClock.elapsedRealtime()
 		val minimumShowTime = showMinTime.coerceAtLeast(0L)
+		val maximumWaitTime = showMaxTime.coerceAtLeast(0L)
 		var currentVideoAd: RewardedAd? = null
 		val showFailed = AtomicBoolean(false)
 		val fillVideoPoolStarted = AtomicBoolean(false)
@@ -1009,22 +1014,7 @@ object AdmobShower {
 			callback.onPaid()
 		}
 
-		suspend fun show(ad: RewardedAd): AdShowStatus {
-			currentCoroutineContext().ensureActive()
-			callback.adContext.adUnitId = ad.adUnitId
-			if (activity.isFinishing || activity.isDestroyed) {
-				return fail(ShowFailResult.ACTIVITY_IS_FINISHING)
-			}
-			waitForMinimumShowTime(startShowTime, minimumShowTime)
-			if (activity.isFinishing || activity.isDestroyed) {
-				return fail(ShowFailResult.ACTIVITY_IS_FINISHING)
-			}
-			// 最小展示等待期间广告位可能已切换，已选中的旧广告不得继续展示。
-			if (ad.adUnitId != AdmobConfig.videoID) {
-				AdmobLoader.videoPool.remove(ad)
-				fillVideoPoolInBackground()
-				return fail(ShowFailResult.AD_CONFIG_CHANGED)
-			}
+		fun show(ad: RewardedAd): AdShowStatus {
 			currentVideoAd = ad
 			showCommitted = true
 			val showStatus = try {
@@ -1045,40 +1035,56 @@ object AdmobShower {
 		}
 
 		try {
-			val videoAd = bestPricedAd(AdmobLoader.videoPool.keys) ?: when (
-				val loadResult = try {
-					withTimeoutOrNull(showMaxTime) {
-						AdmobLoader.loadVideoResult(adContext = callback.adContext)
-					}
-				} catch (e: CancellationException) {
-					throw e
-				} catch (e: Exception) {
-					AdmobLoader.VideoLoadResult.Failed(exception = e)
+			var videoAd: RewardedAd
+			do {
+				currentCoroutineContext().ensureActive()
+				if (activity.isFinishing || activity.isDestroyed) {
+					return@withContext fail(ShowFailResult.ACTIVITY_IS_FINISHING)
 				}
-			) {
-				null -> {
-					logShowEventSafely(LogAdEvent.ad_show_timeout, "Failed to log rewarded ad timeout")
-					return@withContext fail(ShowFailResult.LOAD_TIMEOUT, AdShowStatus.TIMEOUT)
-				}
-				is AdmobLoader.VideoLoadResult.Loaded -> loadResult.ad
-				is AdmobLoader.VideoLoadResult.Failed -> {
-					val failResult = if (loadResult.loadError != null) {
-						Log.e(TAG, "Rewarded ad load failed: ${loadResult.loadError.message}")
-						ShowFailResult.LOAD_FAILED
-					} else {
-						loadResult.exception?.let {
-							Log.e(TAG, "showVideo: ", it)
+				AdmobLoader.checkPool(AdFormat.VIDEO)
+				callback.adContext.adUnitId = AdmobConfig.videoID
+				videoAd = bestPricedAd(AdmobLoader.videoPool.keys) ?: when (
+					val loadResult = try {
+						withTimeoutOrNull((maximumWaitTime - (SystemClock.elapsedRealtime() - startShowTime)).coerceAtLeast(0L)) {
+							AdmobLoader.loadVideoResult(adContext = callback.adContext)
 						}
-						ShowFailResult.LOAD_AD_EXCEPTION
+					} catch (e: CancellationException) {
+						throw e
+					} catch (e: Exception) {
+						AdmobLoader.VideoLoadResult.Failed(exception = e)
 					}
-					return@withContext fail(failResult, AdShowStatus.LOAD_FAIL)
+				) {
+					null -> {
+						logShowEventSafely(LogAdEvent.ad_show_timeout, "Failed to log rewarded ad timeout")
+						return@withContext fail(ShowFailResult.LOAD_TIMEOUT, AdShowStatus.TIMEOUT)
+					}
+					is AdmobLoader.VideoLoadResult.Loaded -> loadResult.ad
+					is AdmobLoader.VideoLoadResult.Failed -> {
+						val failResult = if (loadResult.loadError != null) {
+							Log.e(TAG, "Rewarded ad load failed: ${loadResult.loadError.message}")
+							ShowFailResult.LOAD_FAILED
+						} else {
+							loadResult.exception?.let {
+								Log.e(TAG, "showVideo: ", it)
+							}
+							ShowFailResult.LOAD_AD_EXCEPTION
+						}
+						return@withContext fail(failResult, AdShowStatus.LOAD_FAIL)
+					}
+					AdmobLoader.VideoLoadResult.PoolFull ->
+						bestPricedAd(AdmobLoader.videoPool.keys) ?: return@withContext fail(
+							ShowFailResult.LOAD_AD_EXCEPTION,
+							AdShowStatus.LOAD_FAIL,
+						)
 				}
-				AdmobLoader.VideoLoadResult.PoolFull ->
-					bestPricedAd(AdmobLoader.videoPool.keys) ?: return@withContext fail(
-						ShowFailResult.LOAD_AD_EXCEPTION,
-						AdShowStatus.LOAD_FAIL,
-					)
-			}
+				callback.adContext.adUnitId = videoAd.adUnitId
+				waitForMinimumShowTime(startShowTime, minimumShowTime)
+				currentCoroutineContext().ensureActive()
+				if (activity.isFinishing || activity.isDestroyed) {
+					return@withContext fail(ShowFailResult.ACTIVITY_IS_FINISHING)
+				}
+				// ID 切换后重选或加载新广告，沿用本次展示的剩余等待预算。
+			} while (videoAd.adUnitId != AdmobConfig.videoID)
 			show(videoAd)
 		} catch (e: CancellationException) {
 			if (!showCommitted) {

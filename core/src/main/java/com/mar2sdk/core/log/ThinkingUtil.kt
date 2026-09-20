@@ -40,10 +40,17 @@ object ThinkingUtil {
 
 	// 设置可覆盖的用户属性。
 	fun setUserAttr(key: String, value: Any) {
+		setUserAttr(mapOf(key to value))
+	}
+
+	fun setUserAttr(attributes: Map<String, Any>) {
+		if (attributes.isEmpty()) return
 		if (!isWithinLogWindow()) return
-		Log.e(TAG, "setUserOnceAttr: key = $key, value = $value" )
+		Log.e(TAG, "setUserAttr: $attributes")
 		val userProperties = JSONObject()
-		userProperties.put(key, value)
+		for ((key, value) in attributes) {
+			userProperties.put(key, value)
+		}
 		TDAnalytics.userSet(userProperties)
 	}
 

@@ -12,6 +12,7 @@ import com.google.android.gms.ads.rewarded.RewardedAd
 import com.google.firebase.analytics.FirebaseAnalytics
 import com.inmobi.media.Bo
 import com.mar2sdk.core.AppStatus
+import com.mar2sdk.core.Core
 import com.mar2sdk.core.ad.AdConfig.showMaxTime
 import com.mar2sdk.core.ad.AdConfig.showMinTime
 import com.mar2sdk.core.ad.callback.ShowCallback
@@ -68,7 +69,7 @@ object AdmobShower {
 	 *  4. 如果开屏和插屏广告池都没有广告，则等待开屏和插屏广告加载，如果在最大等待时间内都加载出来了则播价格高的广告，如果只加载出来一个就播加载出来的那个广告。
 	 */
 	suspend fun showOpenInter(activity: Activity, callback: ShowCallback): AdShowStatus = withContext(Dispatchers.Main.immediate) {
-		LogUtil.log(LogAdEvent.ad_occur, callback.adContext.toAdLogParams())
+		Core.log(LogAdEvent.ad_occur, callback.adContext.toAdLogParams())
 		if (AppStatus.isShowingAd) {
 			callback.showFailed(ShowFailResult.OTHER_AD_IS_SHOWING)
 			return@withContext AdShowStatus.OTHER_AD_IS_SHOWING
@@ -94,7 +95,7 @@ object AdmobShower {
 
 		fun logShowEvent(eventName: String) {
 			try {
-				LogUtil.log(
+				Core.log(
 					eventName,
 					callback.adContext.toAdLogParams() + mapOf(
 						LogAdParam.duration to (SystemClock.elapsedRealtime() - startShowTime),
@@ -244,8 +245,8 @@ object AdmobShower {
 					FirebaseAnalytics.Param.CURRENCY to adValue.currencyCode,
 					FirebaseAnalytics.Param.VALUE to revenue,
 				)
-				LogUtil.log(LogAdEvent.ad_impression, revenueParams)
-				LogUtil.log(LogAdEvent.ad_revenue, revenueParams)
+				Core.log(LogAdEvent.ad_impression, revenueParams)
+				Core.log(LogAdEvent.ad_revenue, revenueParams)
 				LogUtil.logSingularAdRevenue(callback.adContext, revenue)
 				callback.onPaid()
 			}
@@ -313,7 +314,7 @@ object AdmobShower {
 		callback: ShowCallback,
 		preferVideoOnTie: Boolean,
 	): AdShowStatus = withContext(Dispatchers.Main.immediate) {
-		LogUtil.log(LogAdEvent.ad_occur, callback.adContext.toAdLogParams())
+		Core.log(LogAdEvent.ad_occur, callback.adContext.toAdLogParams())
 		if (AppStatus.isShowingAd) {
 			callback.showFailed(ShowFailResult.OTHER_AD_IS_SHOWING)
 			return@withContext AdShowStatus.OTHER_AD_IS_SHOWING
@@ -339,7 +340,7 @@ object AdmobShower {
 
 		fun logShowEvent(eventName: String) {
 			try {
-				LogUtil.log(
+				Core.log(
 					eventName,
 					callback.adContext.toAdLogParams() + mapOf(
 						LogAdParam.duration to (SystemClock.elapsedRealtime() - startShowTime),
@@ -493,8 +494,8 @@ object AdmobShower {
 					FirebaseAnalytics.Param.CURRENCY to adValue.currencyCode,
 					FirebaseAnalytics.Param.VALUE to revenue,
 				)
-				LogUtil.log(LogAdEvent.ad_impression, revenueParams)
-				LogUtil.log(LogAdEvent.ad_revenue, revenueParams)
+				Core.log(LogAdEvent.ad_impression, revenueParams)
+				Core.log(LogAdEvent.ad_revenue, revenueParams)
 				LogUtil.logSingularAdRevenue(callback.adContext, revenue)
 				callback.onPaid()
 			}
@@ -551,7 +552,7 @@ object AdmobShower {
 	 */
 	suspend fun showOpen(activity: Activity, callback: ShowCallback): AdShowStatus = withContext(Dispatchers.Main.immediate) {
 		callback.adContext.adUnitId = AdmobConfig.openID
-		LogUtil.log(LogAdEvent.ad_occur, callback.adContext.toAdLogParams())
+		Core.log(LogAdEvent.ad_occur, callback.adContext.toAdLogParams())
 		if (AppStatus.isShowingAd) {
 			Log.e(TAG, "showOpen: AppStatus.isShowingAd" )
 			callback.showFailed(ShowFailResult.OTHER_AD_IS_SHOWING)
@@ -579,7 +580,7 @@ object AdmobShower {
 		}
 
 		fun logShowEvent(eventName: String) {
-			LogUtil.log(
+			Core.log(
 				eventName,
 				callback.adContext.toAdLogParams() + mapOf(
 					LogAdParam.duration to (SystemClock.elapsedRealtime() - startShowTime),
@@ -646,8 +647,8 @@ object AdmobShower {
 				FirebaseAnalytics.Param.CURRENCY to adValue.currencyCode,
 				FirebaseAnalytics.Param.VALUE to revenue,
 			)
-			LogUtil.log(LogAdEvent.ad_impression, revenueParams)
-			LogUtil.log(LogAdEvent.ad_revenue, revenueParams)
+			Core.log(LogAdEvent.ad_impression, revenueParams)
+			Core.log(LogAdEvent.ad_revenue, revenueParams)
 			LogUtil.logSingularAdRevenue(callback.adContext, revenue)
 			callback.onPaid()
 		}
@@ -732,7 +733,7 @@ object AdmobShower {
 
 	suspend fun showInter(activity: Activity, callback: ShowCallback): AdShowStatus = withContext(Dispatchers.Main.immediate) {
 		callback.adContext.adUnitId = AdmobConfig.interID
-		LogUtil.log(LogAdEvent.ad_occur, callback.adContext.toAdLogParams())
+		Core.log(LogAdEvent.ad_occur, callback.adContext.toAdLogParams())
 		if (AppStatus.isShowingAd) {
 			Log.e(TAG, "showInter: AppStatus.isShowingAd")
 			callback.showFailed(ShowFailResult.OTHER_AD_IS_SHOWING)
@@ -760,7 +761,7 @@ object AdmobShower {
 		}
 
 		fun logShowEvent(eventName: String) {
-			LogUtil.log(
+			Core.log(
 				eventName,
 				callback.adContext.toAdLogParams() + mapOf(
 					LogAdParam.duration to (SystemClock.elapsedRealtime() - startShowTime),
@@ -827,8 +828,8 @@ object AdmobShower {
 				FirebaseAnalytics.Param.CURRENCY to adValue.currencyCode,
 				FirebaseAnalytics.Param.VALUE to revenue,
 			)
-			LogUtil.log(LogAdEvent.ad_impression, revenueParams)
-			LogUtil.log(LogAdEvent.ad_revenue, revenueParams)
+			Core.log(LogAdEvent.ad_impression, revenueParams)
+			Core.log(LogAdEvent.ad_revenue, revenueParams)
 			LogUtil.logSingularAdRevenue(callback.adContext, revenue)
 			callback.onPaid()
 		}
@@ -913,7 +914,7 @@ object AdmobShower {
 
 	suspend fun showVideo(activity: Activity, callback: ShowCallback): AdShowStatus = withContext(Dispatchers.Main.immediate) {
 		callback.adContext.adUnitId = AdmobConfig.videoID
-		LogUtil.log(LogAdEvent.ad_occur, callback.adContext.toAdLogParams())
+		Core.log(LogAdEvent.ad_occur, callback.adContext.toAdLogParams())
 		if (AppStatus.isShowingAd) {
 			Log.e(TAG, "showVideo: AppStatus.isShowingAd")
 			callback.showFailed(ShowFailResult.OTHER_AD_IS_SHOWING)
@@ -941,7 +942,7 @@ object AdmobShower {
 		}
 
 		fun logShowEvent(eventName: String) {
-			LogUtil.log(
+			Core.log(
 				eventName,
 				callback.adContext.toAdLogParams() + mapOf(
 					LogAdParam.duration to (SystemClock.elapsedRealtime() - startShowTime),
@@ -1008,8 +1009,8 @@ object AdmobShower {
 				FirebaseAnalytics.Param.CURRENCY to adValue.currencyCode,
 				FirebaseAnalytics.Param.VALUE to revenue,
 			)
-			LogUtil.log(LogAdEvent.ad_impression, revenueParams)
-			LogUtil.log(LogAdEvent.ad_revenue, revenueParams)
+			Core.log(LogAdEvent.ad_impression, revenueParams)
+			Core.log(LogAdEvent.ad_revenue, revenueParams)
 			LogUtil.logSingularAdRevenue(callback.adContext, revenue)
 			callback.onPaid()
 		}

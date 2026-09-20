@@ -20,7 +20,6 @@ import com.mar2sdk.core.Core
 import com.mar2sdk.core.R
 import com.mar2sdk.core.common.status.UserType
 import com.mar2sdk.core.log.LogAppEvent
-import com.mar2sdk.core.log.LogUtil
 
 /**
  * 常驻通知栏
@@ -107,7 +106,7 @@ class CommonService : Service() {
 	override fun onTaskRemoved(rootIntent: Intent?) {
 		super.onTaskRemoved(rootIntent)
 		try {
-			LogUtil.log(LogAppEvent.app_exit, emptyMap())
+			Core.log(LogAppEvent.app_exit, emptyMap())
 		} catch (exception: Exception) {
 			Log.e(TAG, "Failed to log app task removal", exception)
 		}

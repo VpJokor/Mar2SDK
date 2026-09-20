@@ -69,7 +69,7 @@ object Core {
 		// 风控辅助初始化
 		RiskUtil.init()
 		// 上报appMod
-		ThinkingUtil.setUserOnceAttr("appMod", Core.appMod.name)
+		setUserOnceAttr("appMod", Core.appMod.name)
 		// APP通知初始化
 		AppNotificationUtil.init()
 		// 开始监听手机状态
@@ -108,7 +108,12 @@ object Core {
 		ThinkingUtil.setUserAttr(key, value)
 	}
 
-	// 设置事件属性
+	// 批量设置可覆盖用户属性，一次提交整组属性。
+	fun setUserAttr(attributes: Map<String, Any>) {
+		ThinkingUtil.setUserAttr(attributes)
+	}
+
+	// 设置 ThinkingData 公共事件属性，自动附加到后续事件。
 	fun setEventAttr(key: String, value: Any) {
 		ThinkingUtil.setEventAttr(key, value)
 	}

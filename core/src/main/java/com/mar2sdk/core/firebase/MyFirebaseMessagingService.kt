@@ -15,7 +15,6 @@ import com.mar2sdk.core.AppMod
 import com.mar2sdk.core.Core
 import com.mar2sdk.core.R
 import com.mar2sdk.core.log.LogNotifyEvent
-import com.mar2sdk.core.log.LogUtil
 import com.mar2sdk.core.notify.common.CommonDelReceiver
 
 class MyFirebaseMessagingService : FirebaseMessagingService() {
@@ -79,7 +78,7 @@ class MyFirebaseMessagingService : FirebaseMessagingService() {
 				"fcmTitle=${fcmTitle}"
 		)
 
-		LogUtil.log(
+		Core.log(
 			LogNotifyEvent.receive_fcm,mapOf(
 			"fCMSendTime" to fCMSendTime,
 			"fcmId" to fcmId,

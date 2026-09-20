@@ -20,7 +20,6 @@ import com.mar2sdk.core.ad.status.AdLoadStatus
 import com.mar2sdk.core.ad.status.AdPlatform
 import com.mar2sdk.core.log.LogAdEvent
 import com.mar2sdk.core.log.LogAdParam
-import com.mar2sdk.core.log.LogUtil
 import com.mar2sdk.core.log.toAdLogParams
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
@@ -92,7 +91,7 @@ object AdmobLoader {
 
 	// 填满所有广告池 fillOpen/fillInter/fillVideo 可同时执行
 	suspend fun fillPool() = coroutineScope {
-		LogUtil.log(
+		Core.log(
 			LogAdEvent.fill_pool,
 			mapOf(
 				LogAdParam.scene to LogAdParam.scene_open_app,
@@ -388,7 +387,7 @@ object AdmobLoader {
 			LogAdParam.ad_price_precision to price.precisionType,
 			LogAdParam.ad_ecpm to price.ecpm,
 		)
-		LogUtil.log(eventName, params + priceParams)
+		Core.log(eventName, params + priceParams)
 	}
 
 	private inline fun <T : Any> cacheLoadedAd(

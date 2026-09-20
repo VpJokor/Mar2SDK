@@ -28,7 +28,6 @@ import androidx.core.content.ContextCompat
 import com.mar2sdk.core.AppStatus
 import com.mar2sdk.core.Core
 import com.mar2sdk.core.log.LogAppEvent
-import com.mar2sdk.core.log.LogUtil
 import com.mar2sdk.core.notify.NotificationUtil
 import java.util.concurrent.CopyOnWriteArraySet
 
@@ -359,7 +358,7 @@ object AppObs {
 			startedActivityCount++
 			if (!AppStatus.isForeground) {
 				AppStatus.isForeground = true
-				LogUtil.log(LogAppEvent.app_foreground, emptyMap())
+				Core.log(LogAppEvent.app_foreground, emptyMap())
 				emit(Event.ForegroundChanged(true))
 			}
 		}
@@ -375,7 +374,7 @@ object AppObs {
 			if (startedActivityCount > 0) startedActivityCount--
 			if (startedActivityCount == 0 && AppStatus.isForeground && !activity.isChangingConfigurations) {
 				AppStatus.isForeground = false
-				LogUtil.log(LogAppEvent.app_background, emptyMap())
+				Core.log(LogAppEvent.app_background, emptyMap())
 				emit(Event.ForegroundChanged(false))
 			}
 		}

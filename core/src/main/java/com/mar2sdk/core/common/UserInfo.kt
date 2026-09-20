@@ -1,6 +1,6 @@
 package com.mar2sdk.core.common
 
-import com.mar2sdk.core.log.ThinkingUtil
+import com.mar2sdk.core.Core
 import com.mar2sdk.core.common.status.EcpmType
 import com.mar2sdk.core.common.status.RiskType
 import com.mar2sdk.core.common.status.UserType
@@ -41,7 +41,7 @@ object UserInfo {
 		if (firstOpenTime == 0L) {
 			firstOpenTime = System.currentTimeMillis()
 			PreferenceUtil.commitLong(PolicyKey.KEY_FIRST_OPEN_TIME, firstOpenTime)
-			ThinkingUtil.setUserOnceAttr("firstOpenTime", firstOpenTime.toString())
+			Core.setUserOnceAttr("firstOpenTime", firstOpenTime.toString())
 		}
 		//首次广告收入
 		firstAdRevenue = PreferenceUtil.getDouble(PolicyKey.KEY_FIRST_AD_Revenue, -1.0)

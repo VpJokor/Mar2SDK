@@ -3,7 +3,6 @@ package com.mar2sdk.core.common
 import android.util.Log
 import com.mar2sdk.core.Core
 import com.mar2sdk.core.R
-import com.mar2sdk.core.log.ThinkingUtil
 import com.mar2sdk.core.common.status.RiskType
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
@@ -116,7 +115,7 @@ object IPUtil {
 		val detailSummary = "IP detail -> ip=${parsed.ip}, Asn=${parsed.asn}, Isp=${parsed.isp}"
 		Log.e(TAG, detailSummary)
 		withContext(Dispatchers.Main) {
-			ThinkingUtil.setUserOnceAttr("ip_info", "IPInfo ip=${parsed.ip}, longitude=${parsed.longitude}, latitude=${parsed.latitude}, asn=${parsed.asn}, isp=${parsed.isp}",)
+			Core.setUserOnceAttr("ip_info", "IPInfo ip=${parsed.ip}, longitude=${parsed.longitude}, latitude=${parsed.latitude}, asn=${parsed.asn}, isp=${parsed.isp}",)
 			UserInfo.riskIP = if (isGoogleIp) RiskType.RISK else RiskType.COMMON
 			UserInfo.saveUserInfo()
 			RiskUtil.judgeUserType()

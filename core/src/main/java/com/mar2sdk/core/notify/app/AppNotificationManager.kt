@@ -13,7 +13,6 @@ import com.mar2sdk.core.common.status.UserType
 import com.mar2sdk.core.log.LogAppParam
 import com.mar2sdk.core.log.LogNotifyEvent
 import com.mar2sdk.core.log.LogNotifyParam
-import com.mar2sdk.core.log.LogUtil
 import com.mar2sdk.core.notify.NotificationConfig
 import com.mar2sdk.core.common.DBUtil
 import kotlinx.coroutines.CancellationException
@@ -153,7 +152,7 @@ object AppNotificationManager {
 			)
 		}
 
-		LogUtil.log(LogNotifyEvent.notify_send_batch, mapOf(LogNotifyParam.isSuccess to true, LogNotifyParam.scene to scene))
+		Core.log(LogNotifyEvent.notify_send_batch, mapOf(LogNotifyParam.isSuccess to true, LogNotifyParam.scene to scene))
 	}
 
 	/** 清空待发任务，并取消尚未完成的检查；已运行的循环会继续等待新任务。 */
@@ -168,7 +167,7 @@ object AppNotificationManager {
 		if (Core.appMod == AppMod.DEBUG) {
 			Toast.makeText(Core.app, "清空待发送队列", Toast.LENGTH_LONG).show()
 		}
-		LogUtil.log(LogNotifyEvent.clear_notifications, mapOf())
+		Core.log(LogNotifyEvent.clear_notifications, mapOf())
 		if (restartLoop) startLoop()
 	}
 
@@ -182,7 +181,7 @@ object AppNotificationManager {
 		if (!canSendItem(scene)) return@withLock
 		currentCoroutineContext().ensureActive()
 		AppNotificationUtil.sendNotificationContent(scene)
-		LogUtil.log(LogNotifyEvent.notify_send_item, mapOf(LogNotifyParam.isSuccess to true, LogNotifyParam.scene to scene))
+		Core.log(LogNotifyEvent.notify_send_item, mapOf(LogNotifyParam.isSuccess to true, LogNotifyParam.scene to scene))
 	}
 
 	// 通知发送限制
@@ -198,7 +197,7 @@ object AppNotificationManager {
 			if (Core.appMod == AppMod.DEBUG) {
 				Toast.makeText(Core.app, "APP通知总开关没开不发通知", Toast.LENGTH_LONG).show()
 			}
-			LogUtil.log(
+			Core.log(
 				if (isBatch) LogNotifyEvent.notify_send_batch else LogNotifyEvent.notify_send_item,
 				mapOf(LogNotifyParam.isSuccess to false, LogAppParam.msg to "APP通知总开关没开不发通知",)
 			)
@@ -208,7 +207,7 @@ object AppNotificationManager {
 			if (Core.appMod == AppMod.DEBUG) {
 				Toast.makeText(Core.app, "APP在前台不发通知", Toast.LENGTH_LONG).show()
 			}
-			LogUtil.log(
+			Core.log(
 				if (isBatch) LogNotifyEvent.notify_send_batch else LogNotifyEvent.notify_send_item,
 				mapOf(LogNotifyParam.isSuccess to false, LogAppParam.msg to "APP在前台不发通知",)
 			)
@@ -218,7 +217,7 @@ object AppNotificationManager {
 			if (Core.appMod == AppMod.DEBUG) {
 				Toast.makeText(Core.app, "手机熄屏不发通知", Toast.LENGTH_LONG).show()
 			}
-			LogUtil.log(
+			Core.log(
 				if (isBatch) LogNotifyEvent.notify_send_batch else LogNotifyEvent.notify_send_item,
 				mapOf(LogNotifyParam.isSuccess to false, LogAppParam.msg to "手机熄屏不发通知",)
 			)
@@ -228,7 +227,7 @@ object AppNotificationManager {
 			if (Core.appMod == AppMod.DEBUG) {
 				Toast.makeText(Core.app, "手机锁屏不发通知", Toast.LENGTH_LONG).show()
 			}
-			LogUtil.log(
+			Core.log(
 				if (isBatch) LogNotifyEvent.notify_send_batch else LogNotifyEvent.notify_send_item,
 				mapOf(LogNotifyParam.isSuccess to false, LogAppParam.msg to "手机锁屏不发通知",)
 			)
@@ -246,7 +245,7 @@ object AppNotificationManager {
 			if (Core.appMod == AppMod.DEBUG) {
 				Toast.makeText(Core.app, "有通知正在发送，不发新批次通知", Toast.LENGTH_LONG).show()
 			}
-			LogUtil.log(
+			Core.log(
 				LogNotifyEvent.notify_send_batch,
 				mapOf(LogNotifyParam.isSuccess to false, LogAppParam.msg to "有通知正在发送，不发新批次通知",)
 			)
@@ -259,7 +258,7 @@ object AppNotificationManager {
 			if (Core.appMod == AppMod.DEBUG) {
 				Toast.makeText(Core.app, "${scene}, 首次打开时间小于场景通知首次发送延迟", Toast.LENGTH_LONG).show()
 			}
-			LogUtil.log(
+			Core.log(
 				LogNotifyEvent.notify_send_batch ,
 				mapOf(
 					LogNotifyParam.isSuccess to false,
@@ -296,7 +295,7 @@ object AppNotificationManager {
 			if (Core.appMod == AppMod.DEBUG) {
 				Toast.makeText(Core.app, "${scene}, 触发时间小于批次通知全局发送间隔", Toast.LENGTH_LONG).show()
 			}
-			LogUtil.log(
+			Core.log(
 				LogNotifyEvent.notify_send_batch ,
 				mapOf(
 					LogNotifyParam.isSuccess to false,
@@ -312,7 +311,7 @@ object AppNotificationManager {
 			if (Core.appMod == AppMod.DEBUG) {
 				Toast.makeText(Core.app, "${scene}, 最近的24小时内发送批达到发送限制", Toast.LENGTH_LONG).show()
 			}
-			LogUtil.log(
+			Core.log(
 				LogNotifyEvent.notify_send_batch ,
 				mapOf(
 					LogNotifyParam.isSuccess to false,
@@ -328,7 +327,7 @@ object AppNotificationManager {
 			if (Core.appMod == AppMod.DEBUG) {
 				Toast.makeText(Core.app, "${scene}, 最近的1小时内发送批达到发送限制", Toast.LENGTH_LONG).show()
 			}
-			LogUtil.log(
+			Core.log(
 				LogNotifyEvent.notify_send_batch ,
 				mapOf(
 					LogNotifyParam.isSuccess to false,
@@ -344,7 +343,7 @@ object AppNotificationManager {
 			if (Core.appMod == AppMod.DEBUG) {
 				Toast.makeText(Core.app, "${scene}, 最近的24小时内发送条数达到发送限制", Toast.LENGTH_LONG).show()
 			}
-			LogUtil.log(
+			Core.log(
 				LogNotifyEvent.notify_send_batch ,
 				mapOf(
 					LogNotifyParam.isSuccess to false,
@@ -360,7 +359,7 @@ object AppNotificationManager {
 			if (Core.appMod == AppMod.DEBUG) {
 				Toast.makeText(Core.app, "${scene}, 最近的1小时内发送条数达到发送限制", Toast.LENGTH_LONG).show()
 			}
-			LogUtil.log(
+			Core.log(
 				LogNotifyEvent.notify_send_batch ,
 				mapOf(
 					LogNotifyParam.isSuccess to false,
@@ -378,7 +377,7 @@ object AppNotificationManager {
 			if (Core.appMod == AppMod.DEBUG) {
 				Toast.makeText(Core.app, "${scene}, 触发时间小于场景通知发送间隔", Toast.LENGTH_LONG).show()
 			}
-			LogUtil.log(
+			Core.log(
 				LogNotifyEvent.notify_send_batch ,
 				mapOf(
 					LogNotifyParam.isSuccess to false,
@@ -421,7 +420,7 @@ object AppNotificationManager {
 			if (Core.appMod == AppMod.DEBUG) {
 				Toast.makeText(Core.app, "${scene}, 最近的24小时内发送条数达到发送限制", Toast.LENGTH_LONG).show()
 			}
-			LogUtil.log(
+			Core.log(
 				LogNotifyEvent.notify_send_item ,
 				mapOf(
 					LogNotifyParam.isSuccess to false,
@@ -437,7 +436,7 @@ object AppNotificationManager {
 			if (Core.appMod == AppMod.DEBUG) {
 				Toast.makeText(Core.app, "${scene}, 最近的1小时内发送条数达到发送限制", Toast.LENGTH_LONG).show()
 			}
-			LogUtil.log(
+			Core.log(
 				LogNotifyEvent.notify_send_item ,
 				mapOf(
 					LogNotifyParam.isSuccess to false,

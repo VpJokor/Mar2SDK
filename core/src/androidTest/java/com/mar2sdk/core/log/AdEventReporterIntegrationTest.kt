@@ -146,7 +146,7 @@ class AdEventReporterIntegrationTest {
 			LogUtil.logNet(LogAdEvent.ad_revenue, commonParams + mapOf("value" to 0.000153, "currency" to "USD", "ad_format" to "INTER"))
 			LogUtil.logNet(LogAdEvent.ad_click, commonParams + mapOf("format" to "INTER", "duration_time" to 14356L))
 			// 自定义事件通过统一入口和通配符配置上报，无需广告收入字段。
-			LogUtil.log("level_complete", commonParams + mapOf("level_id" to 7, "value" to "bonus", "currency" to "gems"))
+			Core.log("level_complete", commonParams + mapOf("level_id" to 7, "value" to "bonus", "currency" to "gems"))
 
 			val deadline = System.nanoTime() + TimeUnit.SECONDS.toNanos(15)
 			val failed = server.nextReport(deadline)
@@ -214,8 +214,8 @@ class AdEventReporterIntegrationTest {
 
 			// 具名配置允许自定义事件，并过滤未启用的事件。
 			LogConfig.netEvents = listOf("purchase_success")
-			LogUtil.log("disabled_custom_event", commonParams)
-			LogUtil.log("purchase_success", commonParams + ("item_id" to "item-中文&=+"))
+			Core.log("disabled_custom_event", commonParams)
+			Core.log("purchase_success", commonParams + ("item_id" to "item-中文&=+"))
 			val namedRequest = server.nextReport(System.nanoTime() + TimeUnit.SECONDS.toNanos(5))
 			val namedEvents = JSONArray(namedRequest.form.getValue("data"))
 			assertEquals(1, namedEvents.length())

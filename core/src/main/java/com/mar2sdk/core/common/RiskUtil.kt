@@ -9,7 +9,6 @@ import com.mar2sdk.core.firebase.FirebaseUtil
 import com.mar2sdk.core.firebase.SingularConfig
 import com.mar2sdk.core.log.LogConfig
 import com.mar2sdk.core.log.ThinkingConfig
-import com.mar2sdk.core.log.ThinkingUtil
 import com.mar2sdk.core.notify.NotificationConfig
 import com.mar2sdk.core.common.status.EcpmType
 import com.mar2sdk.core.common.status.RiskType
@@ -98,7 +97,7 @@ object RiskUtil {
 		}
 		applyUserType()
 		if (Core.userType == UserInfo.localUserType) {
-			ThinkingUtil.setUserAttr("userType", Core.userType.name)
+			Core.setUserAttr("userType", Core.userType.name)
 		}
 		UserInfo.saveUserInfo()
 		activeRemoteConfig?.let(::applyRemoteConfig)

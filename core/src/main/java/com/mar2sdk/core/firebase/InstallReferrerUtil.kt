@@ -2,13 +2,11 @@ package com.mar2sdk.core.firebase
 
 import android.net.Uri
 import android.util.Log
-import cn.thinkingdata.analytics.TDAnalytics
 import com.android.installreferrer.api.InstallReferrerClient
 import com.android.installreferrer.api.InstallReferrerStateListener
 import com.mar2sdk.core.Core
 import com.mar2sdk.core.common.RiskUtil
 import com.mar2sdk.core.common.UserInfo
-import org.json.JSONObject
 
 object InstallReferrerUtil {
 	private const val TAG = "InstallReferrerUtil"
@@ -85,12 +83,12 @@ object InstallReferrerUtil {
 			UserInfo.saveUserInfo()
 			RiskUtil.judgeUserType()
 
-			val attributes = JSONObject()
+			val attributes = mutableMapOf<String, Any>()
 			attributes.put("network", network)
 			attributes.put("fromNature", network.equals("organic", ignoreCase = true))
 			campaignId?.takeIf { it.isNotBlank() }?.let { attributes.put("campaign_id", it) }
 			campaignName?.takeIf { it.isNotBlank() }?.let { attributes.put("campaign_name", it) }
-			TDAnalytics.userSet(attributes)
+			Core.setUserAttr(attributes)
 			Log.i(TAG, "Install Referrer attribution applied: network=$network")
 		}
 	}

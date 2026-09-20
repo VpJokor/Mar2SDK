@@ -11,8 +11,6 @@ import com.mar2sdk.core.Core
 import com.mar2sdk.core.log.LogAppParam
 import com.mar2sdk.core.log.LogNotifyEvent
 import com.mar2sdk.core.log.LogNotifyParam
-import com.mar2sdk.core.log.LogUtil
-import com.mar2sdk.core.log.ThinkingUtil
 import com.mar2sdk.core.common.UserInfo
 import com.mar2sdk.core.notify.common.CommonService
 
@@ -67,7 +65,7 @@ object NotificationUtil {
 
 	// 初始化和页面恢复时同步，覆盖授权结果及系统设置中的通知开关变化。
 	internal fun reportNotificationPermission() {
-		ThinkingUtil.setUserAttr(LogAppParam.has_notification_permission, hasNotiAccess())
+		Core.setUserAttr(LogAppParam.has_notification_permission, hasNotiAccess())
 	}
 
 	// 启动前台服务
@@ -99,7 +97,7 @@ object NotificationUtil {
 		UserInfo.trafficSource = source
 		entrySourceResolved = true
 		try {
-			ThinkingUtil.setEventAttr(TRAFFIC_SOURCE, source)
+			Core.setEventAttr(TRAFFIC_SOURCE, source)
 		} catch (_: Exception) {
 			// Analytics initialization must not prevent app startup.
 		}
@@ -114,7 +112,7 @@ object NotificationUtil {
 		val params = mutableMapOf<String, Any>(LogNotifyParam.source to source)
 		intent.getStringExtra(EXTRA_SCENE)?.let { params[LogNotifyParam.scene] = it }
 		intent.getStringExtra(EXTRA_ROUTE)?.let { params[LogNotifyParam.route] = it }
-		LogUtil.log(LogNotifyEvent.notification_clicked, params)
+		Core.log(LogNotifyEvent.notification_clicked, params)
 		intent.putExtra(EXTRA_CLICK_TRACKED, true)
 	}
 

@@ -8,6 +8,13 @@ import com.mar2sdk.core.common.PreferenceUtil
 import org.json.JSONArray
 import org.json.JSONObject
 
+enum class ShowMod {
+	MODE_555,
+	MODE_666,
+	MODE_777,
+	MODE_888
+}
+
 // 广告配置
 object AdConfig {
 
@@ -37,7 +44,7 @@ object AdConfig {
 	// 广告展示前最小等待时间，单位毫秒
 	var showMinTime = 500L
 	// 广告展示模式
-	var showMod = 555
+	var showMod = ShowMod.MODE_555
 	// 1小时内最大展示数
 	var max1H = 50
 	// 24小时内最大展示数
@@ -64,7 +71,7 @@ object AdConfig {
 			isOpen = optBoolean("isOpen", isOpen)
 			showMaxTime = optLong("showMaxTime", showMaxTime)
 			showMinTime = optLong("showMinTime", showMinTime)
-			showMod = optInt("showMod", showMod)
+			showMod = ShowMod.valueOf(getString("showMod"))
 			max1H = optInt("1HMax", max1H)
 			max24H = optInt("24HMax", max24H)
 			interval = optInt("interval", interval)
@@ -84,7 +91,7 @@ object AdConfig {
 			isOpen = PreferenceUtil.getBoolean(KEY_IS_OPEN, isOpen)
 			showMaxTime = PreferenceUtil.getLong(KEY_SHOW_MAX_TIME, showMaxTime)
 			showMinTime = PreferenceUtil.getLong(KEY_SHOW_MIN_TIME, showMinTime)
-			showMod = PreferenceUtil.getInt(KEY_SHOW_MOD, showMod)
+			showMod = ShowMod.valueOf(PreferenceUtil.getString(KEY_SHOW_MOD, showMod.name))
 			max1H = PreferenceUtil.getInt(KEY_1H_MAX, max1H)
 			max24H = PreferenceUtil.getInt(KEY_24H_MAX, max24H)
 			interval = PreferenceUtil.getInt(KEY_INTERVAL, interval)
@@ -102,7 +109,7 @@ object AdConfig {
 			PreferenceUtil.commitBoolean(KEY_IS_OPEN, isOpen)
 			PreferenceUtil.commitLong(KEY_SHOW_MAX_TIME, showMaxTime)
 			PreferenceUtil.commitLong(KEY_SHOW_MIN_TIME, showMinTime)
-			PreferenceUtil.commitInt(KEY_SHOW_MOD, showMod)
+			PreferenceUtil.commitString(KEY_SHOW_MOD, showMod.name)
 			PreferenceUtil.commitInt(KEY_1H_MAX, max1H)
 			PreferenceUtil.commitInt(KEY_24H_MAX, max24H)
 			PreferenceUtil.commitInt(KEY_INTERVAL, interval)
@@ -118,7 +125,7 @@ object AdConfig {
 			isOpen = optBoolean("isOpen", isOpen)
 			showMaxTime = optLong("showMaxTime", showMaxTime)
 			showMinTime = optLong("showMinTime", showMinTime)
-			showMod = optInt("showMod", showMod)
+			if (has("showMod")) showMod = ShowMod.valueOf(getString("showMod"))
 			max1H = optInt("1HMax", max1H)
 			max24H = optInt("24HMax", max24H)
 			interval = optInt("interval", interval)

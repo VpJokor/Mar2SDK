@@ -299,7 +299,7 @@ class InfoActivity : AppCompatActivity() {
 			add("展示限制" to buildString {
 				appendLine("展示超时：${AdConfig.showMaxTime} 毫秒")
 				appendLine("展示前最小等待：${AdConfig.showMinTime} 毫秒")
-				appendLine("展示模式：${AdConfig.showMod}")
+				appendLine("展示模式：${AdConfig.showMod.name}")
 				appendLine("1 小时最多展示：${AdConfig.max1H} 次")
 				append("24 小时最多展示：${AdConfig.max24H} 次")
 			})

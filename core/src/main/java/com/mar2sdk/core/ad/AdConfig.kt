@@ -8,7 +8,7 @@ import com.mar2sdk.core.common.PreferenceUtil
 import org.json.JSONArray
 import org.json.JSONObject
 
-// 广告比价博士
+// 广告比价模式
 enum class ShowMod {
 	MODE_555,
 	MODE_666,

@@ -16,6 +16,20 @@ enum class ShowMod {
 	MODE_888
 }
 
+// Banner 广告样式
+enum class BannerStyle {
+	BANNER_STYLE_1,
+	BANNER_STYLE_2,
+	BANNER_STYLE_3
+}
+
+// 原生广告样式
+enum class NativeStyle {
+	NATIVE_STYLE_1,
+	NATIVE_STYLE_2,
+	NATIVE_STYLE_3
+}
+
 // rate: 广告展示概率
 // max1H：每小时最大展示数
 // max24H：滚动24小时最大展示数
@@ -31,6 +45,16 @@ data class AdUnitConfig(
 	val format: AdFormat,
 	val fromRoutes: List<String>,
 	val toRoutes: List<String>
+)
+
+// Banner 广告点位配置
+data class AdBannerConfig(
+	val style: BannerStyle
+)
+
+// 原生广告点位配置
+data class AdNativeConfig(
+	val style: NativeStyle
 )
 
 // 广告配置
@@ -59,6 +83,10 @@ object AdConfig {
 	var interval = 0
 	// 广告位的具体配置
 	var adUnits = mapOf<String, AdUnitConfig>()
+	// Banner 广告点位配置
+	var adBanner = mapOf<String, AdBannerConfig>()
+	// 原生广告点位配置
+	var adNative = mapOf<String, AdNativeConfig>()
 
 	fun init() {
 		loadConfigFromRaw()
@@ -85,6 +113,8 @@ object AdConfig {
 			max24H = optInt("24HMax", max24H)
 			interval = optInt("interval", interval)
 			adUnits = optJSONObject("ad_units")?.toAdUnits() ?: adUnits
+			adBanner = optJSONObject("ad_banner")?.toAdBanner() ?: adBanner
+			adNative = optJSONObject("ad_native")?.toAdNative() ?: adNative
 		}
 	}
 
@@ -112,6 +142,12 @@ object AdConfig {
 			adUnits = JSONObject(
 				PreferenceUtil.getString(KEY_AD_UNITS, adUnits.toJson())
 			).toAdUnits()
+			adBanner = JSONObject(
+				PreferenceUtil.getString(KEY_AD_BANNER, adBanner.toAdBannerJson())
+			).toAdBanner()
+			adNative = JSONObject(
+				PreferenceUtil.getString(KEY_AD_NATIVE, adNative.toAdNativeJson())
+			).toAdNative()
 		}
 	}
 
@@ -131,6 +167,8 @@ object AdConfig {
 			PreferenceUtil.commitInt(KEY_24H_MAX, max24H)
 			PreferenceUtil.commitInt(KEY_INTERVAL, interval)
 			PreferenceUtil.commitString(KEY_AD_UNITS, adUnits.toJson())
+			PreferenceUtil.commitString(KEY_AD_BANNER, adBanner.toAdBannerJson())
+			PreferenceUtil.commitString(KEY_AD_NATIVE, adNative.toAdNativeJson())
 		}
 	}
 
@@ -150,6 +188,8 @@ object AdConfig {
 			max24H = optInt("24HMax", max24H)
 			interval = optInt("interval", interval)
 			optJSONObject("ad_units")?.let { adUnits = it.toAdUnits() }
+			optJSONObject("ad_banner")?.let { adBanner = it.toAdBanner() }
+			optJSONObject("ad_native")?.let { adNative = it.toAdNative() }
 		}
 		saveAdConfig()
 	}
@@ -177,6 +217,16 @@ object AdConfig {
 			}
 		}
 
+	private fun JSONObject.toAdBanner(): Map<String, AdBannerConfig> =
+		keys().asSequence().associateWith { key ->
+			AdBannerConfig(BannerStyle.valueOf(getJSONObject(key).getString("style")))
+		}
+
+	private fun JSONObject.toAdNative(): Map<String, AdNativeConfig> =
+		keys().asSequence().associateWith { key ->
+			AdNativeConfig(NativeStyle.valueOf(getJSONObject(key).getString("style")))
+		}
+
 	private fun JSONArray.toStringList(): List<String> =
 		(0 until length()).map { index -> getString(index) }
 
@@ -191,6 +241,24 @@ object AdConfig {
 					put("format", config.format.name)
 					put("fromRoutes", JSONArray(config.fromRoutes))
 					put("toRoutes", JSONArray(config.toRoutes))
+				})
+			}
+		}.toString()
+
+	private fun Map<String, AdBannerConfig>.toAdBannerJson(): String =
+		JSONObject().apply {
+			forEach { (key, config) ->
+				put(key, JSONObject().apply {
+					put("style", config.style.name)
+				})
+			}
+		}.toString()
+
+	private fun Map<String, AdNativeConfig>.toAdNativeJson(): String =
+		JSONObject().apply {
+			forEach { (key, config) ->
+				put(key, JSONObject().apply {
+					put("style", config.style.name)
 				})
 			}
 		}.toString()

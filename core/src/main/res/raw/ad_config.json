@@ -120,5 +120,27 @@
       "fromRoutes": ["*"],
       "toRoutes": ["*"]
     }
+  },
+  "ad_native": {
+    "testNative1": {
+      "style": "NATIVE_STYLE_1"
+    },
+    "testNative2": {
+      "style": "NATIVE_STYLE_2"
+    },
+    "testNative3": {
+      "style": "NATIVE_STYLE_3"
+    }
+  },
+  "ad_banner": {
+    "testBanner1": {
+      "style": "BANNER_STYLE_1"
+    },
+    "testBanner2": {
+      "style": "BANNER_STYLE_2"
+    },
+    "testBanner3": {
+      "style": "BANNER_STYLE_3"
+    }
   }
 }

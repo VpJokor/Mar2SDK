@@ -15,4 +15,6 @@ object AdKey {
 	const val KEY_24H_MAX = "mar2sdk.ad_config.24HMax"
 	const val KEY_INTERVAL = "mar2sdk.ad_config.interval"
 	const val KEY_AD_UNITS = "mar2sdk.ad_config.adUnits"
+	const val KEY_AD_BANNER = "mar2sdk.ad_config.adBanner"
+	const val KEY_AD_NATIVE = "mar2sdk.ad_config.adNative"
 }

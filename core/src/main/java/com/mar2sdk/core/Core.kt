@@ -109,39 +109,20 @@ object Core {
 		ThinkingUtil.setUserAttr(key, value)
 	}
 
-	/** Initializes Google UMP consent state. Returns true when a recent result was cached. */
-	fun initConsent(activity: Activity, onComplete: (success: Boolean) -> Unit): Boolean {
-		return UMPUtil.initUMP(activity, onComplete)
-	}
+	/** 初始化 Google UMP 同意状态。若近期结果已缓存，则返回 true。 */
+	fun initConsent(activity: Activity, onComplete: (success: Boolean) -> Unit): Boolean =
+		UMPUtil.initUMP(activity, onComplete)
 
-	/** Shows the UMP consent form during the startup flow, then invokes [onComplete]. */
-	fun showSplashConsent(activity: Activity, onComplete: () -> Unit) {
+	/** 在启动流程中显示 UMP 同意表单，然后调用 [onComplete]。 */
+	fun showSplashConsent(activity: Activity, onComplete: () -> Unit) =
 		UMPUtil.showSplashUMP(activity, onComplete)
-	}
 
-	/** Opens the UMP privacy options form. */
-	fun showPrivacyOptions(activity: Activity) {
-		UMPUtil.showUMP(activity)
-	}
+	/** 打开 UMP 隐私选项表单。 */
+	fun showPrivacyOptions(activity: Activity) = UMPUtil.showUMP(activity)
 
-	/** Whether UMP requires a privacy options entry point. */
+	/** UMP 是否要求提供隐私选项入口。 */
 	val isPrivacyOptionsRequired: Boolean
 		get() = UMPUtil.isPrivacyOptionsRequired
-
-	/** Direct UMP-named alias for [initConsent]. */
-	fun initUMP(activity: Activity, onComplete: (success: Boolean) -> Unit): Boolean {
-		return initConsent(activity, onComplete)
-	}
-
-	/** Direct UMP-named alias for [showSplashConsent]. */
-	fun showSplashUMP(activity: Activity, onComplete: () -> Unit) {
-		showSplashConsent(activity, onComplete)
-	}
-
-	/** Direct UMP-named alias for [showPrivacyOptions]. */
-	fun showUMP(activity: Activity) {
-		showPrivacyOptions(activity)
-	}
 
 	// 批量设置可覆盖用户属性，一次提交整组属性。
 	fun setUserAttr(attributes: Map<String, Any>) {

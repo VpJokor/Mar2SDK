@@ -28,11 +28,30 @@ import org.json.JSONObject
  */
 object LogUtil {
 	private const val TAG = "LogUtil"
+	private const val DEFAULT_TRAFFIC_SOURCE = "unknown"
 	private val notificationScope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
 	private val firebaseAutoCollectedAdEvents = setOf(LogAdEvent.ad_impression, LogAdEvent.ad_click)
 
 	fun log(eventName: String, params: Map<String, Any>) {
-		logInternal(eventName, params)
+		logInternal(eventName, withTrafficSource(params))
+	}
+
+	/**
+	 * Adds the current app entry source to an event when the caller did not provide one.
+	 *
+	 * A non-blank value supplied by the caller is kept so callers can intentionally
+	 * attribute an event to a different source (for example, an explicit campaign).
+	 */
+	internal fun withTrafficSource(params: Map<String, Any>): Map<String, Any> {
+		val explicitSource = params[LogAdParam.traffic_source]
+		if (explicitSource != null &&
+			(explicitSource !is CharSequence || explicitSource.isNotBlank())
+		) {
+			return params
+		}
+
+		val source = UserInfo.trafficSource.takeIf { it.isNotBlank() } ?: DEFAULT_TRAFFIC_SOURCE
+		return params + (LogAdParam.traffic_source to source)
 	}
 
 	private fun logInternal(eventName: String, params: Map<String, Any>) {
@@ -57,14 +76,15 @@ object LogUtil {
 	}
 
 	fun spUse(eventName: String, params: Map<String, Any>) {
+		val eventParams = withTrafficSource(params)
 		if (eventName == LogAdEvent.ad_revenue) {
 			if (
-				(params[FirebaseAnalytics.Param.AD_FORMAT] as? String).equals(AdFormat.OPEN.name) ||
-				(params[FirebaseAnalytics.Param.AD_FORMAT] as? String).equals(AdFormat.INTER.name) ||
-				(params[FirebaseAnalytics.Param.AD_FORMAT] as? String).equals(AdFormat.VIDEO.name)
+				(eventParams[FirebaseAnalytics.Param.AD_FORMAT] as? String).equals(AdFormat.OPEN.name) ||
+				(eventParams[FirebaseAnalytics.Param.AD_FORMAT] as? String).equals(AdFormat.INTER.name) ||
+				(eventParams[FirebaseAnalytics.Param.AD_FORMAT] as? String).equals(AdFormat.VIDEO.name)
 			) {
 				if (UserInfo.firstAdRevenue == -1.0) {
-					UserInfo.firstAdRevenue = (params[FirebaseAnalytics.Param.VALUE] as? Number)?.toDouble() ?: -1.0
+					UserInfo.firstAdRevenue = (eventParams[FirebaseAnalytics.Param.VALUE] as? Number)?.toDouble() ?: -1.0
 					Core.setUserOnceAttr("firstAdRevenue", UserInfo.firstAdRevenue.toString())
 					UserInfo.saveUserInfo()
 					RiskUtil.judgeRisk()
@@ -100,9 +120,10 @@ object LogUtil {
 
 	/** 上报 Firebase Analytics 事件，并把 Map 参数转换为 Bundle。 */
 	fun logFirebase(eventName: String, params: Map<String, Any>) {
+		val eventParams = withTrafficSource(params)
 		val firebaseAnalytics = FirebaseAnalytics.getInstance(Core.app)
 		val bundle = Bundle()
-		for ((key, value) in params) {
+		for ((key, value) in eventParams) {
 			when (value) {
 				is String -> bundle.putString(key, value)
 				is Int -> bundle.putInt(key, value)
@@ -118,7 +139,7 @@ object LogUtil {
 
 	fun logThinking(eventName: String, params: Map<String, Any>) {
 		try {
-			ThinkingUtil.log(eventName, params)
+			ThinkingUtil.log(eventName, withTrafficSource(params))
 		} catch (e: Exception) {
 			Log.e(TAG, "logThinking error: ${e.message}")
 		}
@@ -128,8 +149,9 @@ object LogUtil {
 	fun logLocal(eventName: String, params: Map<String, Any>) {
 		val eventTimeMillis = System.currentTimeMillis()
 		try {
+			val eventParams = withTrafficSource(params)
 			val jsonObject = JSONObject()
-			for ((key, value) in params) {
+			for ((key, value) in eventParams) {
 				jsonObject.put(key, value)
 			}
 			DBUtil.insertLog(eventName, jsonObject.toString(), eventTimeMillis)
@@ -140,7 +162,7 @@ object LogUtil {
 
 	// 打点到自己的服务端
 	fun logNet(eventName: String, params: Map<String, Any>) {
-		AdEventReporter.capture(eventName, params)
+		AdEventReporter.capture(eventName, withTrafficSource(params))
 	}
 
 	fun logSingularAdRevenue(adPlatform: String, revenue: Double) {

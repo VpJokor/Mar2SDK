@@ -7,6 +7,7 @@ import android.util.Log
 import androidx.annotation.MainThread
 import com.google.android.gms.ads.AdError
 import com.google.android.gms.ads.AdListener
+import com.google.android.gms.ads.AdLoader
 import com.google.android.gms.ads.AdRequest
 import com.google.android.gms.ads.AdSize
 import com.google.android.gms.ads.AdView
@@ -15,6 +16,7 @@ import com.google.android.gms.ads.LoadAdError
 import com.google.android.gms.ads.OnPaidEventListener
 import com.google.android.gms.ads.appopen.AppOpenAd
 import com.google.android.gms.ads.interstitial.InterstitialAd
+import com.google.android.gms.ads.nativead.NativeAd
 import com.google.android.gms.ads.rewarded.RewardedAd
 import com.google.firebase.analytics.FirebaseAnalytics
 import com.mar2sdk.core.AppStatus
@@ -33,14 +35,17 @@ import com.mar2sdk.core.log.toAdLogParams
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeoutOrNull
 import java.util.concurrent.atomic.AtomicBoolean
+import kotlin.coroutines.resume
 
 /**
  * 开屏广告展示器
@@ -52,6 +57,14 @@ object AdmobShower {
 	internal var requestBannerAd: (AdView) -> Unit = { banner ->
 		banner.loadAd(AdRequest.Builder().build())
 	}
+	internal var requestNativeAd: (Activity, String, AdListener, (NativeAd) -> Unit) -> Unit =
+		{ activity, id, listener, onLoaded ->
+			AdLoader.Builder(activity, id)
+				.forNativeAd { onLoaded(it) }
+				.withAdListener(listener)
+				.build()
+				.loadAd(AdRequest.Builder().build())
+		}
 
 	private fun <T : Any> bestPricedAd(ads: Collection<T>): T? = ads.maxByOrNull {
 		comparisonPriceEcpmMicros(it) ?: Long.MIN_VALUE
@@ -1104,9 +1117,162 @@ object AdmobShower {
 		}
 	}
 
-	// 获取原生广告
-	fun getNative() {
+	/**
+	 * 获取原生广告
+	 * 先请求高价广告没填充再请求中价广告还没填充就请求低价广告
+	 * [adIndex] 为 nativeConfig.ads 的下标，默认第一组；跳过空 ID。
+	 * 三档请求共用 nativeConfig.timeout 超时预算，失败返回 null 并通知 [callback]。
+	 * 加载成功不代表曝光，showSuccess 仅在 SDK 曝光回调中触发。
+	 * 调用方负责绑定 NativeAdView，并在不再使用时在主线程调用 NativeAd.destroy。
+	 */
+	suspend fun getNative(activity: Activity, callback: ShowCallback, adIndex: Int = 0): NativeAd? {
+		var ownedAd: NativeAd? = null
+		var delivered = false
+		var eventsEnabled = false
+		try {
+			val result = withContext(Dispatchers.Main.immediate) {
+				callback.adContext.adFormat = AdFormat.NATIVE
+				callback.adContext.adPlatform = AdPlatform.ADMOB
+				callback.adContext.adUnitId = ""
+				val adContext = callback.adContext.copy()
+				val startedAt = SystemClock.elapsedRealtime()
+				fun isActivityActive() = !activity.isFinishing && !activity.isDestroyed
+				fun logEvent(event: String, params: Map<String, Any> = adContext.toAdLogParams()) {
+					try {
+						Core.log(event, params + mapOf(
+							LogAdParam.duration to (SystemClock.elapsedRealtime() - startedAt),
+							LogAdParam.ad_source to (ownedAd?.responseInfo?.loadedAdapterResponseInfo?.adSourceName ?: LogAdParam.unknow),
+						))
+					} catch (e: Exception) {
+						Log.e(TAG, "Failed to log native ad event: $event", e)
+					}
+				}
+				fun fail(reason: ShowFailResult): NativeAd? {
+					logEvent(if (reason == ShowFailResult.LOAD_TIMEOUT) LogAdEvent.ad_show_timeout else LogAdEvent.ad_show_fail)
+					callback.showFailed(reason)
+					return null
+				}
+				logEvent(LogAdEvent.ad_occur)
+				if (!isActivityActive()) return@withContext fail(ShowFailResult.ACTIVITY_IS_FINISHING)
+				val ids = AdmobConfig.nativeIDs(adIndex)
+				if (ids.isEmpty()) return@withContext fail(ShowFailResult.LOAD_AD_EXCEPTION)
+				var loadFailure = ShowFailResult.LOAD_FAILED
+				val loaded = withTimeoutOrNull(AdmobConfig.nativeConfig.timeout.coerceAtLeast(0L)) {
+					for (id in ids) {
+						currentCoroutineContext().ensureActive()
+						if (!isActivityActive()) {
+							loadFailure = ShowFailResult.ACTIVITY_IS_FINISHING
+							return@withTimeoutOrNull false
+						}
+						adContext.adUnitId = id
+						callback.adContext.adUnitId = id
+						val requestContext = adContext.copy()
+						var attemptAd: NativeAd? = null
+						fun canNotify() = eventsEnabled && attemptAd != null && attemptAd === ownedAd && isActivityActive()
+						logEvent(LogAdEvent.ad_start_loading)
+						val ad = suspendCancellableCoroutine<NativeAd?> { continuation ->
+							val completed = AtomicBoolean(false)
+							val listener = object : AdListener() {
+								override fun onAdFailedToLoad(error: LoadAdError) {
+									if (!completed.compareAndSet(false, true) || !continuation.isActive) return
+									Log.e(TAG, "Native ad load failed ($id): ${error.message}")
+									loadFailure = ShowFailResult.LOAD_FAILED
+									continuation.resume(null)
+								}
 
+								override fun onAdImpression() {
+									if (canNotify()) callback.showSuccess()
+								}
+
+								override fun onAdClicked() {
+									if (!canNotify()) return
+									logEvent(LogAdEvent.ad_click, requestContext.toAdLogParams())
+									callback.onClicked()
+								}
+
+								override fun onAdClosed() {
+									if (!canNotify()) return
+									logEvent(LogAdEvent.ad_close, requestContext.toAdLogParams())
+									callback.onAdClosed()
+								}
+							}
+							try {
+								requestNativeAd(activity, id, listener) { nativeAd ->
+									if (!completed.compareAndSet(false, true) || !continuation.isActive) {
+										if (nativeAd !== ownedAd) destroyNativeAd(nativeAd)
+										return@requestNativeAd
+									}
+									attemptAd = nativeAd
+									ownedAd = nativeAd
+									continuation.resume(nativeAd)
+								}
+							} catch (e: CancellationException) {
+								throw e
+							} catch (e: Exception) {
+								if (completed.compareAndSet(false, true) && continuation.isActive) {
+									Log.e(TAG, "Failed to start loading native ad ($id)", e)
+									loadFailure = ShowFailResult.LOAD_AD_EXCEPTION
+									continuation.resume(null)
+								}
+							}
+						}
+						if (ad == null) continue
+						currentCoroutineContext().ensureActive()
+						if (!isActivityActive()) {
+							loadFailure = ShowFailResult.ACTIVITY_IS_FINISHING
+							return@withTimeoutOrNull false
+						}
+						logEvent(LogAdEvent.ad_finish_loading)
+						try {
+							ad.setOnPaidEventListener(OnPaidEventListener { adValue ->
+								if (!canNotify()) return@OnPaidEventListener
+								val revenue = adValue.valueMicros / 1_000_000.0
+								val revenueParams = requestContext.toAdLogParams(FirebaseAnalytics.Param.AD_FORMAT) + mapOf(
+									FirebaseAnalytics.Param.CURRENCY to adValue.currencyCode,
+									FirebaseAnalytics.Param.VALUE to revenue,
+								)
+								logEvent(LogAdEvent.ad_impression, revenueParams)
+								logEvent(LogAdEvent.ad_revenue, revenueParams)
+								LogUtil.logSingularAdRevenue(requestContext, revenue)
+								callback.onPaid()
+							})
+						} catch (e: CancellationException) {
+							throw e
+						} catch (e: Exception) {
+							Log.e(TAG, "Failed to set native ad paid listener", e)
+							loadFailure = ShowFailResult.LOAD_AD_EXCEPTION
+							return@withTimeoutOrNull false
+						}
+						return@withTimeoutOrNull true
+					}
+					false
+				}
+				when (loaded) {
+					null -> fail(ShowFailResult.LOAD_TIMEOUT)
+					false -> fail(loadFailure)
+					true -> {
+						eventsEnabled = true
+						ownedAd
+					}
+				}
+			}
+			delivered = result != null
+			return result
+		} finally {
+			// 同时覆盖超时和切回调用方线程时的取消，未交付的广告仍由 SDK 负责释放。
+			if (!delivered) withContext(NonCancellable + Dispatchers.Main.immediate) {
+				eventsEnabled = false
+				ownedAd?.let(::destroyNativeAd)
+			}
+		}
+	}
+
+	private fun destroyNativeAd(ad: NativeAd) {
+		try {
+			ad.destroy()
+		} catch (e: Exception) {
+			Log.e(TAG, "Failed to destroy native ad", e)
+		}
 	}
 
 	/**
@@ -1200,4 +1366,5 @@ object AdmobShower {
 			return null
 		}
 	}
+
 }

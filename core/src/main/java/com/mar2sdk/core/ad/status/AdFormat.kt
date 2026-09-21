@@ -11,4 +11,5 @@ enum class AdFormat {
 	INTER_VIDEO,
 	VIDEO_INTER,
 	BANNER,
+	NATIVE,
 }

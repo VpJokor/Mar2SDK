@@ -76,6 +76,7 @@ object AdmobConfig {
 	val testInterID = "ca-app-pub-3940256099942544/1033173712"
 	val testVideoID = "ca-app-pub-3940256099942544/5224354917"
 	val testBannerID = "ca-app-pub-3940256099942544/6300978111"
+	val testNativeID = "ca-app-pub-3940256099942544/2247696110"
 
 	var openConfig = AdUnitConfig("", 12600000L, 1, ProbeConfig(ProbeMod.REFLECT, 3000L, "USD", emptyList()))
 	var interConfig = AdUnitConfig("", 3000000L, 1, ProbeConfig(ProbeMod.REFLECT, 3000L, "USD", emptyList()))
@@ -94,6 +95,14 @@ object AdmobConfig {
 		get() = if (isTest) testVideoID else videoConfig.id
 	val bannerID: String
 		get() = if (isTest) testBannerID else bannerConfig.id
+
+	/** 按高、中、低顺序返回指定组的有效原生广告位；测试模式使用官方测试广告位。 */
+	fun nativeIDs(adIndex: Int): List<String> {
+		if (adIndex < 0) return emptyList()
+		if (isTest) return listOf(testNativeID)
+		val ad = nativeConfig.ads.getOrNull(adIndex) ?: return emptyList()
+		return listOf(ad.hID, ad.mID, ad.lID).filter { it.isNotBlank() }
+	}
 
 	fun init() {
 		loadConfigFromRaw()

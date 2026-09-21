@@ -4,6 +4,7 @@ import android.app.Activity
 import androidx.annotation.MainThread
 import com.google.android.gms.ads.AdSize
 import com.google.android.gms.ads.AdView
+import com.google.android.gms.ads.nativead.NativeAd
 import com.mar2sdk.core.ad.callback.ShowCallback
 import com.mar2sdk.core.ad.impl.admob.AdmobShower
 import com.mar2sdk.core.ad.status.AdPlatform
@@ -62,6 +63,23 @@ object AdShower {
 			AdPlatform.ADMOB -> AdmobShower.showVideo(activity, callback)
 			// TODO implement Max/UNITY/TRADPLUS/TOPON
 			else -> AdmobShower.showVideo(activity, callback)
+		}
+	}
+
+	/**
+	 * 按高、中、低顺序加载 [adIndex] 指定组的原生广告，失败或超时返回 null。
+	 * 调用方负责将素材绑定到 NativeAdView，并在页面移除或替换广告时调用 NativeAd.destroy。
+	 * showSuccess 在广告实际曝光时回调，返回广告仅表示加载成功。
+	 */
+	suspend fun getNative(
+		activity: Activity,
+		callback: ShowCallback,
+		adIndex: Int = 0,
+	): NativeAd? {
+		return when(callback.adContext.adPlatform) {
+			AdPlatform.ADMOB -> AdmobShower.getNative(activity, callback, adIndex)
+			// TODO implement Max/UNITY/TRADPLUS/TOPON
+			else -> AdmobShower.getNative(activity, callback, adIndex)
 		}
 	}
 

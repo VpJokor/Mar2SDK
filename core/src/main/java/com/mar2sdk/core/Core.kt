@@ -5,6 +5,7 @@ import android.app.Application
 import androidx.annotation.MainThread
 import com.google.android.gms.ads.AdSize
 import com.google.android.gms.ads.AdView
+import com.google.android.gms.ads.nativead.NativeAd
 import com.mar2sdk.core.ad.AdIniter
 import com.mar2sdk.core.ad.AdShower
 import com.mar2sdk.core.ad.UMPUtil
@@ -95,13 +96,24 @@ object Core {
 			AdFormat.OPEN_INTER -> AdShower.showOpenInter(activity, callback)
 			AdFormat.INTER_VIDEO -> AdShower.showInterVideo(activity, callback)
 			AdFormat.VIDEO_INTER -> AdShower.showVideoInter(activity, callback)
-			AdFormat.BANNER -> {
-				// Banner 需要页面容器，请使用 getBanner 获取广告 View。
+			AdFormat.BANNER, AdFormat.NATIVE -> {
+				// 嵌入式广告需要页面容器，请使用 getBanner 或 getNative。
 				callback.showFailed(ShowFailResult.FAILED_TO_SHOW_CONTENT)
 				AdShowStatus.SHOW_FAIL
 			}
 		}
 	}
+
+	/**
+	 * 加载 [adIndex] 指定组的原生广告，失败或超时返回 null，并通过 [callback] 通知原因。
+	 * 调用方负责把素材绑定到 NativeAdView，并在页面移除或替换广告时调用 NativeAd.destroy。
+	 * showSuccess 在实际曝光时触发。建议通过页面 lifecycleScope 调用，以便离开页面时取消加载。
+	 */
+	suspend fun getNative(
+		activity: Activity,
+		callback: ShowCallback,
+		adIndex: Int = 0,
+	): NativeAd? = AdShower.getNative(activity, callback, adIndex)
 
 	/**
 	 * 开始异步加载 Banner，并立即返回供页面挂载的 View；无法开始加载时返回 null。

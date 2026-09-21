@@ -41,3 +41,32 @@ Remote Config 可只提供需要更新的顶层广告配置对象；提供的对
 仅修改探价参数、池容量等且实际 ID 不变时，不会因 ID 切换而丢弃广告；缓存有效期仍按最新 `timeout` 检查。TEST/DEBUG 使用固定测试 ID，因此修改配置中的正式 ID 不会触发测试广告的切换。后续若接入自有服务端下发，应在主线程统一调用 `AdmobConfig.applyConfig()`，沿用同一套更新规则。
 
 示例资源：[`admob_config.json`](../../core/src/main/res/raw/admob_config.json)。广告位 ID 应替换为发行版后台创建的值；超时时间和池容量应使用非负数。
+
+## 原生广告配置
+
+`nativeConfig` 使用独立的加载超时和多组广告位配置：
+
+| 字段 | 类型 | 说明 |
+| --- | --- | --- |
+| `nativeConfig.timeout` | 整数（毫秒） | 一次原生广告加载的总超时时间，默认 `30000`，高、中、低三档共享该预算。 |
+| `nativeConfig.ads` | 数组 | 原生广告位分组，通过 `Core.getNative` 的 `adIndex` 参数选择，索引从 `0` 开始。 |
+| `nativeConfig.ads[].HID` | 字符串 | 高价广告位 ID，优先请求。 |
+| `nativeConfig.ads[].MID` | 字符串 | 中价广告位 ID，高价加载失败后请求。 |
+| `nativeConfig.ads[].LID` | 字符串 | 低价广告位 ID，中价加载失败后请求。 |
+
+```json
+{
+  "nativeConfig": {
+    "timeout": 30000,
+    "ads": [
+      { "HID": "native-high-id", "MID": "native-medium-id", "LID": "native-low-id" }
+    ]
+  }
+}
+```
+
+空白 ID 会跳过；任一档加载成功后立即返回，不再请求后续档位。无有效广告位或索引无效时返回 `null` 并回调 `LOAD_AD_EXCEPTION`；所有档位加载失败时按最后一档结果回调 `LOAD_FAILED`（SDK 加载失败）或 `LOAD_AD_EXCEPTION`（请求抛出异常），总预算耗尽时回调 `LOAD_TIMEOUT`。这些情况均不返回广告对象。
+
+DEBUG/TEST 模式对任意非负 `adIndex` 使用官方原生测试广告位 `ca-app-pub-3940256099942544/2247696110`，无需配置 `ads`；负数索引始终无效。PRE_RELEASE/RELEASE 使用所选分组的正式 ID。发布前须将资源中的示例 ID 替换为 AdMob 后台创建的原生广告位 ID。
+
+运行时可修改 `AdmobConfig.nativeConfig` 并调用 `saveAdmobConfig()` 持久化；Remote Config 的 `nativeConfig` 对象也会整体替换、保存。每次调用 `getNative` 使用本次加载开始时的 ID 列表与超时快照，更新配置对下一次调用生效。`AdConfig.adNative` 中的 `NativeStyle` 属于页面样式配置，不用于推导广告位分组，分组由 `adIndex` 显式指定。

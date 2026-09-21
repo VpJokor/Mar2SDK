@@ -2,12 +2,16 @@ package com.mar2sdk.core
 
 import android.app.Activity
 import android.app.Application
+import androidx.annotation.MainThread
+import com.google.android.gms.ads.AdSize
+import com.google.android.gms.ads.AdView
 import com.mar2sdk.core.ad.AdIniter
 import com.mar2sdk.core.ad.AdShower
 import com.mar2sdk.core.ad.UMPUtil
 import com.mar2sdk.core.ad.callback.ShowCallback
 import com.mar2sdk.core.ad.status.AdFormat
 import com.mar2sdk.core.ad.status.AdShowStatus
+import com.mar2sdk.core.ad.status.ShowFailResult
 import com.mar2sdk.core.common.AppObs
 import com.mar2sdk.core.common.CommonConfig
 import com.mar2sdk.core.common.RiskUtil
@@ -91,8 +95,25 @@ object Core {
 			AdFormat.OPEN_INTER -> AdShower.showOpenInter(activity, callback)
 			AdFormat.INTER_VIDEO -> AdShower.showInterVideo(activity, callback)
 			AdFormat.VIDEO_INTER -> AdShower.showVideoInter(activity, callback)
+			AdFormat.BANNER -> {
+				// Banner 需要页面容器，请使用 getBanner 获取广告 View。
+				callback.showFailed(ShowFailResult.FAILED_TO_SHOW_CONTENT)
+				AdShowStatus.SHOW_FAIL
+			}
 		}
 	}
+
+	/**
+	 * 开始异步加载 Banner，并立即返回供页面挂载的 View；无法开始加载时返回 null。
+	 * 展示结果通过 [callback] 通知，showSuccess 在实际曝光时触发。
+	 * 调用方负责随页面生命周期调用 View 的 pause、resume 和 destroy。
+	 */
+	@MainThread
+	fun getBanner(
+		activity: Activity,
+		callback: ShowCallback,
+		adSize: AdSize = AdSize.BANNER,
+	): AdView? = AdShower.getBanner(activity, callback, adSize)
 
 	// 日志上报
 	fun log(eventName: String, params: Map<String, Any>) {

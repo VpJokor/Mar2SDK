@@ -1,6 +1,9 @@
 package com.mar2sdk.core.ad
 
 import android.app.Activity
+import androidx.annotation.MainThread
+import com.google.android.gms.ads.AdSize
+import com.google.android.gms.ads.AdView
 import com.mar2sdk.core.ad.callback.ShowCallback
 import com.mar2sdk.core.ad.impl.admob.AdmobShower
 import com.mar2sdk.core.ad.status.AdPlatform
@@ -62,4 +65,21 @@ object AdShower {
 		}
 	}
 
+	/**
+	 * 开始加载 Banner 并立即返回广告 View；无法开始加载时返回 null。
+	 * 调用方负责将 View 添加到页面，并随页面生命周期调用 pause、resume 和 destroy。
+	 * showSuccess 在广告曝光时回调。
+	 */
+	@MainThread
+	fun getBanner(
+		activity: Activity,
+		callback: ShowCallback,
+		adSize: AdSize = AdSize.BANNER,
+	): AdView? {
+		return when(callback.adContext.adPlatform) {
+			AdPlatform.ADMOB -> AdmobShower.getBanner(activity, callback, adSize)
+			// TODO implement Max/UNITY/TRADPLUS/TOPON
+			else -> AdmobShower.getBanner(activity, callback, adSize)
+		}
+	}
 }

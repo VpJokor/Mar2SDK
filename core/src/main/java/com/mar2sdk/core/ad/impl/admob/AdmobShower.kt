@@ -1,16 +1,22 @@
 package com.mar2sdk.core.ad.impl.admob
 
 import android.app.Activity
+import android.os.Looper
 import android.os.SystemClock
 import android.util.Log
+import androidx.annotation.MainThread
 import com.google.android.gms.ads.AdError
+import com.google.android.gms.ads.AdListener
+import com.google.android.gms.ads.AdRequest
+import com.google.android.gms.ads.AdSize
+import com.google.android.gms.ads.AdView
 import com.google.android.gms.ads.FullScreenContentCallback
+import com.google.android.gms.ads.LoadAdError
 import com.google.android.gms.ads.OnPaidEventListener
 import com.google.android.gms.ads.appopen.AppOpenAd
 import com.google.android.gms.ads.interstitial.InterstitialAd
 import com.google.android.gms.ads.rewarded.RewardedAd
 import com.google.firebase.analytics.FirebaseAnalytics
-import com.inmobi.media.Bo
 import com.mar2sdk.core.AppStatus
 import com.mar2sdk.core.Core
 import com.mar2sdk.core.ad.AdConfig.showMaxTime
@@ -43,6 +49,9 @@ object AdmobShower {
 
 	private const val TAG = "AdmobShower"
 	private val adScope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
+	internal var requestBannerAd: (AdView) -> Unit = { banner ->
+		banner.loadAd(AdRequest.Builder().build())
+	}
 
 	private fun <T : Any> bestPricedAd(ads: Collection<T>): T? = ads.maxByOrNull {
 		comparisonPriceEcpmMicros(it) ?: Long.MIN_VALUE
@@ -1100,8 +1109,95 @@ object AdmobShower {
 
 	}
 
-	// 获取Banner广告
-	fun getBanner() {
+	/**
+	 * 创建 Banner 并开始异步加载，立即返回供调用方加入布局的 View。
+	 * [ShowCallback.showSuccess] 在实际曝光时触发，自动刷新后可以再次触发。
+	 * 调用方需在主线程随页面生命周期调用 pause/resume，并在移除 View 后调用 destroy。
+	 * Activity 已结束或无法启动加载时返回 null，并通过 callback 报告原因。
+	 */
+	@MainThread
+	fun getBanner(activity: Activity, callback: ShowCallback, adSize: AdSize = AdSize.BANNER): AdView? {
+		check(Looper.myLooper() == Looper.getMainLooper()) { "getBanner must be called on the main thread" }
+		callback.adContext.adFormat = AdFormat.BANNER
+		callback.adContext.adPlatform = AdPlatform.ADMOB
+		callback.adContext.adUnitId = AdmobConfig.bannerID
+		// Banner 可以长期驻留并自动刷新，埋点使用本次请求的上下文快照。
+		val adContext = callback.adContext.copy()
+		var banner: AdView? = null
 
+		fun logEvent(eventName: String, params: Map<String, Any> = adContext.toAdLogParams()) {
+			try {
+				Core.log(eventName, params + mapOf(
+					LogAdParam.ad_source to (banner?.responseInfo?.loadedAdapterResponseInfo?.adSourceName ?: LogAdParam.unknow),
+				))
+			} catch (e: Exception) {
+				Log.e(TAG, "Failed to log banner event: $eventName", e)
+			}
+		}
+
+		fun isActivityActive() = !activity.isFinishing && !activity.isDestroyed
+
+		if (!isActivityActive()) {
+			callback.showFailed(ShowFailResult.ACTIVITY_IS_FINISHING)
+			return null
+		}
+		try {
+			require(adContext.adUnitId.isNotBlank()) { "Banner ad unit ID is empty" }
+			val adView = AdView(activity)
+			banner = adView
+			adView.adUnitId = adContext.adUnitId
+			adView.setAdSize(adSize)
+			adView.adListener = object : AdListener() {
+				override fun onAdLoaded() {
+					if (!isActivityActive()) return
+				}
+
+				override fun onAdFailedToLoad(error: LoadAdError) {
+					if (!isActivityActive()) return
+					Log.e(TAG, "Banner ad load failed: ${error.message}")
+					callback.showFailed(ShowFailResult.LOAD_FAILED)
+				}
+
+				override fun onAdImpression() {
+					if (!isActivityActive()) return
+					callback.showSuccess()
+				}
+
+				override fun onAdClicked() {
+					if (!isActivityActive()) return
+					callback.onClicked()
+				}
+
+				override fun onAdClosed() {
+					if (!isActivityActive()) return
+					callback.onAdClosed()
+				}
+			}
+			adView.onPaidEventListener = OnPaidEventListener { adValue ->
+				if (!isActivityActive()) return@OnPaidEventListener
+				val revenue = adValue.valueMicros / 1_000_000.0
+				val revenueParams = adContext.toAdLogParams(FirebaseAnalytics.Param.AD_FORMAT) + mapOf(
+					FirebaseAnalytics.Param.CURRENCY to adValue.currencyCode,
+					FirebaseAnalytics.Param.VALUE to revenue,
+				)
+				logEvent(LogAdEvent.ad_impression, revenueParams)
+				logEvent(LogAdEvent.ad_revenue, revenueParams)
+				LogUtil.logSingularAdRevenue(adContext, revenue)
+				callback.onPaid()
+			}
+			requestBannerAd(adView)
+			return adView
+		} catch (e: Exception) {
+			Log.e(TAG, "Failed to start loading banner ad", e)
+			try {
+				banner?.adListener = object : AdListener() {}
+				banner?.onPaidEventListener = null
+				banner?.destroy()
+			} catch (destroyError: Exception) {
+				Log.e(TAG, "Failed to destroy banner ad", destroyError)
+			}
+			callback.showFailed(ShowFailResult.LOAD_AD_EXCEPTION)
+			return null
+		}
 	}
 }

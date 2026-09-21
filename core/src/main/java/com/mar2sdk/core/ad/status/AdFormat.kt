@@ -10,4 +10,5 @@ enum class AdFormat {
 	OPEN_INTER,
 	INTER_VIDEO,
 	VIDEO_INTER,
+	BANNER,
 }

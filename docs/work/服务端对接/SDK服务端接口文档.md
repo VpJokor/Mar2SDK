@@ -1531,7 +1531,7 @@ thinkingData.logout();
 
 
 
-以下示例保持客户端实际采集结构，并统一增加顶层 `#account_id`。示例账号 ID 仅用于说明，实际值必须取当前已登录用户身份。
+以下示例保持客户端实际采集结构，并统一增加顶层 `#account_id`。示例账号 ID 仅用于说明，实际值必须取当前已登录用户身份。`traffic_source` 由 SDK 统一补充：桌面启动为 `desktop`，普通通知为 `notification`，常驻通知为 `persistent_notification`，无法识别时为 `unknown`。
 
 
 
@@ -1577,7 +1577,7 @@ thinkingData.logout();
     "#device_id": "dfaec1745686e4bc",
     "#bundle_id": "com.toolrecovery.restorerecoverydata",
     "#screen_width": 1080,
-    "traffic_source": "app_push",
+    "traffic_source": "notification",
     "#install_time": "2026-05-24 21:56:30.860",
     "#simulator": false,
     "areakey": "coreFeaturesNativeAdv",
@@ -1636,7 +1636,7 @@ thinkingData.logout();
     "#device_id": "dfaec1745686e4bc",
     "#bundle_id": "com.toolrecovery.restorerecoverydata",
     "#screen_width": 1080,
-    "traffic_source": "app_push",
+    "traffic_source": "notification",
     "#install_time": "2026-05-24 21:56:30.860",
     "#simulator": false,
     "areakey": "coreFeaturesNativeAdv",
@@ -1693,7 +1693,7 @@ thinkingData.logout();
     "#device_id": "0f8087179f46a412",
     "#bundle_id": "com.toolrecovery.restorerecoverydata",
     "#screen_width": 1080,
-    "traffic_source": "",
+    "traffic_source": "unknown",
     "#install_time": "2026-08-26 03:43:20.718",
     "#simulator": false,
     "areakey": "openPageAdv",
@@ -2218,7 +2218,6 @@ JSON 格式错误、缺少有效请求体等请求格式问题可能返回 `4xx`
 |V1\.1|广告收入采集接口|2026\-09\-09|
 |V1\.2|用户登录接口|2026\-09\-09|
 |V1\.3|包名校验\+IP归属地\(新版本\)|2026\-09\-15|
-
 
 
 

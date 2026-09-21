@@ -2,7 +2,10 @@ package com.mar2sdk.debug
 
 import android.content.Intent
 import android.os.Bundle
+import android.view.Gravity
 import android.view.View
+import android.view.ViewGroup
+import android.widget.FrameLayout
 import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.enableEdgeToEdge
@@ -10,12 +13,15 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
+import com.google.android.gms.ads.AdView
 import com.mar2sdk.core.AppMod
 import com.mar2sdk.core.Core
 import com.mar2sdk.core.ad.AdConfig
+import com.mar2sdk.core.ad.callback.ShowCallback
 import com.mar2sdk.core.ad.policy.ScreenAdContext
 import com.mar2sdk.core.ad.policy.ScreenAdTrigger
 import com.mar2sdk.core.ad.status.AdFormat
+import com.mar2sdk.core.ad.status.ShowFailResult
 import com.mar2sdk.core.notify.NotificationUtil
 import com.mar2sdk.core.notify.app.AppNotificationUtil
 import com.mar2sdk.core.common.TestMod
@@ -24,6 +30,9 @@ import com.mar2sdk.core.common.status.UserType
 import com.mar2sdk.impl.AdActivity
 
 class DebugActivity : AppCompatActivity() {
+	private var bannerView: AdView? = null
+	private var bannerRequestId: String? = null
+
 	private val notificationPermissionLauncher =
 		registerForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
 			handleNotificationPermissionResult(granted)
@@ -123,6 +132,13 @@ class DebugActivity : AppCompatActivity() {
 		findViewById<View>(R.id.test_inter_video).setOnClickListener {
 			showTestAd(AreaKeys.KEY_TEST_INTER_VIDEO, AdFormat.VIDEO)
 		}
+		findViewById<View>(R.id.test_banner).setOnClickListener {
+			showTestBanner()
+		}
+		findViewById<View>(R.id.destroy_banner).apply {
+			isEnabled = false
+			setOnClickListener { destroyTestBanner() }
+		}
 		findViewById<View>(R.id.req_ump).setOnClickListener {
 			setConsentButtonsEnabled(false)
 			// 命中缓存时不会触发回调，需要直接继续展示流程。
@@ -170,6 +186,82 @@ class DebugActivity : AppCompatActivity() {
 		)
 	}
 
+	private fun showTestBanner() {
+		// 重复点击展示时，先移除并释放上一次请求的广告。
+		destroyTestBanner()
+		val context = ScreenAdContext(
+			areaKey = AreaKeys.KEY_TEST_BANNER,
+			adFormat = AdFormat.BANNER,
+			adPlatform = AdConfig.defaultPlatform,
+			trigger = ScreenAdTrigger.UNKNOW,
+		)
+		bannerRequestId = context.requestId
+		findViewById<TextView>(R.id.banner_status).setText(R.string.banner_status_loading)
+		val view = Core.getBanner(this, object : ShowCallback {
+			override val adContext = context
+
+			private fun updateStatus(message: String) {
+				// 销毁或替换 Banner 后，旧请求的延迟回调不再更新页面。
+				if (bannerRequestId != adContext.requestId || isFinishing || isDestroyed) return
+				findViewById<TextView>(R.id.banner_status).text = message
+			}
+
+			override fun showFailed(reason: ShowFailResult) {
+				updateStatus(getString(R.string.banner_status_failed, reason.name))
+			}
+
+			override fun showSuccess() {
+				updateStatus(getString(R.string.banner_status_showing))
+			}
+
+			override fun onClicked() {
+				updateStatus(getString(R.string.banner_status_clicked))
+			}
+
+			override fun onAdClosed() {
+				updateStatus(getString(R.string.banner_status_closed))
+			}
+
+			override fun onPaid() {
+				updateStatus(getString(R.string.banner_status_paid))
+			}
+
+			override fun onReward() = Unit
+		})
+		bannerView = view
+		if (view == null) {
+			bannerRequestId = null
+			return
+		}
+		findViewById<FrameLayout>(R.id.banner_container).apply {
+			visibility = View.VISIBLE
+			addView(view, FrameLayout.LayoutParams(
+				ViewGroup.LayoutParams.WRAP_CONTENT,
+				ViewGroup.LayoutParams.WRAP_CONTENT,
+				Gravity.CENTER,
+			))
+		}
+		findViewById<View>(R.id.destroy_banner).apply {
+			isEnabled = true
+			alpha = 1f
+		}
+	}
+
+	private fun destroyTestBanner() {
+		bannerRequestId = null
+		val view = bannerView
+		bannerView = null
+		// 先从父容器移除，再销毁；清空引用后可安全重复调用。
+		(view?.parent as? ViewGroup)?.removeView(view)
+		view?.destroy()
+		findViewById<View>(R.id.banner_container).visibility = View.GONE
+		findViewById<View>(R.id.destroy_banner).apply {
+			isEnabled = false
+			alpha = 0.5f
+		}
+		findViewById<TextView>(R.id.banner_status).setText(R.string.banner_status_destroyed)
+	}
+
 	private fun handleNotificationPermissionResult(granted: Boolean) {
 		if (granted) {
 			Toast.makeText(this, "通知权限请求成功", Toast.LENGTH_SHORT).show()
@@ -186,7 +278,18 @@ class DebugActivity : AppCompatActivity() {
 
 	override fun onResume() {
 		super.onResume()
+		bannerView?.resume()
 		refreshData()
+	}
+
+	override fun onPause() {
+		bannerView?.pause()
+		super.onPause()
+	}
+
+	override fun onDestroy() {
+		destroyTestBanner()
+		super.onDestroy()
 	}
 
 	fun refreshData() {

@@ -123,11 +123,20 @@ class MyFirebaseMessagingService : FirebaseMessagingService() {
 	private fun showNotification(remoteMessage: RemoteMessage) {
 
 		val notificationManager = getSystemService(NOTIFICATION_SERVICE) as NotificationManager
+		val route = remoteMessage.data["Route"].orEmpty()
+		val scene = remoteMessage.data["Scene"].orEmpty()
+		val launchIntent = packageManager.getLaunchIntentForPackage(packageName) ?: return
+		launchIntent.apply {
+			putExtra("AppOpenFrom", "app_push")
+			putExtra("Route", route)
+			putExtra("Scene", scene)
+			addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP)
+		}
 
 		val pendingIntent = PendingIntent.getActivity(
 			this,
 			0,
-			Intent(),
+			launchIntent,
 			PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
 		)
 		val title = remoteMessage.notification?.title

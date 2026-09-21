@@ -1,6 +1,7 @@
 package com.mar2sdk.core.log
 
 import com.mar2sdk.core.ad.policy.ScreenAdContext
+import com.mar2sdk.core.common.UserInfo
 import com.singular.sdk.SingularAdData
 
 // 通知/广告跳转时复用的 Intent 参数名和默认广告页路由。
@@ -56,6 +57,7 @@ object LogAdParam {
 internal fun ScreenAdContext.toAdLogParams(
 	formatKey: String = LogAdParam.ad_format
 ): Map<String, Any> = buildMap {
+	put(LogAdParam.traffic_source, UserInfo.trafficSource.ifBlank { "unknown" })
 	put(LogAdParam.request_id, requestId)
 	put(LogAdParam.ad_areakey, areaKey)
 	put(formatKey, adFormat.name)

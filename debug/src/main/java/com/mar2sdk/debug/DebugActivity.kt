@@ -123,7 +123,39 @@ class DebugActivity : AppCompatActivity() {
 		findViewById<View>(R.id.test_inter_video).setOnClickListener {
 			showTestAd(AreaKeys.KEY_TEST_INTER_VIDEO, AdFormat.VIDEO)
 		}
+		findViewById<View>(R.id.req_ump).setOnClickListener {
+			setConsentButtonsEnabled(false)
+			// 命中缓存时不会触发回调，需要直接继续展示流程。
+			val cached = Core.initConsent(this@DebugActivity, ::handleConsentRequestResult)
+			if (cached) handleConsentRequestResult(true)
+		}
+		findViewById<View>(R.id.show_ump).setOnClickListener {
+			if (Core.isPrivacyOptionsRequired) {
+				Core.showPrivacyOptions(this@DebugActivity)
+			} else {
+				Toast.makeText(this@DebugActivity, "当前无需展示UMP隐私选项", Toast.LENGTH_LONG).show()
+			}
+		}
 
+	}
+
+	private fun handleConsentRequestResult(success: Boolean) {
+		if (isFinishing || isDestroyed) return
+		if (success) {
+			Core.showSplashConsent(this) {
+				if (isFinishing || isDestroyed) return@showSplashConsent
+				setConsentButtonsEnabled(true)
+				Toast.makeText(this, "UMP同意流程结束", Toast.LENGTH_SHORT).show()
+			}
+		} else {
+			setConsentButtonsEnabled(true)
+			Toast.makeText(this, "UMP请求失败", Toast.LENGTH_SHORT).show()
+		}
+	}
+
+	private fun setConsentButtonsEnabled(enabled: Boolean) {
+		findViewById<View>(R.id.req_ump).isEnabled = enabled
+		findViewById<View>(R.id.show_ump).isEnabled = enabled
 	}
 
 	private fun showTestAd(area: String, adFormat: AdFormat) {

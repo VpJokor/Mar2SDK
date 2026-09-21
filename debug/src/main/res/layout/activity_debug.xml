@@ -991,6 +991,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content">
                 <androidx.cardview.widget.CardView
+                    android:id="@+id/req_ump"
                     app:cardCornerRadius="10dp"
                     app:cardElevation="0dp"
                     app:cardBackgroundColor="@android:color/system_neutral2_100"
@@ -1013,7 +1014,7 @@
 
                         <TextView
                             android:layout_marginTop="4dp"
-                            android:text="测试UMP"
+                            android:text="请求并展示UMP"
                             android:textStyle="bold"
                             android:textColor="@android:color/black"
                             android:textSize="15sp"
@@ -1028,7 +1029,7 @@
                     android:layout_height="0dp"/>
 
                 <androidx.cardview.widget.CardView
-                    android:visibility="invisible"
+                    android:id="@+id/show_ump"
                     app:cardCornerRadius="10dp"
                     app:cardElevation="0dp"
                     app:cardBackgroundColor="@android:color/system_neutral2_100"
@@ -1045,13 +1046,13 @@
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
                             android:gravity="center"
-                            android:text="测试广告"
+                            android:text="测试UMP"
                             android:textColor="@android:color/black"
                             android:textSize="10sp" />
 
                         <TextView
                             android:layout_marginTop="4dp"
-                            android:text="测试原生"
+                            android:text="展示隐私选项"
                             android:textStyle="bold"
                             android:textColor="@android:color/black"
                             android:textSize="15sp"

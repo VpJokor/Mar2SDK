@@ -6,11 +6,13 @@ import android.os.Bundle
 import android.util.Log
 import android.view.View
 import android.widget.Button
-import android.widget.ProgressBar
 import android.widget.Toast
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.IntentCompat
+import androidx.core.view.ViewCompat
+import androidx.core.view.WindowInsetsCompat
+import androidx.core.view.updatePadding
 import androidx.lifecycle.lifecycleScope
 import com.mar2sdk.core.AppMod
 import com.mar2sdk.core.Core
@@ -91,6 +93,20 @@ class AdActivity : AppCompatActivity() {
 		}
 		enableEdgeToEdge()
 		setContentView(R.layout.activity_ad)
+		val main = findViewById<View>(R.id.main)
+		ViewCompat.setOnApplyWindowInsetsListener(main) { view, insets ->
+			val safeArea = insets.getInsets(
+				WindowInsetsCompat.Type.systemBars() or WindowInsetsCompat.Type.displayCutout()
+			)
+			view.updatePadding(
+				left = safeArea.left,
+				top = safeArea.top,
+				right = safeArea.right,
+				bottom = safeArea.bottom
+			)
+			insets
+		}
+		ViewCompat.requestApplyInsets(main)
 		findViewById<Button>(R.id.close_ad).setOnClickListener { finish() }
 		showRequestedAd(adContext)
 	}
@@ -104,7 +120,7 @@ class AdActivity : AppCompatActivity() {
 	}
 
 	private fun showRequestedAd(context: ScreenAdContext) {
-		val loading = findViewById<ProgressBar>(R.id.ad_loading)
+		val loading = findViewById<View>(R.id.ad_loading_content)
 		if (Core.appMod == AppMod.DEBUG) {
 			Toast.makeText(Core.app, "展示广告 areaKey= ${context.areaKey}", Toast.LENGTH_LONG).show()
 		}

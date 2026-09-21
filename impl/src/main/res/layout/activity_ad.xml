@@ -1,32 +1,109 @@
 <?xml version="1.0" encoding="utf-8"?>
-<FrameLayout
-    xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/main"
-    android:background="@android:color/background_light"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:background="@color/mar2_ad_background"
     tools:context=".AdActivity">
 
-    <ProgressBar
-        android:id="@+id/ad_loading"
-        style="?android:attr/progressBarStyleLarge"
-        android:indeterminate="true"
-        android:layout_gravity="center"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:contentDescription="@string/ad_loading" />
-
-    <Button
+    <androidx.appcompat.widget.AppCompatButton
         android:id="@+id/close_ad"
+        style="@style/Widget.AppCompat.Button.Borderless"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_gravity="top|end"
         android:layout_marginTop="16dp"
         android:layout_marginEnd="16dp"
-        android:minWidth="0dp"
+        android:background="@drawable/mar2_ad_close_background"
+        android:contentDescription="@string/ad_close"
+        android:drawableStart="@drawable/mar2_ad_ic_close"
+        android:drawablePadding="8dp"
+        android:fontFamily="sans-serif-medium"
+        android:gravity="center"
+        android:minWidth="48dp"
         android:minHeight="48dp"
+        android:paddingStart="16dp"
+        android:paddingTop="12dp"
+        android:paddingEnd="16dp"
+        android:paddingBottom="12dp"
+        android:stateListAnimator="@null"
         android:text="@string/ad_close"
-        android:contentDescription="@string/ad_close" />
+        android:textAllCaps="false"
+        android:textColor="@color/mar2_ad_text_secondary"
+        android:textSize="14sp"
+        app:backgroundTint="@null"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
 
-</FrameLayout>
+    <ScrollView
+        android:id="@+id/ad_loading_content"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:layout_marginStart="24dp"
+        android:layout_marginEnd="24dp"
+        android:fillViewport="true"
+        android:scrollbars="none"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/close_ad">
+
+        <androidx.constraintlayout.widget.ConstraintLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
+
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="24dp"
+                android:layout_marginBottom="24dp"
+                android:background="@drawable/mar2_ad_card_background"
+                android:gravity="center"
+                android:orientation="vertical"
+                android:paddingStart="24dp"
+                android:paddingTop="32dp"
+                android:paddingEnd="24dp"
+                android:paddingBottom="32dp"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="parent"
+                app:layout_constraintWidth_max="320dp">
+
+                <ProgressBar
+                    android:id="@+id/ad_loading"
+                    style="?android:attr/progressBarStyleLarge"
+                    android:layout_width="48dp"
+                    android:layout_height="48dp"
+                    android:importantForAccessibility="no"
+                    android:indeterminate="true"
+                    android:indeterminateTint="@color/mar2_ad_accent" />
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="24dp"
+                    android:accessibilityHeading="true"
+                    android:fontFamily="sans-serif-medium"
+                    android:gravity="center"
+                    android:text="@string/ad_loading"
+                    android:textColor="@color/mar2_ad_text_primary"
+                    android:textSize="20sp" />
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
+                    android:gravity="center"
+                    android:text="@string/mar2_ad_loading_hint"
+                    android:textColor="@color/mar2_ad_text_secondary"
+                    android:textSize="14sp" />
+
+            </LinearLayout>
+
+        </androidx.constraintlayout.widget.ConstraintLayout>
+
+    </ScrollView>
+
+</androidx.constraintlayout.widget.ConstraintLayout>

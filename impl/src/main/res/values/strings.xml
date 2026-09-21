@@ -1,4 +1,5 @@
 <resources>
-    <string name="ad_loading">加载广告...</string>
+    <string name="ad_loading">正在加载广告</string>
     <string name="ad_close">关闭</string>
+    <string name="mar2_ad_loading_hint">请稍候，加载完成后将自动展示</string>
 </resources>

@@ -71,8 +71,31 @@ class AdmobConfigTest {
 		config.put("openConfig", replacement)
 		assertMatches(config)
 
+		val bannerReplacement = JSONObject().put("id", "updated-banner")
+		AdmobConfig.applyConfig(JSONObject().put("bannerConfig", bannerReplacement))
+
+		config.put("bannerConfig", bannerReplacement)
+		assertMatches(config)
+
 		AdmobConfig.applyConfig(JSONObject())
 		assertMatches(config)
+	}
+
+	@Test
+	fun nativeOnlyUpdatesReplaceAdsAndAcceptEmptyLists() {
+		val config = distinctConfig()
+		AdmobConfig.applyConfig(config)
+		val replacements = listOf(
+			JSONObject("""{"timeout":54321,"ads":[{"HID":"updated-high","MID":"updated-mid","LID":"updated-low"}]}"""),
+			JSONObject("""{"timeout":12345,"ads":[]}"""),
+		)
+
+		for (replacement in replacements) {
+			AdmobConfig.applyConfig(JSONObject().put("nativeConfig", replacement))
+
+			config.put("nativeConfig", replacement)
+			assertMatches(config)
+		}
 	}
 
 	@Test
@@ -82,13 +105,15 @@ class AdmobConfigTest {
 		for (mode in AppMod.entries) {
 			Core.appMod = mode
 			val expected = if (mode == AppMod.DEBUG || mode == AppMod.TEST) {
-				listOf(AdmobConfig.testOpenID, AdmobConfig.testInterID, AdmobConfig.testVideoID)
+				listOf(AdmobConfig.testOpenID, AdmobConfig.testInterID,
+					AdmobConfig.testVideoID, AdmobConfig.testBannerID)
 			} else {
-				listOf("open-id", "inter-id", "video-id")
+				listOf("open-id", "inter-id", "video-id", "banner-id")
 			}
 			assertEquals(mode.name, expected, activeIds())
 		}
 		assertEquals(listOf("open-id", "inter-id", "video-id"), formatConfigs().map { it.id })
+		assertEquals("banner-id", AdmobConfig.bannerConfig.id)
 	}
 
 	@Test
@@ -122,19 +147,28 @@ class AdmobConfigTest {
 		val original = distinctConfig()
 		AdmobConfig.applyConfig(original)
 		val originalConfigs = formatConfigs()
-		val keys = listOf(AdmobKey.KEY_OPEN_CONFIG, AdmobKey.KEY_INTER_CONFIG, AdmobKey.KEY_VIDEO_CONFIG)
+		val keys = listOf(AdmobKey.KEY_OPEN_CONFIG, AdmobKey.KEY_INTER_CONFIG,
+			AdmobKey.KEY_VIDEO_CONFIG, AdmobKey.KEY_NATIVE_CONFIG, AdmobKey.KEY_BANNER_CONFIG)
 		val originalStored = keys.associateWith { preferences.getString(it, null) }
-		val invalidUpdate = distinctConfig().apply {
-			getJSONObject("openConfig").put("id", "replacement-open")
-			getJSONObject("interConfig").remove("probeConfig")
-			getJSONObject("videoConfig").put("id", "replacement-video")
+		for (invalidGroup in listOf("interConfig", "nativeConfig", "bannerConfig")) {
+			val invalidUpdate = distinctConfig().apply {
+				getJSONObject("openConfig").put("id", "replacement-open")
+				getJSONObject("videoConfig").put("id", "replacement-video")
+				getJSONObject("nativeConfig").put("timeout", 98765L)
+				getJSONObject("bannerConfig").put("id", "replacement-banner")
+				when (invalidGroup) {
+					"interConfig" -> getJSONObject(invalidGroup).remove("probeConfig")
+					"nativeConfig" -> getJSONObject(invalidGroup).getJSONArray("ads").getJSONObject(1).remove("MID")
+					"bannerConfig" -> getJSONObject(invalidGroup).remove("id")
+				}
+			}
+
+			assertThrows(JSONException::class.java) { AdmobConfig.applyConfig(invalidUpdate) }
+
+			assertEquals(originalConfigs, formatConfigs())
+			assertMatches(original)
+			assertEquals(originalStored, keys.associateWith { preferences.getString(it, null) })
 		}
-
-		assertThrows(JSONException::class.java) { AdmobConfig.applyConfig(invalidUpdate) }
-
-		assertEquals(originalConfigs, formatConfigs())
-		assertMatches(original)
-		assertEquals(originalStored, keys.associateWith { preferences.getString(it, null) })
 	}
 
 	@Test
@@ -218,6 +252,19 @@ class AdmobConfigTest {
 				})
 			})
 		}
+		put("nativeConfig", JSONObject().apply {
+			put("timeout", 4000L)
+			put("ads", JSONArray().apply {
+				repeat(2) { index ->
+					put(JSONObject().apply {
+						put("HID", "native-high-$index")
+						put("MID", "native-mid-$index")
+						put("LID", "native-low-$index")
+					})
+				}
+			})
+		})
+		put("bannerConfig", JSONObject().put("id", "banner-id"))
 	}
 
 	private fun assertMatches(config: JSONObject) {
@@ -240,11 +287,21 @@ class AdmobConfigTest {
 				},
 			), formats[index].probeConfig)
 		}
-		assertEquals(formats.map { it.id }, activeIds())
+		val native = config.getJSONObject("nativeConfig")
+		val ads = native.getJSONArray("ads")
+		assertEquals(NativeConfig(
+			timeout = native.getLong("timeout"),
+			ads = List(ads.length()) { index ->
+				val ad = ads.getJSONObject(index)
+				NativeAdConfig(ad.getString("HID"), ad.getString("MID"), ad.getString("LID"))
+			},
+		), AdmobConfig.nativeConfig)
+		assertEquals(BannerConfig(config.getJSONObject("bannerConfig").getString("id")), AdmobConfig.bannerConfig)
+		assertEquals(formats.map { it.id } + AdmobConfig.bannerConfig.id, activeIds())
 	}
 
 	private fun formatConfigs() = listOf(AdmobConfig.openConfig, AdmobConfig.interConfig, AdmobConfig.videoConfig)
-	private fun activeIds() = listOf(AdmobConfig.openID, AdmobConfig.interID, AdmobConfig.videoID)
+	private fun activeIds() = listOf(AdmobConfig.openID, AdmobConfig.interID, AdmobConfig.videoID, AdmobConfig.bannerID)
 
 	private fun preserveFields(type: Class<*>, names: Set<String>? = null) {
 		restore += snapshotFields(type, names)

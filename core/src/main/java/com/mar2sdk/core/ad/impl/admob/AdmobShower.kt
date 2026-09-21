@@ -1095,5 +1095,13 @@ object AdmobShower {
 		}
 	}
 
+	// 获取原生广告
+	fun getNative() {
 
+	}
+
+	// 获取Banner广告
+	fun getBanner() {
+
+	}
 }

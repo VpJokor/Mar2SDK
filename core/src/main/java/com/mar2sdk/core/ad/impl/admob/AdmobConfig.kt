@@ -50,16 +50,38 @@ data class ProbeInstance(
 	val param: String
 )
 
+// id：Banner 正式广告位 ID
+data class BannerConfig(
+	val id: String
+)
+
+// timeout：原生广告超时时间，单位毫秒
+// ads：原生广告位配置列表
+data class NativeConfig(
+	val timeout: Long,
+	val ads: List<NativeAdConfig>
+)
+
+// 高、中、低三档正式广告位 ID
+data class NativeAdConfig(
+	val hID: String,
+	val mID: String,
+	val lID: String
+)
+
 // AdMob 广告配置
 object AdmobConfig {
 
 	val testOpenID = "ca-app-pub-3940256099942544/9257395921"
 	val testInterID = "ca-app-pub-3940256099942544/1033173712"
 	val testVideoID = "ca-app-pub-3940256099942544/5224354917"
+	val testBannerID = "ca-app-pub-3940256099942544/6300978111"
 
 	var openConfig = AdUnitConfig("", 12600000L, 1, ProbeConfig(ProbeMod.REFLECT, 3000L, "USD", emptyList()))
 	var interConfig = AdUnitConfig("", 3000000L, 1, ProbeConfig(ProbeMod.REFLECT, 3000L, "USD", emptyList()))
 	var videoConfig = AdUnitConfig("", 3000000L, 1, ProbeConfig(ProbeMod.REFLECT, 3000L, "USD", emptyList()))
+	var bannerConfig = BannerConfig("")
+	var nativeConfig = NativeConfig(30000L, emptyList())
 
 	private val isTest: Boolean
 		get() = Core.appMod == AppMod.TEST || Core.appMod == AppMod.DEBUG
@@ -70,6 +92,8 @@ object AdmobConfig {
 		get() = if (isTest) testInterID else interConfig.id
 	val videoID: String
 		get() = if (isTest) testVideoID else videoConfig.id
+	val bannerID: String
+		get() = if (isTest) testBannerID else bannerConfig.id
 
 	fun init() {
 		loadConfigFromRaw()
@@ -86,6 +110,8 @@ object AdmobConfig {
 			openConfig = getJSONObject("openConfig").toAdUnitConfig()
 			interConfig = getJSONObject("interConfig").toAdUnitConfig()
 			videoConfig = getJSONObject("videoConfig").toAdUnitConfig()
+			bannerConfig = getJSONObject("bannerConfig").toBannerConfig()
+			nativeConfig = getJSONObject("nativeConfig").toNativeConfig()
 		}
 	}
 
@@ -101,6 +127,12 @@ object AdmobConfig {
 			videoConfig = JSONObject(
 				PreferenceUtil.getString(KEY_VIDEO_CONFIG, videoConfig.toJson())
 			).toAdUnitConfig()
+			bannerConfig = JSONObject(
+				PreferenceUtil.getString(KEY_BANNER_CONFIG, bannerConfig.toJson())
+			).toBannerConfig()
+			nativeConfig = JSONObject(
+				PreferenceUtil.getString(KEY_NATIVE_CONFIG, nativeConfig.toJson())
+			).toNativeConfig()
 		}
 	}
 
@@ -110,6 +142,8 @@ object AdmobConfig {
 			PreferenceUtil.commitString(KEY_OPEN_CONFIG, openConfig.toJson())
 			PreferenceUtil.commitString(KEY_INTER_CONFIG, interConfig.toJson())
 			PreferenceUtil.commitString(KEY_VIDEO_CONFIG, videoConfig.toJson())
+			PreferenceUtil.commitString(KEY_BANNER_CONFIG, bannerConfig.toJson())
+			PreferenceUtil.commitString(KEY_NATIVE_CONFIG, nativeConfig.toJson())
 		}
 	}
 
@@ -120,9 +154,13 @@ object AdmobConfig {
 		val nextOpen = config.optJSONObject("openConfig")?.toAdUnitConfig() ?: openConfig
 		val nextInter = config.optJSONObject("interConfig")?.toAdUnitConfig() ?: interConfig
 		val nextVideo = config.optJSONObject("videoConfig")?.toAdUnitConfig() ?: videoConfig
+		val nextBanner = config.optJSONObject("bannerConfig")?.toBannerConfig() ?: bannerConfig
+		val nextNative = config.optJSONObject("nativeConfig")?.toNativeConfig() ?: nativeConfig
 		openConfig = nextOpen
 		interConfig = nextInter
 		videoConfig = nextVideo
+		bannerConfig = nextBanner
+		nativeConfig = nextNative
 		AdmobLoader.onConfigChanged()
 		saveAdmobConfig()
 	}
@@ -154,6 +192,47 @@ object AdmobConfig {
 				)
 			}
 		}
+
+	private fun JSONObject.toBannerConfig(): BannerConfig =
+		BannerConfig(
+			getString("id")
+		)
+
+	private fun JSONObject.toNativeConfig(): NativeConfig =
+		NativeConfig(
+			getLong("timeout"),
+			getJSONArray("ads").toNativeAds()
+		)
+
+	private fun JSONArray.toNativeAds(): List<NativeAdConfig> =
+		(0 until length()).map { index ->
+			getJSONObject(index).let { ad ->
+				NativeAdConfig(
+					ad.getString("HID"),
+					ad.getString("MID"),
+					ad.getString("LID")
+				)
+			}
+		}
+
+	private fun BannerConfig.toJson(): String =
+		JSONObject().apply {
+			put("id", id)
+		}.toString()
+
+	private fun NativeConfig.toJson(): String =
+		JSONObject().apply {
+			put("timeout", timeout)
+			put("ads", JSONArray().apply {
+				ads.forEach { ad ->
+					put(JSONObject().apply {
+						put("HID", ad.hID)
+						put("MID", ad.mID)
+						put("LID", ad.lID)
+					})
+				}
+			})
+		}.toString()
 
 	private fun AdUnitConfig.toJson(): String =
 		JSONObject().apply {

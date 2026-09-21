@@ -5,4 +5,6 @@ object AdmobKey {
 	const val KEY_OPEN_CONFIG = "mar2sdk.admob_config.openConfig"
 	const val KEY_INTER_CONFIG = "mar2sdk.admob_config.interConfig"
 	const val KEY_VIDEO_CONFIG = "mar2sdk.admob_config.videoConfig"
+	const val KEY_BANNER_CONFIG = "mar2sdk.admob_config.bannerConfig"
+	const val KEY_NATIVE_CONFIG = "mar2sdk.admob_config.nativeConfig"
 }

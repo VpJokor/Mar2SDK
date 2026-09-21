@@ -109,18 +109,18 @@ object Core {
 		ThinkingUtil.setUserAttr(key, value)
 	}
 
-	/** 初始化 Google UMP 同意状态。若近期结果已缓存，则返回 true。 */
+	// 初始化 Google UMP 同意状态。若近期结果已缓存，则返回 true。
 	fun initConsent(activity: Activity, onComplete: (success: Boolean) -> Unit): Boolean =
 		UMPUtil.initUMP(activity, onComplete)
 
-	/** 在启动流程中显示 UMP 同意表单，然后调用 [onComplete]。 */
+	// 在启动流程中显示 UMP 同意表单，然后调用 [onComplete]。
 	fun showSplashConsent(activity: Activity, onComplete: () -> Unit) =
 		UMPUtil.showSplashUMP(activity, onComplete)
 
-	/** 打开 UMP 隐私选项表单。 */
+	// 打开 UMP 隐私选项表单。
 	fun showPrivacyOptions(activity: Activity) = UMPUtil.showUMP(activity)
 
-	/** UMP 是否要求提供隐私选项入口。 */
+	// UMP 是否要求提供隐私选项入口。
 	val isPrivacyOptionsRequired: Boolean
 		get() = UMPUtil.isPrivacyOptionsRequired
 

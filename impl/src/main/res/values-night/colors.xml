@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="mar2_ad_background">#14151C</color>
+    <color name="mar2_ad_surface">#20222D</color>
+    <color name="mar2_ad_outline">#343746</color>
+    <color name="mar2_ad_accent">#BCA5FF</color>
+    <color name="mar2_ad_text_primary">#F2F0F8</color>
+    <color name="mar2_ad_text_secondary">#B4B7C8</color>
+    <color name="mar2_ad_ripple">#33BCA5FF</color>
+</resources>

@@ -82,6 +82,12 @@ object RiskUtil {
 			UserInfo.riskDevice == RiskType.RISK ||
 			UserInfo.ecpmType == EcpmType.ECPM_0
 		) {
+			Log.e(TAG, "judgeFromLocal: " +
+					"UserInfo.riskIP = ${UserInfo.riskIP}," +
+					"UserInfo.riskPackage = ${UserInfo.riskPackage}," +
+					"UserInfo.riskDevice = ${UserInfo.riskDevice}," +
+					"UserInfo.ecpmType = ${UserInfo.ecpmType}"
+			)
 			UserInfo.localUserType = UserType.RISK
 			applyUserType()
 			activeRemoteConfig?.let(::applyRemoteConfig)

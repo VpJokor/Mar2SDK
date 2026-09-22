@@ -8,6 +8,7 @@ object AdKey {
 	const val KEY_PRICE_MULTIPLIER = "mar2sdk.ad_config.priceMultiplier"
 	const val KEY_PRICE_OFFSET = "mar2sdk.ad_config.priceOffset"
 	const val KEY_IS_OPEN = "mar2sdk.ad_config.isOpen"
+	const val KEY_IS_RISK = "mar2sdk.ad_config.isRisk"
 	const val KEY_SHOW_MAX_TIME = "mar2sdk.ad_config.showMaxTime"
 	const val KEY_SHOW_MIN_TIME = "mar2sdk.ad_config.showMinTime"
 	const val KEY_SHOW_MOD = "mar2sdk.ad_config.showMod"

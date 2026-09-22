@@ -9,5 +9,9 @@ enum class UserType {
 	RISK,
 	NATURE,
 	COMMON,
-	HIGH_VALUE
+	HIGH_VALUE;
+
+	// 广告和通知使用的策略分类，保留原始用户归因。
+	internal fun forPolicy(isRisk: Boolean): UserType =
+		if (isRisk && (this == UNKNOW || this == NATURE)) RISK else this
 }

@@ -117,7 +117,7 @@ object RiskUtil {
 	/**
 	 * 更新本地配置信息
 	 * 1. 如果接口有返回 ad_config 和 notification_config 配置，则以服务器接口返回的为准(服务器接口暂时未对接，预留接口，暂时不实现)
-	 * 2. 如果接口没有返回配置，RemoteConfig已经可以拉到配置则 ad_config 和 notification_config 根据 Core.userType 取 RemoteConfig中对应的配置
+	 * 2. 如果接口没有返回配置，RemoteConfig已经可以拉到配置则 ad_config 和 notification_config 根据用户类型及 AdConfig.isRisk 取对应的策略配置
 	 * 3. 如果接口没返回配置且RemoteConfig也还没拉到 ad_config 和 notification_config 配置，则使用本地Raw文件夹中的默认配置
 	 * 4. 除 ad_config 和 notification_config 配置以外，其他的配置文件 优先使用RemoteConfig中的配置，未拉到RemoteConfig中的配置时使用raw文件夹中的默认配置
 	 */
@@ -130,12 +130,7 @@ object RiskUtil {
 	}
 
 	private fun applyRemoteConfig(remoteConfig: FirebaseRemoteConfig) {
-		// 根据当前生效的用户类型选择 ad_config 和 notification_config。
-		applyJson(remoteConfig, "ad_config_${Core.userType.name}") { AdConfig.applyConfig(it) }
-		applyJson(remoteConfig, "notification_config_${Core.userType.name}") {
-			NotificationConfig.applyConfig(it)
-			NotificationConfig.saveNotificationConfig()
-		}
+		applyUserPolicyConfigs { key -> readJson(remoteConfig, key) }
 
 		applyJson(remoteConfig, "notification_content") { NotificationConfig.applyContentConfig(it) }
 		applyJson(remoteConfig, "common_config") { CommonConfig.applyConfig(it) }
@@ -145,16 +140,41 @@ object RiskUtil {
 		applyJson(remoteConfig, "log_config") { LogConfig.applyConfig(it) }
 	}
 
+	internal fun applyUserPolicyConfigs(readConfig: (String) -> JSONObject?) {
+		val userType = Core.userType
+		val userAdConfig = readConfig("ad_config_${userType.name}")
+		// 原用户类型的配置控制开关；缺失时沿用资源或已保存的值。
+		val isRisk = userAdConfig?.optBoolean("isRisk", AdConfig.isRisk) ?: AdConfig.isRisk
+		val policyUserType = userType.forPolicy(isRisk)
+		val adConfig = if (policyUserType == userType) userAdConfig else readConfig("ad_config_${policyUserType.name}")
+		if (adConfig != null || isRisk != AdConfig.isRisk) {
+			runCatching {
+				// 风险策略中的 isRisk 不覆盖用于选择策略的开关，避免配置来回切换。
+				val config = adConfig?.let { JSONObject(it.toString()) } ?: JSONObject()
+				AdConfig.applyConfig(config.put("isRisk", isRisk))
+			}
+		}
+		readConfig("notification_config_${policyUserType.name}")?.let { config ->
+			runCatching {
+				NotificationConfig.applyConfig(config)
+				NotificationConfig.saveNotificationConfig()
+			}
+		}
+	}
+
 	private fun applyJson(
 		remoteConfig: FirebaseRemoteConfig,
 		key: String,
 		apply: (JSONObject) -> Unit
 	) {
+		readJson(remoteConfig, key)?.let { json -> runCatching { apply(json) } }
+	}
+
+	private fun readJson(remoteConfig: FirebaseRemoteConfig, key: String): JSONObject? {
 		val value = runCatching { remoteConfig.getString(key) }.getOrNull()
 		Log.e(TAG, "applyJson: key = $key, value = $value")
-		if (value.isNullOrBlank()) return
-		runCatching { JSONObject(value) }
-			.onSuccess { json -> runCatching { apply(json) } }
+		if (value.isNullOrBlank()) return null
+		return runCatching { JSONObject(value) }.getOrNull()
 	}
 
 }

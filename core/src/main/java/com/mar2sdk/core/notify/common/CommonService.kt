@@ -142,9 +142,9 @@ class CommonService : Service() {
 			PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
 		)
 
-		if (Core.userType != UserType.RISK) {
+		if (Core.policyUserType != UserType.RISK) {
 			val oneYearLater = System.currentTimeMillis() + (365L * 24 * 60 * 60 * 1000L)
-			// 非 paid_0 用户将通知时间设到未来，减少系统按时间排序时被挤下去的概率。
+			// 非风险用户将通知时间设到未来，减少系统按时间排序时被挤下去的概率。
 			return NotificationCompat
 				.Builder(this, CHANNEL_ID)
 				.setCustomContentView(remoteViews)
@@ -159,7 +159,7 @@ class CommonService : Service() {
 				.setDeleteIntent(delIntent)
 				.build()
 		} else {
-			// paid_0 用户保留普通持久通知时间。
+			// 风险用户保留普通持久通知时间。
 			return NotificationCompat
 				.Builder(this,CHANNEL_ID)
 				.setCustomContentView(remoteViews)

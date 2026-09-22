@@ -188,7 +188,7 @@ object AppNotificationManager {
 	@MainThread
 	fun canSend(isBatch: Boolean) : Boolean {
 		checkMainThread()
-		if (Core.userType == UserType.RISK) {
+		if (Core.policyUserType == UserType.RISK) {
 			if (Core.appMod == AppMod.DEBUG) {
 				Toast.makeText(Core.app, "风险用户不发通知", Toast.LENGTH_LONG).show()
 			}

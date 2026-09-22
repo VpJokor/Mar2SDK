@@ -12,6 +12,7 @@
 | `priceMultiplier` | 数值 | `1.0` | 价格倍率。 |
 | `priceOffset` | 数值 | `0.0` | 价格偏移量。 |
 | `isOpen` | 布尔值 | `true` | 广告展示总开关。 |
+| `isRisk` | 布尔值 | `false` | 开启时，`UNKNOW`、`NATURE` 用户使用 `RISK` 的广告和通知策略；其他用户类型不变。 |
 | `showMaxTime` | 整数（毫秒） | `10000` | 广告加载等待的最长时间。 |
 | `showMinTime` | 整数（毫秒） | `500` | 展示广告前的最短等待时间。 |
 | `showMod` | 字符串 | `MODE_555` | `ShowMod` 枚举名称，可选 `MODE_555`、`MODE_666`、`MODE_777`、`MODE_888`。 |
@@ -20,6 +21,8 @@
 | `ad_units` | 对象 | — | 广告点位配置集合。 |
 
 `showMod` 的 JSON 配置和本地 `Preference` 均使用枚举名称字符串，不再支持整数。已有旧整数数据时，需清理本地 `mar2sdk.ad_config.showMod` 配置或清除应用数据。
+
+`isRisk` 不改变原始用户分类。应用 Remote Config 时，先读取原用户类型的 `ad_config_<用户类型>` 中的 `isRisk`，缺失则沿用当前值；开启后为 `UNKNOW`、`NATURE` 选择 `ad_config_RISK` 和 `notification_config_RISK`，通知中的风险分支也使用该策略分类。`ad_config_RISK` 内的开关值不会反向覆盖这次选择依据。关闭原用户类型配置中的开关后，下次应用配置恢复该类型的策略；远程分组缺失时保留当前配置。
 
 ## `ad_units` 点位字段
 

@@ -69,6 +69,8 @@ object AdConfig {
 	var priceOffset = 0.0
 	// 全局广告总开关
 	var isOpen = true
+	// 开启时，未知和自然量用户使用风险用户的广告、通知策略。
+	var isRisk = false
 	// 广告展示超时时间，单位毫秒
 	var showMaxTime = 10 * 1000L
 	// 广告展示前最小等待时间，单位毫秒
@@ -106,6 +108,7 @@ object AdConfig {
 			priceMultiplier = optDouble("priceMultiplier", priceMultiplier)
 			priceOffset = optDouble("priceOffset", priceOffset)
 			isOpen = optBoolean("isOpen", isOpen)
+			isRisk = optBoolean("isRisk", isRisk)
 			showMaxTime = optLong("showMaxTime", showMaxTime)
 			showMinTime = optLong("showMinTime", showMinTime)
 			showMod = ShowMod.valueOf(getString("showMod"))
@@ -133,6 +136,7 @@ object AdConfig {
 			priceMultiplier = PreferenceUtil.getDouble(KEY_PRICE_MULTIPLIER, priceMultiplier)
 			priceOffset = PreferenceUtil.getDouble(KEY_PRICE_OFFSET, priceOffset)
 			isOpen = PreferenceUtil.getBoolean(KEY_IS_OPEN, isOpen)
+			isRisk = PreferenceUtil.getBoolean(KEY_IS_RISK, isRisk)
 			showMaxTime = PreferenceUtil.getLong(KEY_SHOW_MAX_TIME, showMaxTime)
 			showMinTime = PreferenceUtil.getLong(KEY_SHOW_MIN_TIME, showMinTime)
 			showMod = ShowMod.valueOf(PreferenceUtil.getString(KEY_SHOW_MOD, showMod.name))
@@ -160,6 +164,7 @@ object AdConfig {
 			PreferenceUtil.commitDouble(KEY_PRICE_MULTIPLIER, priceMultiplier)
 			PreferenceUtil.commitDouble(KEY_PRICE_OFFSET, priceOffset)
 			PreferenceUtil.commitBoolean(KEY_IS_OPEN, isOpen)
+			PreferenceUtil.commitBoolean(KEY_IS_RISK, isRisk)
 			PreferenceUtil.commitLong(KEY_SHOW_MAX_TIME, showMaxTime)
 			PreferenceUtil.commitLong(KEY_SHOW_MIN_TIME, showMinTime)
 			PreferenceUtil.commitString(KEY_SHOW_MOD, showMod.name)
@@ -181,6 +186,7 @@ object AdConfig {
 			priceMultiplier = optDouble("priceMultiplier", priceMultiplier)
 			priceOffset = optDouble("priceOffset", priceOffset)
 			isOpen = optBoolean("isOpen", isOpen)
+			isRisk = optBoolean("isRisk", isRisk)
 			showMaxTime = optLong("showMaxTime", showMaxTime)
 			showMinTime = optLong("showMinTime", showMinTime)
 			if (has("showMod")) showMod = ShowMod.valueOf(getString("showMod"))

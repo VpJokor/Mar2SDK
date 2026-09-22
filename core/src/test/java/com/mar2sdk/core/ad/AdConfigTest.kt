@@ -1,11 +1,21 @@
 package com.mar2sdk.core.ad
 
 import android.content.SharedPreferences
+import com.mar2sdk.core.Core
 import com.mar2sdk.core.ad.status.AdFormat
 import com.mar2sdk.core.common.PreferenceUtil
+import com.mar2sdk.core.common.RiskUtil
+import com.mar2sdk.core.common.status.UserType
+import com.mar2sdk.core.notify.NotificationConfig
+import com.mar2sdk.core.notify.NotificationKey
 import java.io.File
 import java.lang.reflect.Modifier
 import java.lang.reflect.Proxy
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.test.StandardTestDispatcher
+import kotlinx.coroutines.test.resetMain
+import kotlinx.coroutines.test.setMain
 import org.json.JSONException
 import org.json.JSONObject
 import org.junit.After
@@ -14,24 +24,34 @@ import org.junit.Assert.assertThrows
 import org.junit.Before
 import org.junit.Test
 
+@OptIn(ExperimentalCoroutinesApi::class)
 class AdConfigTest {
 
 	private val restore = mutableListOf<() -> Unit>()
 	private val preferenceValues = mutableMapOf<String, Any?>()
+	private val mainDispatcher = StandardTestDispatcher()
 
 	@Before
 	fun setUp() {
+		Dispatchers.setMain(mainDispatcher)
 		restore += snapshotFields(AdConfig::class.java)
 		restore += snapshotFields(PreferenceUtil::class.java)
 		PreferenceUtil::class.java.getDeclaredField("sharedPreferences").apply {
 			isAccessible = true
 			set(null, inMemoryPreferences())
 		}
+		restore += snapshotFields(Core::class.java)
+		restore += snapshotFields(NotificationConfig::class.java)
 	}
 
 	@After
 	fun tearDown() {
-		restore.asReversed().forEach { it() }
+		try {
+			mainDispatcher.scheduler.runCurrent()
+		} finally {
+			restore.asReversed().forEach { it() }
+			Dispatchers.resetMain()
+		}
 	}
 
 	@Test
@@ -131,6 +151,183 @@ class AdConfigTest {
 				AdConfig.applyConfig(JSONObject().put(group, JSONObject("""{"invalid":{}}""")))
 			}
 		}
+	}
+
+	@Test
+	fun appliesMatchingAdAndNotificationPoliciesForEveryUserTypeAndRiskSwitch() {
+		val cases = listOf(
+			Triple(UserType.UNKNOW, false, UserType.UNKNOW),
+			Triple(UserType.UNKNOW, true, UserType.RISK),
+			Triple(UserType.NATURE, false, UserType.NATURE),
+			Triple(UserType.NATURE, true, UserType.RISK),
+			Triple(UserType.RISK, false, UserType.RISK),
+			Triple(UserType.RISK, true, UserType.RISK),
+			Triple(UserType.COMMON, false, UserType.COMMON),
+			Triple(UserType.COMMON, true, UserType.COMMON),
+			Triple(UserType.HIGH_VALUE, false, UserType.HIGH_VALUE),
+			Triple(UserType.HIGH_VALUE, true, UserType.HIGH_VALUE),
+		)
+		val intervals = mapOf(
+			UserType.UNKNOW to 11, UserType.NATURE to 22, UserType.RISK to 33,
+			UserType.COMMON to 44, UserType.HIGH_VALUE to 55,
+		)
+		for ((userType, isRisk, expectedType) in cases) {
+			Core.userType = userType
+			AdConfig.isRisk = !isRisk
+			val configs = intervals.flatMap { (type, interval) -> listOf(
+				"ad_config_${type.name}" to JSONObject().put("isRisk", isRisk).put("interval", interval),
+				"notification_config_${type.name}" to JSONObject().put("interval_second", interval + 100),
+			) }.toMap()
+
+			val requested = applyPolicies(configs)
+
+			val message = "$userType, isRisk=$isRisk"
+			assertEquals(message, intervals.getValue(expectedType), AdConfig.interval)
+			assertEquals(message, intervals.getValue(expectedType) + 100, NotificationConfig.intervalSecond)
+			assertEquals(message, expectedType, Core.policyUserType)
+			assertEquals(message, userType, Core.userType)
+			assertEquals(message, isRisk, AdConfig.isRisk)
+			assertEquals(message, listOf("ad_config_${userType.name}", "ad_config_${expectedType.name}")
+				.distinct() + "notification_config_${expectedType.name}", requested)
+			assertEquals(message, AdConfig.interval, preferenceValues[AdKey.KEY_INTERVAL])
+			assertEquals(message, NotificationConfig.intervalSecond, preferenceValues[NotificationKey.KEY_INTERVAL_SECOND])
+		}
+	}
+
+	@Test
+	fun remoteSwitchEnablesAndDisablesRiskPoliciesWithoutRiskConfigOverridingIt() {
+		for (userType in listOf(UserType.UNKNOW, UserType.NATURE)) {
+			Core.userType = userType
+			AdConfig.isRisk = false
+			val userConfig = JSONObject().put("isRisk", true).put("interval", 12)
+			val riskConfig = JSONObject().put("isRisk", false).put("interval", 90)
+			val configs = mapOf(
+				"ad_config_${userType.name}" to userConfig,
+				"ad_config_RISK" to riskConfig,
+				"notification_config_${userType.name}" to JSONObject().put("isSend", true).put("interval_second", 24),
+				"notification_config_RISK" to JSONObject().put("isSend", false).put("interval_second", 180),
+			)
+
+			repeat(2) {
+				assertEquals(listOf("ad_config_${userType.name}", "ad_config_RISK", "notification_config_RISK"),
+					applyPolicies(configs))
+				assertEquals(90, AdConfig.interval)
+				assertEquals(180, NotificationConfig.intervalSecond)
+				assertEquals(false, NotificationConfig.isSend)
+				assertEquals(true, AdConfig.isRisk)
+				assertEquals(true, preferenceValues[AdKey.KEY_IS_RISK])
+				assertEquals(UserType.RISK, Core.policyUserType)
+				assertEquals(userType, Core.userType)
+				assertEquals(false, riskConfig.getBoolean("isRisk"))
+			}
+
+			userConfig.put("isRisk", false)
+			assertEquals(listOf("ad_config_${userType.name}", "notification_config_${userType.name}"),
+				applyPolicies(configs))
+			assertEquals(12, AdConfig.interval)
+			assertEquals(24, NotificationConfig.intervalSecond)
+			assertEquals(true, NotificationConfig.isSend)
+			assertEquals(false, AdConfig.isRisk)
+			assertEquals(false, preferenceValues[AdKey.KEY_IS_RISK])
+			assertEquals(userType, Core.policyUserType)
+			assertEquals(userType, Core.userType)
+		}
+	}
+
+	@Test
+	fun missingRemoteRiskFlagRetainsCurrentSwitch() {
+		Core.userType = UserType.NATURE
+		val configs = mapOf(
+			"ad_config_NATURE" to JSONObject().put("interval", 12),
+			"ad_config_RISK" to JSONObject().put("isRisk", false).put("interval", 90),
+			"notification_config_NATURE" to JSONObject().put("interval_second", 24),
+			"notification_config_RISK" to JSONObject().put("interval_second", 180),
+		)
+		AdConfig.isRisk = true
+
+		assertEquals(listOf("ad_config_NATURE", "ad_config_RISK", "notification_config_RISK"), applyPolicies(configs))
+		assertEquals(true, AdConfig.isRisk)
+		assertEquals(90, AdConfig.interval)
+		assertEquals(180, NotificationConfig.intervalSecond)
+
+		AdConfig.isRisk = false
+
+		assertEquals(listOf("ad_config_NATURE", "notification_config_NATURE"), applyPolicies(configs))
+		assertEquals(false, AdConfig.isRisk)
+		assertEquals(12, AdConfig.interval)
+		assertEquals(24, NotificationConfig.intervalSecond)
+	}
+
+	@Test
+	fun missingRemoteGroupsRetainCurrentAdAndNotificationValues() {
+		Core.userType = UserType.UNKNOW
+		AdConfig.isRisk = true
+		AdConfig.interval = 17
+		NotificationConfig.intervalSecond = 34
+
+		assertEquals(listOf("ad_config_UNKNOW", "ad_config_RISK", "notification_config_RISK"), applyPolicies(emptyMap()))
+
+		assertEquals(true, AdConfig.isRisk)
+		assertEquals(17, AdConfig.interval)
+		assertEquals(34, NotificationConfig.intervalSecond)
+		assertEquals(UserType.RISK, Core.policyUserType)
+		assertEquals(UserType.UNKNOW, Core.userType)
+		assertEquals(emptyMap<String, Any?>(), preferenceValues)
+	}
+
+	@Test
+	fun missingRiskGroupRetainsOnlyThatPolicyWhileApplyingAvailableConfigAndSwitch() {
+		for (missingKey in listOf("ad_config_RISK", "notification_config_RISK")) {
+			Core.userType = UserType.NATURE
+			AdConfig.isRisk = false
+			AdConfig.interval = 17
+			NotificationConfig.intervalSecond = 34
+			val configs = mapOf(
+				"ad_config_NATURE" to JSONObject().put("isRisk", true).put("interval", 12),
+				"ad_config_RISK" to JSONObject().put("interval", 90),
+				"notification_config_NATURE" to JSONObject().put("interval_second", 24),
+				"notification_config_RISK" to JSONObject().put("interval_second", 180),
+			) - missingKey
+
+			assertEquals(listOf("ad_config_NATURE", "ad_config_RISK", "notification_config_RISK"), applyPolicies(configs))
+
+			assertEquals(if (missingKey == "ad_config_RISK") 17 else 90, AdConfig.interval)
+			assertEquals(if (missingKey == "notification_config_RISK") 34 else 180, NotificationConfig.intervalSecond)
+			assertEquals(true, AdConfig.isRisk)
+			assertEquals(true, preferenceValues[AdKey.KEY_IS_RISK])
+			assertEquals(UserType.RISK, Core.policyUserType)
+			assertEquals(UserType.NATURE, Core.userType)
+		}
+	}
+
+	@Test
+	fun persistsAndRestoresRiskSwitchAndKeepsCurrentValueWhenPreferenceIsAbsent() {
+		Core.userType = UserType.NATURE
+		for (isRisk in listOf(true, false)) {
+			AdConfig.applyConfig(JSONObject().put("isRisk", isRisk))
+			assertEquals(isRisk, preferenceValues[AdKey.KEY_IS_RISK])
+			AdConfig.isRisk = !isRisk
+
+			AdConfig.loadConfigFromPreference()
+
+			assertEquals(isRisk, AdConfig.isRisk)
+			assertEquals(if (isRisk) UserType.RISK else UserType.NATURE, Core.policyUserType)
+			preferenceValues.remove(AdKey.KEY_IS_RISK)
+
+			AdConfig.loadConfigFromPreference()
+
+			assertEquals(isRisk, AdConfig.isRisk)
+		}
+	}
+
+	private fun applyPolicies(configs: Map<String, JSONObject>): List<String> {
+		val requested = mutableListOf<String>()
+		RiskUtil.applyUserPolicyConfigs { key ->
+			requested += key
+			configs[key]
+		}
+		mainDispatcher.scheduler.runCurrent()
+		return requested
 	}
 
 	private fun bundledConfig(): JSONObject = JSONObject(listOf(

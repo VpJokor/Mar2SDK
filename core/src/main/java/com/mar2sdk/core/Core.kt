@@ -6,6 +6,7 @@ import androidx.annotation.MainThread
 import com.google.android.gms.ads.AdSize
 import com.google.android.gms.ads.AdView
 import com.google.android.gms.ads.nativead.NativeAd
+import com.mar2sdk.core.ad.AdConfig
 import com.mar2sdk.core.ad.AdIniter
 import com.mar2sdk.core.ad.AdShower
 import com.mar2sdk.core.ad.UMPUtil
@@ -54,6 +55,10 @@ object Core {
 	}
 
 	var testMod = TestMod.POLICY
+
+	// 广告和通知的生效分类，随风险开关和用户类型变化。
+	internal val policyUserType: UserType
+		get() = userType.forPolicy(AdConfig.isRisk)
 
 	// 初始化SDK
 	fun init(app: Application, appMod: AppMod) {

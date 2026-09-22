@@ -7,6 +7,7 @@
   "showMaxTime": 10000,
   "showMinTime": 500,
   "isOpen": true,
+  "isRisk": false,
   "showMod": "MODE_555",
   "1HMax": 50,
   "24HMax": 50,

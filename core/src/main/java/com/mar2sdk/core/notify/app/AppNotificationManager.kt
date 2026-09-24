@@ -14,6 +14,7 @@ import com.mar2sdk.core.log.LogAppParam
 import com.mar2sdk.core.log.LogNotifyEvent
 import com.mar2sdk.core.log.LogNotifyParam
 import com.mar2sdk.core.notify.NotificationConfig
+import com.mar2sdk.core.notify.NotificationUtil
 import com.mar2sdk.core.common.DBUtil
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
@@ -140,6 +141,10 @@ object AppNotificationManager {
 
 		val trigger = NotificationConfig.triggers[scene] ?: return
 		if (trigger.count <= 0) return
+		if (!NotificationUtil.hasNotiAccess()) {
+			logPermissionDenied(isBatch = true, scene = scene)
+			return
+		}
 
 		// 批次中的通知按场景配置的单条间隔排队。
 		val baseTime = SystemClock.elapsedRealtime()
@@ -152,7 +157,14 @@ object AppNotificationManager {
 			)
 		}
 
-		Core.log(LogNotifyEvent.notify_send_batch, mapOf(LogNotifyParam.isSuccess to true, LogNotifyParam.scene to scene))
+		Core.log(
+			LogNotifyEvent.notify_send_batch,
+			mapOf(
+				LogNotifyParam.isSuccess to true,
+				LogNotifyParam.scene to scene,
+				LogNotifyParam.notificationPermissionAtSend to true,
+			)
+		)
 	}
 
 	/** 清空待发任务，并取消尚未完成的检查；已运行的循环会继续等待新任务。 */
@@ -180,8 +192,19 @@ object AppNotificationManager {
 	private suspend fun send(scene: String) = sendMutex.withLock {
 		if (!canSendItem(scene)) return@withLock
 		currentCoroutineContext().ensureActive()
+		if (!NotificationUtil.hasNotiAccess()) {
+			logPermissionDenied(isBatch = false, scene = scene)
+			return@withLock
+		}
 		AppNotificationUtil.sendNotificationContent(scene)
-		Core.log(LogNotifyEvent.notify_send_item, mapOf(LogNotifyParam.isSuccess to true, LogNotifyParam.scene to scene))
+		Core.log(
+			LogNotifyEvent.notify_send_item,
+			mapOf(
+				LogNotifyParam.isSuccess to true,
+				LogNotifyParam.scene to scene,
+				LogNotifyParam.notificationPermissionAtSend to true,
+			)
+		)
 	}
 
 	// 通知发送限制
@@ -192,6 +215,10 @@ object AppNotificationManager {
 			if (Core.appMod == AppMod.DEBUG) {
 				Toast.makeText(Core.app, "风险用户不发通知", Toast.LENGTH_LONG).show()
 			}
+		}
+		if (!NotificationUtil.hasNotiAccess()) {
+			logPermissionDenied(isBatch)
+			return false
 		}
 		if (!NotificationConfig.isSend) {
 			if (Core.appMod == AppMod.DEBUG) {
@@ -237,6 +264,19 @@ object AppNotificationManager {
 	}
 
 	//发送批次限制
+	private fun logPermissionDenied(isBatch: Boolean, scene: String? = null) {
+		val params = mutableMapOf<String, Any>(
+			LogNotifyParam.isSuccess to false,
+			LogNotifyParam.notificationPermissionAtSend to false,
+			LogAppParam.msg to "系统通知权限未开启",
+		)
+		scene?.let { params[LogNotifyParam.scene] = it }
+		Core.log(
+			if (isBatch) LogNotifyEvent.notify_send_batch else LogNotifyEvent.notify_send_item,
+			params,
+		)
+	}
+
 	@MainThread
 	suspend fun canSendBatch(scene: String) : Boolean {
 		if (!canSend(true)) return false

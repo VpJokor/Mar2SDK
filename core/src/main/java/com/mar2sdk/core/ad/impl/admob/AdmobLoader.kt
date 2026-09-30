@@ -11,7 +11,6 @@ import com.google.android.gms.ads.rewarded.RewardedAd
 import com.google.android.gms.ads.rewarded.RewardedAdLoadCallback
 import com.mar2sdk.core.Core
 import com.mar2sdk.core.ad.impl.admob.probe.AdmobAdapterProxyReader
-import com.mar2sdk.core.ad.impl.admob.probe.AdmobPrice
 import com.mar2sdk.core.ad.impl.admob.probe.AdmobReflectProbe
 import com.mar2sdk.core.ad.policy.ScreenAdContext
 import com.mar2sdk.core.ad.policy.ScreenAdTrigger
@@ -20,7 +19,6 @@ import com.mar2sdk.core.ad.status.AdLoadStatus
 import com.mar2sdk.core.ad.status.AdPlatform
 import com.mar2sdk.core.log.LogAdEvent
 import com.mar2sdk.core.log.LogAdParam
-import com.mar2sdk.core.log.toAdLogParams
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.coroutineScope
@@ -156,7 +154,9 @@ object AdmobLoader {
 	private fun startOpenLoad(
 		adContext: ScreenAdContext
 	): CompletableDeferred<OpenLoadResult> {
-		val loadContext = adContext.copy(adUnitId = AdmobConfig.openID)
+		val loadContext = adContext.copy(
+			adFormat = AdFormat.OPEN, adPlatform = AdPlatform.ADMOB, adUnitId = AdmobConfig.openID,
+		)
 		val probeConfig = AdmobConfig.openConfig.probeConfig.let {
 			it.copy(instances = it.instances.toList())
 		}
@@ -164,30 +164,41 @@ object AdmobLoader {
 		openLoadDeferred = loadDeferred
 		openLoadingAdUnitId = loadContext.adUnitId
 		isLoadingOpen = true
+		var callbackCompleted = false
 		try {
-			logLoad(LogAdEvent.ad_start_loading, loadContext)
+			AdLoadLogger.started(loadContext)
 			val loadCallback = object : AppOpenAd.AppOpenAdLoadCallback() {
 				override fun onAdLoaded(openAd: AppOpenAd) {
+					if (callbackCompleted) return
+					callbackCompleted = true
+					val price = AdmobReflectProbe.read(openAd)
+					AdLoadLogger.succeeded(loadContext, price)
 					// 旧请求不能在切换后入池，也不能覆盖新请求的加载状态。
 					if (openLoadDeferred !== loadDeferred || loadContext.adUnitId != AdmobConfig.openID) {
 						completeLoad(loadDeferred, OpenLoadResult.Failed(exception = AdUnitChangedException()))
 						return
 					}
-					val price = AdmobReflectProbe.read(openAd)
 					openAd.reflectPrice = price
 					openAd.adapterProbeResult = AdmobAdapterProxyReader.read(openAd.responseInfo, probeConfig)
-					cacheLoadedAd(openAd, openPool, loadContext, "open", price) {
+					cacheLoadedAd(openAd, openPool) {
 						completeLoad(loadDeferred, OpenLoadResult.Loaded(openAd))
 					}
 				}
 
 				override fun onAdFailedToLoad(loadAdError: LoadAdError) {
+					if (callbackCompleted) return
+					callbackCompleted = true
+					AdLoadLogger.failed(loadContext, loadAdError)
 					completeLoad(loadDeferred, OpenLoadResult.Failed(loadError = loadAdError))
 				}
 			}
 			requestOpenAd(loadContext.adUnitId, loadCallback)
 		} catch (error: Exception) {
 			Log.e(TAG, "Failed to start loading open ad", error)
+			if (!callbackCompleted) {
+				callbackCompleted = true
+				AdLoadLogger.failed(loadContext, error)
+			}
 			completeLoad(loadDeferred, OpenLoadResult.Failed(exception = error))
 		}
 		return loadDeferred
@@ -225,7 +236,9 @@ object AdmobLoader {
 	private fun startInterLoad(
 		adContext: ScreenAdContext
 	): CompletableDeferred<InterLoadResult> {
-		val loadContext = adContext.copy(adUnitId = AdmobConfig.interID)
+		val loadContext = adContext.copy(
+			adFormat = AdFormat.INTER, adPlatform = AdPlatform.ADMOB, adUnitId = AdmobConfig.interID,
+		)
 		val probeConfig = AdmobConfig.interConfig.probeConfig.let {
 			it.copy(instances = it.instances.toList())
 		}
@@ -233,29 +246,40 @@ object AdmobLoader {
 		interLoadDeferred = loadDeferred
 		interLoadingAdUnitId = loadContext.adUnitId
 		isLoadingInter = true
+		var callbackCompleted = false
 		try {
-			logLoad(LogAdEvent.ad_start_loading, loadContext)
+			AdLoadLogger.started(loadContext)
 			val loadCallback = object : InterstitialAdLoadCallback() {
 				override fun onAdLoaded(interstitialAd: InterstitialAd) {
+					if (callbackCompleted) return
+					callbackCompleted = true
+					val price = AdmobReflectProbe.read(interstitialAd)
+					AdLoadLogger.succeeded(loadContext, price)
 					if (interLoadDeferred !== loadDeferred || loadContext.adUnitId != AdmobConfig.interID) {
 						completeLoad(loadDeferred, InterLoadResult.Failed(exception = AdUnitChangedException()))
 						return
 					}
-					val price = AdmobReflectProbe.read(interstitialAd)
 					interstitialAd.reflectPrice = price
 					interstitialAd.adapterProbeResult = AdmobAdapterProxyReader.read(interstitialAd.responseInfo, probeConfig)
-					cacheLoadedAd(interstitialAd, interPool, loadContext, "interstitial", price) {
+					cacheLoadedAd(interstitialAd, interPool) {
 						completeLoad(loadDeferred, InterLoadResult.Loaded(interstitialAd))
 					}
 				}
 
 				override fun onAdFailedToLoad(loadAdError: LoadAdError) {
+					if (callbackCompleted) return
+					callbackCompleted = true
+					AdLoadLogger.failed(loadContext, loadAdError)
 					completeLoad(loadDeferred, InterLoadResult.Failed(loadError = loadAdError))
 				}
 			}
 			requestInterAd(loadContext.adUnitId, loadCallback)
 		} catch (error: Exception) {
 			Log.e(TAG, "Failed to start loading interstitial ad", error)
+			if (!callbackCompleted) {
+				callbackCompleted = true
+				AdLoadLogger.failed(loadContext, error)
+			}
 			completeLoad(loadDeferred, InterLoadResult.Failed(exception = error))
 		}
 		return loadDeferred
@@ -293,7 +317,9 @@ object AdmobLoader {
 	private fun startVideoLoad(
 		adContext: ScreenAdContext
 	): CompletableDeferred<VideoLoadResult> {
-		val loadContext = adContext.copy(adUnitId = AdmobConfig.videoID)
+		val loadContext = adContext.copy(
+			adFormat = AdFormat.VIDEO, adPlatform = AdPlatform.ADMOB, adUnitId = AdmobConfig.videoID,
+		)
 		val probeConfig = AdmobConfig.videoConfig.probeConfig.let {
 			it.copy(instances = it.instances.toList())
 		}
@@ -301,29 +327,40 @@ object AdmobLoader {
 		videoLoadDeferred = loadDeferred
 		videoLoadingAdUnitId = loadContext.adUnitId
 		isLoadingVideo = true
+		var callbackCompleted = false
 		try {
-			logLoad(LogAdEvent.ad_start_loading, loadContext)
+			AdLoadLogger.started(loadContext)
 			val loadCallback = object : RewardedAdLoadCallback() {
 				override fun onAdLoaded(rewardedAd: RewardedAd) {
+					if (callbackCompleted) return
+					callbackCompleted = true
+					val price = AdmobReflectProbe.read(rewardedAd)
+					AdLoadLogger.succeeded(loadContext, price)
 					if (videoLoadDeferred !== loadDeferred || loadContext.adUnitId != AdmobConfig.videoID) {
 						completeLoad(loadDeferred, VideoLoadResult.Failed(exception = AdUnitChangedException()))
 						return
 					}
-					val price = AdmobReflectProbe.read(rewardedAd)
 					rewardedAd.reflectPrice = price
 					rewardedAd.adapterProbeResult = AdmobAdapterProxyReader.read(rewardedAd.responseInfo, probeConfig)
-					cacheLoadedAd(rewardedAd, videoPool, loadContext, "rewarded", price) {
+					cacheLoadedAd(rewardedAd, videoPool) {
 						completeLoad(loadDeferred, VideoLoadResult.Loaded(rewardedAd))
 					}
 				}
 
 				override fun onAdFailedToLoad(loadAdError: LoadAdError) {
+					if (callbackCompleted) return
+					callbackCompleted = true
+					AdLoadLogger.failed(loadContext, loadAdError)
 					completeLoad(loadDeferred, VideoLoadResult.Failed(loadError = loadAdError))
 				}
 			}
 			requestVideoAd(loadContext.adUnitId, loadCallback)
 		} catch (error: Exception) {
 			Log.e(TAG, "Failed to start loading rewarded ad", error)
+			if (!callbackCompleted) {
+				callbackCompleted = true
+				AdLoadLogger.failed(loadContext, error)
+			}
 			completeLoad(loadDeferred, VideoLoadResult.Failed(exception = error))
 		}
 		return loadDeferred
@@ -379,30 +416,11 @@ object AdmobLoader {
 		adUnitId = adUnitId
 	)
 
-	private fun logLoad(eventName: String, adContext: ScreenAdContext, price: AdmobPrice? = null) {
-		val params = adContext.toAdLogParams() + mapOf(LogAdParam.ad_preload to (adContext.areaKey == "preload"))
-		val priceParams = if (price == null) emptyMap() else mapOf(
-			LogAdParam.ad_price_micros to price.valueMicros,
-			LogAdParam.ad_price_currency to price.currencyCode,
-			LogAdParam.ad_price_precision to price.precisionType,
-			LogAdParam.ad_ecpm to price.ecpm,
-		)
-		Core.log(eventName, params + priceParams)
-	}
-
 	private inline fun <T : Any> cacheLoadedAd(
 		ad: T,
 		pool: MutableMap<T, Long>,
-		adContext: ScreenAdContext,
-		adName: String,
-		price: AdmobPrice?,
 		complete: () -> Unit,
 	) {
-		try {
-			logLoad(LogAdEvent.ad_finish_loading, adContext, price)
-		} catch (error: Exception) {
-			Log.e(TAG, "Failed to log loaded $adName ad", error)
-		}
 		try {
 			pool[ad] = System.currentTimeMillis()
 		} finally {

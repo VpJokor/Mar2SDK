@@ -20,9 +20,14 @@ import com.mar2sdk.core.ad.policy.ScreenAdTrigger
 import com.mar2sdk.core.ad.status.AdFormat
 import com.mar2sdk.core.ad.status.AdPlatform
 import com.mar2sdk.core.ad.status.ShowFailResult
+import com.mar2sdk.core.common.DBUtil
 import com.mar2sdk.core.firebase.SingularConfig
+import com.mar2sdk.core.log.LogAdEvent
+import com.mar2sdk.core.log.LogAdParam
 import com.mar2sdk.core.log.LogConfig
 import kotlin.reflect.KMutableProperty0
+import kotlinx.coroutines.runBlocking
+import org.json.JSONObject
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -46,6 +51,7 @@ class AdmobBannerShowerTest {
 	@Before
 	fun setUp() {
 		onMain {
+			DBUtil.init(InstrumentationRegistry.getInstrumentation().context)
 			val appModField = Core::class.java.getDeclaredField("appMod").apply { isAccessible = true }
 			val previousAppMod = appModField.get(null)
 			restore += { appModField.set(null, previousAppMod) }
@@ -54,7 +60,8 @@ class AdmobBannerShowerTest {
 			replace(AdmobConfig::bannerConfig, BannerConfig("configured-banner"))
 			replace(LogConfig::fbEvents, emptyList())
 			replace(LogConfig::thEvents, emptyList())
-			replace(LogConfig::localEvents, emptyList())
+			replace(LogConfig::localEvents, listOf(LogAdEvent.ad_start_loading,
+				LogAdEvent.ad_finish_loading, LogAdEvent.ad_load_fail))
 			replace(LogConfig::netEvents, emptyList())
 			replace(SingularConfig::trackRevenue, false)
 			replace(AdmobShower::requestBannerAd, { requests += it })
@@ -101,6 +108,7 @@ class AdmobBannerShowerTest {
 		assertEquals(0, callback.successes)
 		assertTrue(callback.failures.isEmpty())
 		assertFalse(AppStatus.isShowingAd)
+		assertEquals(listOf(LogAdEvent.ad_start_loading), loadLogs(callback).map { it.first })
 	}
 
 	@Test
@@ -171,6 +179,8 @@ class AdmobBannerShowerTest {
 		AppStatus.isShowingAd = true
 		val callback = RecordingCallback()
 		val view = AdmobShower.getBanner(activity, callback)!!
+		callback.adContext.areaKey = "changed-after-request"
+		callback.adContext.adUnitId = "changed-after-request"
 		val loadError = LoadAdError(3, "No fill", "test", null, null)
 
 		view.adListener.onAdFailedToLoad(loadError)
@@ -185,6 +195,23 @@ class AdmobBannerShowerTest {
 		assertEquals(2, callback.successes)
 		assertEquals(1, requests.size)
 		assertTrue(AppStatus.isShowingAd)
+		val logs = loadLogs(callback)
+		assertEquals(listOf(LogAdEvent.ad_start_loading, LogAdEvent.ad_load_fail,
+			LogAdEvent.ad_finish_loading, LogAdEvent.ad_load_fail, LogAdEvent.ad_finish_loading),
+			logs.map { it.first })
+		for ((event, params) in logs) {
+			assertEquals("home_banner", params.getString(LogAdParam.ad_areakey))
+			assertEquals("configured-banner", params.getString(LogAdParam.ad_unit_name))
+			assertEquals(AdFormat.BANNER.name, params.getString(LogAdParam.ad_format))
+			assertFalse(params.getBoolean(LogAdParam.ad_preload))
+			assertFalse(params.has(LogAdParam.duration))
+			if (event == LogAdEvent.ad_load_fail) {
+				assertEquals("SDK_ERROR", params.getString(LogAdParam.failure_reason))
+				assertEquals(3, params.getInt(LogAdParam.error_code))
+				assertEquals("test", params.getString(LogAdParam.error_domain))
+				assertEquals("No fill", params.getString(LogAdParam.error_message))
+			}
+		}
 	}
 
 	@Test
@@ -225,6 +252,44 @@ class AdmobBannerShowerTest {
 		assertEquals(0, callback.successes)
 		assertEquals(1, requests.size)
 		assertTrue(AppStatus.isShowingAd)
+		val logs = loadLogs(callback)
+		assertEquals(listOf(LogAdEvent.ad_start_loading, LogAdEvent.ad_load_fail), logs.map { it.first })
+		val failure = logs.last().second
+		assertEquals("LOAD_EXCEPTION", failure.getString(LogAdParam.failure_reason))
+		assertEquals(IllegalStateException::class.java.name, failure.getString(LogAdParam.error_type))
+		assertEquals("Simulated SDK load exception", failure.getString(LogAdParam.error_message))
+	}
+
+	@Test
+	fun sdkSuccessFollowedByStartupExceptionKeepsTheSuccessfulLoadResult() = onMain {
+		AdmobShower.requestBannerAd = { view ->
+			requests += view
+			view.adListener.onAdLoaded()
+			throw IllegalStateException("Post-load exception")
+		}
+		val callback = RecordingCallback()
+
+		assertNull(AdmobShower.getBanner(activity, callback))
+
+		assertEquals(listOf(ShowFailResult.LOAD_AD_EXCEPTION), callback.failures)
+		assertEquals(listOf(LogAdEvent.ad_start_loading, LogAdEvent.ad_finish_loading),
+			loadLogs(callback).map { it.first })
+	}
+
+	@Test
+	fun sdkResultsAfterActivityFinishesRemainTrackedWithoutShowCallbacks() = onMain {
+		val callback = RecordingCallback()
+		val view = AdmobShower.getBanner(activity, callback)!!
+		activity.finish()
+
+		view.adListener.onAdFailedToLoad(LoadAdError(3, "No fill", "test", null, null))
+		view.adListener.onAdLoaded()
+		view.adListener.onAdImpression()
+
+		assertTrue(callback.failures.isEmpty())
+		assertEquals(0, callback.successes)
+		assertEquals(listOf(LogAdEvent.ad_start_loading, LogAdEvent.ad_load_fail, LogAdEvent.ad_finish_loading),
+			loadLogs(callback).map { it.first })
 	}
 
 	@Test
@@ -243,6 +308,11 @@ class AdmobBannerShowerTest {
 		val previous = property.get()
 		restore += { property.set(previous) }
 		property.set(value)
+	}
+
+	private fun loadLogs(callback: RecordingCallback): List<Pair<String, JSONObject>> = runBlocking {
+		DBUtil.queryLogs(500).asReversed().map { it.eventName to JSONObject(it.paramsJson) }
+			.filter { it.second.optString(LogAdParam.request_id) == callback.adContext.requestId }
 	}
 
 	private fun onMain(block: () -> Unit) = InstrumentationRegistry.getInstrumentation().runOnMainSync(block)

@@ -58,7 +58,7 @@
     },
     "log_config": {
       "defaultValue": {
-        "value": "{   \"fbEvents\": [\"*\"],   \"localEvents\": [\"*\"],   \"thEvents\": [\"notification_clicked\",\"ad_occur\",\"ad_impression\",\"ad_revenue\",\"screen_open\",\"screen_close\",\"screen_navigate\"],   \"netEvents\": [\"eventA\",\"eventB\",\"eventC\"] }"
+        "value": "{   \"fbEvents\": [\"*\"],   \"localEvents\": [\"*\"],   \"thEvents\": [\"notification_clicked\",\"ad_occur\",\"ad_start_loading\",\"ad_finish_loading\",\"ad_load_fail\",\"ad_impression\",\"ad_revenue\",\"screen_open\",\"screen_close\",\"screen_navigate\"],   \"netEvents\": [\"eventA\",\"eventB\",\"eventC\",\"ad_start_loading\",\"ad_finish_loading\",\"ad_load_fail\"] }"
       },
       "description": "日志配置",
       "valueType": "JSON"

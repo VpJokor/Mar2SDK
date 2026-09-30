@@ -40,6 +40,11 @@ object LogAdParam {
 	const val traffic_source = "traffic_source"
 
 	const val ad_preload = "ad_preload"
+	const val failure_reason = "failure_reason"
+	const val error_code = "error_code"
+	const val error_domain = "error_domain"
+	const val error_message = "error_message"
+	const val error_type = "error_type"
 	// 加载成功时读取的展示前价格，仅供观察。
 	const val ad_price_micros = "ad_price_micros"
 	const val ad_price_currency = "ad_price_currency"

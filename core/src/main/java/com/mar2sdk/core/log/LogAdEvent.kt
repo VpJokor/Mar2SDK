@@ -8,7 +8,9 @@ package com.mar2sdk.core.log
 object LogAdEvent {
 	const val ad_occur = "ad_occur"
 	const val ad_start_loading = "ad_start_loading"
+	// 单次 SDK 请求加载成功；保留已有事件名。
 	const val ad_finish_loading = "ad_finish_loading"
+	const val ad_load_fail = "ad_load_fail"
 	const val ad_click = "ad_click"
 	const val ad_close = "ad_close"
 	const val ad_show_fail = "ad_show_fail"

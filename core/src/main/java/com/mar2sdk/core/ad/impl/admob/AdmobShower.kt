@@ -1155,9 +1155,14 @@ object AdmobShower {
 				logEvent(LogAdEvent.ad_occur)
 				if (!isActivityActive()) return@withContext fail(ShowFailResult.ACTIVITY_IS_FINISHING)
 				val ids = AdmobConfig.nativeIDs(adIndex)
-				if (ids.isEmpty()) return@withContext fail(ShowFailResult.LOAD_AD_EXCEPTION)
+				if (ids.isEmpty()) {
+					AdLoadLogger.failed(adContext, "INVALID_CONFIG", "No native ad unit IDs configured for index $adIndex")
+					return@withContext fail(ShowFailResult.LOAD_AD_EXCEPTION)
+				}
 				var loadFailure = ShowFailResult.LOAD_FAILED
-				val loaded = withTimeoutOrNull(AdmobConfig.nativeConfig.timeout.coerceAtLeast(0L)) {
+				val timeoutMillis = AdmobConfig.nativeConfig.timeout.coerceAtLeast(0L)
+				var reportLoadTimeout: (() -> Unit)? = null
+				val loaded = withTimeoutOrNull(timeoutMillis) {
 					for (id in ids) {
 						currentCoroutineContext().ensureActive()
 						if (!isActivityActive()) {
@@ -1169,13 +1174,19 @@ object AdmobShower {
 						val requestContext = adContext.copy()
 						var attemptAd: NativeAd? = null
 						fun canNotify() = eventsEnabled && attemptAd != null && attemptAd === ownedAd && isActivityActive()
-						logEvent(LogAdEvent.ad_start_loading)
+						val completed = AtomicBoolean(false)
+						reportLoadTimeout = {
+							if (completed.compareAndSet(false, true)) {
+								AdLoadLogger.failed(requestContext, "LOAD_TIMEOUT", "Native ad loading exceeded the shared ${timeoutMillis}ms timeout")
+							}
+						}
+						AdLoadLogger.started(requestContext)
 						val ad = suspendCancellableCoroutine<NativeAd?> { continuation ->
-							val completed = AtomicBoolean(false)
 							val listener = object : AdListener() {
 								override fun onAdFailedToLoad(error: LoadAdError) {
-									if (!completed.compareAndSet(false, true) || !continuation.isActive) return
+									if (!continuation.isActive || !completed.compareAndSet(false, true)) return
 									Log.e(TAG, "Native ad load failed ($id): ${error.message}")
+									AdLoadLogger.failed(requestContext, error)
 									loadFailure = ShowFailResult.LOAD_FAILED
 									continuation.resume(null)
 								}
@@ -1198,19 +1209,24 @@ object AdmobShower {
 							}
 							try {
 								requestNativeAd(activity, id, listener) { nativeAd ->
-									if (!completed.compareAndSet(false, true) || !continuation.isActive) {
+									if (!continuation.isActive || !completed.compareAndSet(false, true)) {
 										if (nativeAd !== ownedAd) destroyNativeAd(nativeAd)
 										return@requestNativeAd
 									}
 									attemptAd = nativeAd
 									ownedAd = nativeAd
+									AdLoadLogger.succeeded(requestContext,
+										durationMillis = SystemClock.elapsedRealtime() - startedAt,
+										adSource = runCatching { nativeAd.responseInfo?.loadedAdapterResponseInfo?.adSourceName }
+											.getOrNull() ?: LogAdParam.unknow)
 									continuation.resume(nativeAd)
 								}
 							} catch (e: CancellationException) {
 								throw e
 							} catch (e: Exception) {
-								if (completed.compareAndSet(false, true) && continuation.isActive) {
+								if (continuation.isActive && completed.compareAndSet(false, true)) {
 									Log.e(TAG, "Failed to start loading native ad ($id)", e)
+									AdLoadLogger.failed(requestContext, e)
 									loadFailure = ShowFailResult.LOAD_AD_EXCEPTION
 									continuation.resume(null)
 								}
@@ -1222,7 +1238,6 @@ object AdmobShower {
 							loadFailure = ShowFailResult.ACTIVITY_IS_FINISHING
 							return@withTimeoutOrNull false
 						}
-						logEvent(LogAdEvent.ad_finish_loading)
 						try {
 							ad.setOnPaidEventListener(OnPaidEventListener { adValue ->
 								if (!canNotify()) return@OnPaidEventListener
@@ -1248,7 +1263,13 @@ object AdmobShower {
 					false
 				}
 				when (loaded) {
-					null -> fail(ShowFailResult.LOAD_TIMEOUT)
+					null -> {
+						val reportPending = reportLoadTimeout
+						if (reportPending != null) reportPending() else {
+							AdLoadLogger.failed(adContext, "LOAD_TIMEOUT", "Native ad loading timeout is ${timeoutMillis}ms")
+						}
+						fail(ShowFailResult.LOAD_TIMEOUT)
+					}
 					false -> fail(loadFailure)
 					true -> {
 						eventsEnabled = true
@@ -1290,6 +1311,7 @@ object AdmobShower {
 		// Banner 可以长期驻留并自动刷新，埋点使用本次请求的上下文快照。
 		val adContext = callback.adContext.copy()
 		var banner: AdView? = null
+		var loadResultReported = false
 
 		fun logEvent(eventName: String, params: Map<String, Any> = adContext.toAdLogParams()) {
 			try {
@@ -1307,6 +1329,7 @@ object AdmobShower {
 			callback.showFailed(ShowFailResult.ACTIVITY_IS_FINISHING)
 			return null
 		}
+		AdLoadLogger.started(adContext)
 		try {
 			require(adContext.adUnitId.isNotBlank()) { "Banner ad unit ID is empty" }
 			val adView = AdView(activity)
@@ -1315,10 +1338,15 @@ object AdmobShower {
 			adView.setAdSize(adSize)
 			adView.adListener = object : AdListener() {
 				override fun onAdLoaded() {
-					if (!isActivityActive()) return
+					loadResultReported = true
+					AdLoadLogger.succeeded(adContext,
+						adSource = runCatching { adView.responseInfo?.loadedAdapterResponseInfo?.adSourceName }
+							.getOrNull() ?: LogAdParam.unknow)
 				}
 
 				override fun onAdFailedToLoad(error: LoadAdError) {
+					loadResultReported = true
+					AdLoadLogger.failed(adContext, error)
 					if (!isActivityActive()) return
 					Log.e(TAG, "Banner ad load failed: ${error.message}")
 					callback.showFailed(ShowFailResult.LOAD_FAILED)
@@ -1355,6 +1383,7 @@ object AdmobShower {
 			return adView
 		} catch (e: Exception) {
 			Log.e(TAG, "Failed to start loading banner ad", e)
+			if (!loadResultReported) AdLoadLogger.failed(adContext, e)
 			try {
 				banner?.adListener = object : AdListener() {}
 				banner?.onPaidEventListener = null

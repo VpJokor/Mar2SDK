@@ -31,7 +31,10 @@ import com.mar2sdk.core.ad.status.AdFormat
 import com.mar2sdk.core.ad.status.AdPlatform
 import com.mar2sdk.core.ad.status.AdShowStatus
 import com.mar2sdk.core.ad.status.ShowFailResult
+import com.mar2sdk.core.common.DBUtil
 import com.mar2sdk.core.common.PreferenceUtil
+import com.mar2sdk.core.log.LogAdEvent
+import com.mar2sdk.core.log.LogAdParam
 import com.mar2sdk.core.log.LogConfig
 import kotlin.reflect.KMutableProperty0
 import kotlinx.coroutines.CompletableDeferred
@@ -121,6 +124,114 @@ class AdmobInterVideoShowerTest {
 	fun tearDown() = onMain {
 		restore.asReversed().forEach { it() }
 		restore.clear()
+	}
+
+	@Test
+	fun sharedLoadsLogOneSuccessAndPoolHitsDoNotStartAnotherRequest() = runBlocking(Dispatchers.Main) {
+		enableLoadLogs()
+		val requests = captureAdRequests()
+		for (format in listOf(AdFormat.OPEN, AdFormat.INTER, AdFormat.VIDEO)) {
+			requests.clear()
+			val property = configProperty(format)
+			property.set(property.get().copy(poolSize = 1))
+			val context = loadContext(format)
+			val sharedContext = loadContext(format).copy(areaKey = "shared-waiter")
+			val first = async(start = CoroutineStart.UNDISPATCHED) { loadForContext(context) }
+			val shared = async(start = CoroutineStart.UNDISPATCHED) { loadForContext(sharedContext) }
+			try {
+				val request = requests.single()
+				request.succeed()
+				request.succeed()
+				request.fail()
+				assertSame(request.ad, loadedAd(first.await()))
+				assertSame(request.ad, loadedAd(shared.await()))
+				loadForContext(context) // The filled pool must not generate another load event.
+				assertEquals(1, requests.size)
+				val logs = loadLogs(context.requestId)
+				assertEquals(listOf(LogAdEvent.ad_start_loading, LogAdEvent.ad_finish_loading),
+					logs.map { it.eventName })
+				val params = JSONObject(logs.last().paramsJson)
+				assertEquals(request.id, params.getString(LogAdParam.ad_unit_name))
+				assertEquals(format.name, params.getString(LogAdParam.ad_format))
+				assertTrue(params.getBoolean(LogAdParam.ad_preload))
+				assertTrue(loadLogs(sharedContext.requestId).isEmpty())
+			} finally {
+				first.cancelAndJoin()
+				shared.cancelAndJoin()
+			}
+		}
+	}
+
+	@Test
+	fun sdkFailuresLogOriginalErrorAndRequestContextOnce() = runBlocking(Dispatchers.Main) {
+		enableLoadLogs()
+		val requests = captureAdRequests()
+		for (format in listOf(AdFormat.OPEN, AdFormat.INTER, AdFormat.VIDEO)) {
+			requests.clear()
+			val property = configProperty(format)
+			property.set(property.get().copy(poolSize = 1))
+			val context = loadContext(format).copy(areaKey = "original-area")
+			val waiting = async(start = CoroutineStart.UNDISPATCHED) { loadForContext(context) }
+			try {
+				val request = requests.single()
+				context.areaKey = "mutated-area"
+				context.adUnitId = "mutated-id"
+				context.adFormat = AdFormat.NATIVE
+				request.fail()
+				request.fail()
+				request.succeed()
+				val result = waiting.await()
+				assertTrue(result is AdmobLoader.OpenLoadResult.Failed ||
+					result is AdmobLoader.InterLoadResult.Failed || result is AdmobLoader.VideoLoadResult.Failed)
+				assertTrue(poolAds(format).isEmpty())
+				assertFalse(isLoading(format))
+				val logs = loadLogs(context.requestId)
+				assertEquals(listOf(LogAdEvent.ad_start_loading, LogAdEvent.ad_load_fail),
+					logs.map { it.eventName })
+				val params = JSONObject(logs.last().paramsJson)
+				assertEquals("SDK_ERROR", params.getString(LogAdParam.failure_reason))
+				assertEquals(0, params.getInt(LogAdParam.error_code))
+				assertEquals("test", params.getString(LogAdParam.error_domain))
+				assertEquals("fake load failure", params.getString(LogAdParam.error_message))
+				assertEquals(request.id, params.getString(LogAdParam.ad_unit_name))
+				assertEquals(format.name, params.getString(LogAdParam.ad_format))
+				assertEquals("original-area", params.getString(LogAdParam.ad_areakey))
+				assertFalse(params.getBoolean(LogAdParam.ad_preload))
+			} finally {
+				waiting.cancelAndJoin()
+			}
+		}
+	}
+
+	@Test
+	fun synchronousRequestExceptionsLogFailureAndReleaseAllFormats() = runBlocking(Dispatchers.Main) {
+		enableLoadLogs()
+		val failure = IllegalStateException("SDK request rejected")
+		replace(AdmobLoader::requestOpenAd, { _, _ -> throw failure })
+		replace(AdmobLoader::requestInterAd, { _, _ -> throw failure })
+		replace(AdmobLoader::requestVideoAd, { _, _ -> throw failure })
+		for (format in listOf(AdFormat.OPEN, AdFormat.INTER, AdFormat.VIDEO)) {
+			val property = configProperty(format)
+			property.set(property.get().copy(poolSize = 1))
+			val context = loadContext(format)
+			val result = loadForContext(context)
+			val exception = when (result) {
+				is AdmobLoader.OpenLoadResult.Failed -> result.exception
+				is AdmobLoader.InterLoadResult.Failed -> result.exception
+				is AdmobLoader.VideoLoadResult.Failed -> result.exception
+				else -> error("Expected a failed load, got $result")
+			}
+			assertSame(failure, exception)
+			assertFalse(isLoading(format))
+			val logs = loadLogs(context.requestId)
+			assertEquals(listOf(LogAdEvent.ad_start_loading, LogAdEvent.ad_load_fail),
+				logs.map { it.eventName })
+			val params = JSONObject(logs.last().paramsJson)
+			assertEquals("LOAD_EXCEPTION", params.getString(LogAdParam.failure_reason))
+			assertEquals(failure.javaClass.name, params.getString(LogAdParam.error_type))
+			assertEquals(failure.message, params.getString(LogAdParam.error_message))
+			assertTrue(params.getBoolean(LogAdParam.ad_preload))
+		}
 	}
 
 	@Test
@@ -279,6 +390,7 @@ class AdmobInterVideoShowerTest {
 
 	@Test
 	fun lateSdkCallbacksCannotCacheOldAdsOrCompleteReplacementLoads() = runBlocking(Dispatchers.Main) {
+		enableLoadLogs()
 		val requests = captureAdRequests()
 		for (format in listOf(AdFormat.OPEN, AdFormat.INTER, AdFormat.VIDEO)) {
 			requests.clear()
@@ -319,6 +431,12 @@ class AdmobInterVideoShowerTest {
 				assertEquals(setOf(replacement.ad), poolAds(format))
 				assertNull(deferredField.get(null))
 				assertFalse(isLoading(format))
+				val logs = loadLogs(context.requestId)
+				assertEquals(2, logs.count { it.eventName == LogAdEvent.ad_start_loading })
+				assertEquals(0, logs.count { it.eventName == LogAdEvent.ad_load_fail })
+				assertEquals(listOf(oldRequest.id, replacement.id),
+					logs.filter { it.eventName == LogAdEvent.ad_finish_loading }
+						.map { JSONObject(it.paramsJson).getString(LogAdParam.ad_unit_name) })
 			} finally {
 				waiting.cancelAndJoin()
 			}
@@ -1163,6 +1281,26 @@ class AdmobInterVideoShowerTest {
 			assertEquals(listOf(ShowFailResult.LOAD_TIMEOUT), callback.failures)
 			assertFalse(AppStatus.isShowingAd)
 		}
+	}
+
+	private fun enableLoadLogs() {
+		DBUtil.init(InstrumentationRegistry.getInstrumentation().context)
+		replace(LogConfig::localEvents,
+			listOf(LogAdEvent.ad_start_loading, LogAdEvent.ad_finish_loading, LogAdEvent.ad_load_fail))
+	}
+
+	private suspend fun loadLogs(requestId: String) = DBUtil.queryLogs(limit = 500)
+		.filter { JSONObject(it.paramsJson).optString(LogAdParam.request_id) == requestId }
+		.sortedBy { it.id }
+
+	private fun loadContext(format: AdFormat) = ScreenAdContext(
+		adFormat = format, adPlatform = AdPlatform.ADMOB, trigger = ScreenAdTrigger.ENTER,
+	)
+
+	private suspend fun loadForContext(context: ScreenAdContext): Any = when (context.adFormat) {
+		AdFormat.OPEN -> AdmobLoader.loadOpenResult(context)
+		AdFormat.INTER -> AdmobLoader.loadInterResult(context)
+		else -> AdmobLoader.loadVideoResult(context)
 	}
 
 	private data class PendingLoads(

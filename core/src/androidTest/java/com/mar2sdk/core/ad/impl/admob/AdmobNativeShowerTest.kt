@@ -23,7 +23,10 @@ import com.mar2sdk.core.ad.policy.ScreenAdTrigger
 import com.mar2sdk.core.ad.status.AdFormat
 import com.mar2sdk.core.ad.status.AdPlatform
 import com.mar2sdk.core.ad.status.ShowFailResult
+import com.mar2sdk.core.common.DBUtil
 import com.mar2sdk.core.firebase.SingularConfig
+import com.mar2sdk.core.log.LogAdEvent
+import com.mar2sdk.core.log.LogAdParam
 import com.mar2sdk.core.log.LogConfig
 import kotlin.reflect.KMutableProperty0
 import kotlinx.coroutines.CoroutineStart
@@ -34,6 +37,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withTimeout
 import kotlinx.coroutines.yield
+import org.json.JSONObject
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -54,6 +58,7 @@ class AdmobNativeShowerTest {
 
 	@Before
 	fun setUp() = onMain {
+		DBUtil.init(InstrumentationRegistry.getInstrumentation().context)
 		val appModField = Core::class.java.getDeclaredField("appMod").apply { isAccessible = true }
 		val previousAppMod = appModField.get(null)
 		restore += { appModField.set(null, previousAppMod) }
@@ -64,7 +69,8 @@ class AdmobNativeShowerTest {
 			listOf(NativeAdConfig("high", "medium", "low"))))
 		replace(LogConfig::fbEvents, emptyList())
 		replace(LogConfig::thEvents, emptyList())
-		replace(LogConfig::localEvents, emptyList())
+		replace(LogConfig::localEvents, listOf(LogAdEvent.ad_start_loading,
+			LogAdEvent.ad_finish_loading, LogAdEvent.ad_load_fail, LogAdEvent.ad_show_timeout, LogAdEvent.ad_show_fail))
 		replace(LogConfig::netEvents, emptyList())
 		replace(SingularConfig::trackRevenue, false)
 		replace(AdmobShower::requestNativeAd, { owner, id, listener, loaded ->
@@ -104,6 +110,18 @@ class AdmobNativeShowerTest {
 			assertEquals(0, callback.successes)
 			assertTrue(callback.failures.isEmpty())
 			assertFalse(AppStatus.isShowingAd)
+			val logs = loadLogs(callback)
+			assertEquals(listOf(LogAdEvent.ad_start_loading, LogAdEvent.ad_load_fail,
+				LogAdEvent.ad_start_loading, LogAdEvent.ad_finish_loading), logs.map { it.first })
+			assertEquals(listOf("high", "high", "medium", "medium"),
+				logs.map { it.second.getString(LogAdParam.ad_unit_name) })
+			val failure = logs[1].second
+			assertEquals("SDK_ERROR", failure.getString(LogAdParam.failure_reason))
+			assertEquals(3, failure.getInt(LogAdParam.error_code))
+			assertEquals("test", failure.getString(LogAdParam.error_domain))
+			assertEquals("No fill", failure.getString(LogAdParam.error_message))
+			assertEquals(AdFormat.NATIVE.name, failure.getString(LogAdParam.ad_format))
+			assertFalse(failure.getBoolean(LogAdParam.ad_preload))
 		} finally {
 			waiting.cancelAndJoin()
 		}
@@ -141,6 +159,9 @@ class AdmobNativeShowerTest {
 			val callback = RecordingCallback()
 			assertNull(AdmobShower.getNative(activity, callback, adIndex = index))
 			assertEquals(listOf(ShowFailResult.LOAD_AD_EXCEPTION), callback.failures)
+			val failure = loadLogs(callback).single().second
+			assertEquals("INVALID_CONFIG", failure.getString(LogAdParam.failure_reason))
+			assertTrue(failure.getString(LogAdParam.error_message).contains("index $index"))
 		}
 		for (groups in listOf(emptyList(), listOf(NativeAdConfig("", " ", "")))) {
 			AdmobConfig.nativeConfig = NativeConfig(5_000L, groups)
@@ -171,6 +192,13 @@ class AdmobNativeShowerTest {
 				else ShowFailResult.LOAD_FAILED), callback.failures)
 			assertEquals("low", callback.adContext.adUnitId)
 			assertEquals(0, callback.successes)
+			val failures = loadLogs(callback).filter { it.first == LogAdEvent.ad_load_fail }
+			assertEquals(listOf("high", "medium", "low"),
+				failures.map { it.second.getString(LogAdParam.ad_unit_name) })
+			assertEquals("LOAD_EXCEPTION", failures.first().second.getString(LogAdParam.failure_reason))
+			assertEquals(IllegalStateException::class.java.name,
+				failures.first().second.getString(LogAdParam.error_type))
+			assertEquals("Simulated SDK exception", failures.first().second.getString(LogAdParam.error_message))
 		}
 	}
 
@@ -225,6 +253,12 @@ class AdmobNativeShowerTest {
 		assertEquals(0, callback.successes)
 		assertEquals(0, callback.clicks)
 		assertEquals(0, callback.closes)
+		val logs = loadLogs(callback)
+		assertEquals(listOf(LogAdEvent.ad_start_loading, LogAdEvent.ad_load_fail), logs.map { it.first })
+		assertEquals("LOAD_TIMEOUT", logs.last().second.getString(LogAdParam.failure_reason))
+		assertEquals("high", logs.last().second.getString(LogAdParam.ad_unit_name))
+		assertTrue(logs.last().second.getString(LogAdParam.error_message).contains("100ms"))
+		assertEquals(1, requestLogs(callback).count { it.first == LogAdEvent.ad_show_timeout })
 	}
 
 	@Test
@@ -268,6 +302,7 @@ class AdmobNativeShowerTest {
 		assertEquals(0, callback.successes)
 		assertEquals(1, requests.size)
 		assertTrue(AppStatus.isShowingAd)
+		assertEquals(listOf(LogAdEvent.ad_start_loading), loadLogs(callback).map { it.first })
 	}
 
 	@Test
@@ -283,6 +318,27 @@ class AdmobNativeShowerTest {
 		assertTrue(waiting.isCancelled)
 		assertEquals(1, ad.destroys)
 		assertTrue(callback.failures.isEmpty())
+		assertEquals(listOf(LogAdEvent.ad_start_loading, LogAdEvent.ad_finish_loading),
+			loadLogs(callback).map { it.first })
+	}
+
+	@Test
+	fun duplicateCallbacksAndPaidListenerExceptionsCannotChangeTheSdkLoadResult() = runBlocking(Dispatchers.Main) {
+		val callback = RecordingCallback()
+		val ad = FakeNative(throwsOnPaidListener = true)
+		AdmobShower.requestNativeAd = { _, id, listener, loaded ->
+			requests += Request(id, listener, loaded)
+			loaded(ad)
+			loaded(ad)
+			listener.onAdFailedToLoad(noFill())
+		}
+
+		assertNull(AdmobShower.getNative(activity, callback))
+
+		assertEquals(listOf(ShowFailResult.LOAD_AD_EXCEPTION), callback.failures)
+		assertEquals(1, ad.destroys)
+		assertEquals(listOf(LogAdEvent.ad_start_loading, LogAdEvent.ad_finish_loading),
+			loadLogs(callback).map { it.first })
 	}
 
 	@Test
@@ -310,6 +366,8 @@ class AdmobNativeShowerTest {
 			assertEquals(0, callback.clicks)
 			assertEquals(0, callback.closes)
 			assertTrue(callback.failures.isEmpty())
+			assertEquals(listOf(LogAdEvent.ad_start_loading, LogAdEvent.ad_load_fail,
+				LogAdEvent.ad_start_loading, LogAdEvent.ad_finish_loading), loadLogs(callback).map { it.first })
 		} finally {
 			waiting.cancelAndJoin()
 		}
@@ -369,6 +427,14 @@ class AdmobNativeShowerTest {
 		property.set(value)
 	}
 
+	private suspend fun requestLogs(callback: RecordingCallback): List<Pair<String, JSONObject>> =
+		DBUtil.queryLogs(500).asReversed().map { it.eventName to JSONObject(it.paramsJson) }
+			.filter { it.second.optString(LogAdParam.request_id) == callback.adContext.requestId }
+
+	private suspend fun loadLogs(callback: RecordingCallback): List<Pair<String, JSONObject>> =
+		requestLogs(callback).filter { it.first in listOf(LogAdEvent.ad_start_loading,
+			LogAdEvent.ad_finish_loading, LogAdEvent.ad_load_fail) }
+
 	private fun onMain(block: () -> Unit) = InstrumentationRegistry.getInstrumentation().runOnMainSync(block)
 
 	private class Request(val id: String, val listener: AdListener, val loaded: (NativeAd) -> Unit) {
@@ -407,7 +473,7 @@ class AdmobNativeShowerTest {
 	}
 
 	@Suppress("OVERRIDE_DEPRECATION")
-	private class FakeNative : NativeAd() {
+	private class FakeNative(private val throwsOnPaidListener: Boolean = false) : NativeAd() {
 		var destroys = 0
 		var paidListener: OnPaidEventListener? = null
 		private var placement = 0L
@@ -437,7 +503,10 @@ class AdmobNativeShowerTest {
 		override fun reportTouchEvent(bundle: Bundle) = Unit
 		override fun getMediaContent(): MediaContent? = null
 		override fun getResponseInfo(): ResponseInfo? = null
-		override fun setOnPaidEventListener(listener: OnPaidEventListener?) { paidListener = listener }
+		override fun setOnPaidEventListener(listener: OnPaidEventListener?) {
+			if (throwsOnPaidListener) throw IllegalStateException("Paid listener setup failed")
+			paidListener = listener
+		}
 		override fun recordEvent(bundle: Bundle) = Unit
 		override fun getPlacementId() = placement
 		override fun setPlacementId(placementId: Long) { placement = placementId }

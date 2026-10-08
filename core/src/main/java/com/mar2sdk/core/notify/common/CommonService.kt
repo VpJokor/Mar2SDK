@@ -46,8 +46,6 @@ class CommonService : Service() {
 		}
 	}
 
-	private lateinit var notificationManager: NotificationManager
-
 	lateinit var wakeLock: PowerManager.WakeLock
 
 	// 短时持有 WakeLock，降低服务启动后被系统立即挂起的概率。
@@ -113,11 +111,11 @@ class CommonService : Service() {
 		start(applicationContext)
 	}
 
-	// 服务销毁时注销观察器、释放 WakeLock，并清理持久/临时通知。
+	// 服务销毁时释放 WakeLock，并清理常驻通知。
 	override fun onDestroy() {
 		super.onDestroy()
 		releaseWakeLock()
-		notificationManager.cancel(NOTIFICATION_ID)
+		getSystemService(NotificationManager::class.java)?.cancel(NOTIFICATION_ID)
 	}
 
 	// 创建通知通道并返回前台通知。

@@ -70,6 +70,19 @@ object AdmobShower {
 		comparisonPriceEcpmMicros(it) ?: Long.MIN_VALUE
 	}
 
+	private fun AdError.toFailureLogParams(): Map<String, Any> = mapOf(
+		LogAdParam.failure_reason to "SDK_ERROR",
+		LogAdParam.error_code to code,
+		LogAdParam.error_domain to domain,
+		LogAdParam.error_message to message.ifBlank { "AdMob SDK error (code=$code)" },
+	)
+
+	private fun Exception.toFailureLogParams(): Map<String, Any> = mapOf(
+		LogAdParam.failure_reason to "LOAD_EXCEPTION",
+		LogAdParam.error_type to javaClass.name,
+		LogAdParam.error_message to (message?.takeIf { it.isNotBlank() } ?: javaClass.name),
+	)
+
 	private suspend fun waitForMinimumShowTime(startedAtMs: Long, minimumTimeMs: Long) {
 		val elapsedMs = (SystemClock.elapsedRealtime() - startedAtMs).coerceAtLeast(0L)
 		val remainingMs = minimumTimeMs - elapsedMs
@@ -115,11 +128,11 @@ object AdmobShower {
 			return status
 		}
 
-		fun logShowEvent(eventName: String) {
+		fun logShowEvent(eventName: String, extraParams: Map<String, Any> = emptyMap()) {
 			try {
 				Core.log(
 					eventName,
-					callback.adContext.toAdLogParams() + mapOf(
+					callback.adContext.toAdLogParams() + extraParams + mapOf(
 						LogAdParam.duration to (SystemClock.elapsedRealtime() - startShowTime),
 						LogAdParam.ad_source to adSource,
 					)
@@ -237,7 +250,7 @@ object AdmobShower {
 				override fun onAdFailedToShowFullScreenContent(error: AdError) {
 					if (finished.get()) return
 					fillPoolInBackground()
-					logShowEvent(LogAdEvent.ad_show_fail)
+					logShowEvent(LogAdEvent.ad_show_fail, error.toFailureLogParams())
 					fail(ShowFailResult.FAILED_TO_SHOW_CONTENT)
 				}
 
@@ -360,11 +373,11 @@ object AdmobShower {
 			return status
 		}
 
-		fun logShowEvent(eventName: String) {
+		fun logShowEvent(eventName: String, extraParams: Map<String, Any> = emptyMap()) {
 			try {
 				Core.log(
 					eventName,
-					callback.adContext.toAdLogParams() + mapOf(
+					callback.adContext.toAdLogParams() + extraParams + mapOf(
 						LogAdParam.duration to (SystemClock.elapsedRealtime() - startShowTime),
 						LogAdParam.ad_source to adSource,
 					)
@@ -486,7 +499,7 @@ object AdmobShower {
 				override fun onAdFailedToShowFullScreenContent(error: AdError) {
 					if (finished.get()) return
 					fillPoolInBackground()
-					logShowEvent(LogAdEvent.ad_show_fail)
+					logShowEvent(LogAdEvent.ad_show_fail, error.toFailureLogParams())
 					fail(ShowFailResult.FAILED_TO_SHOW_CONTENT)
 				}
 
@@ -601,19 +614,19 @@ object AdmobShower {
 			return showStatus
 		}
 
-		fun logShowEvent(eventName: String) {
+		fun logShowEvent(eventName: String, extraParams: Map<String, Any> = emptyMap()) {
 			Core.log(
 				eventName,
-				callback.adContext.toAdLogParams() + mapOf(
+				callback.adContext.toAdLogParams() + extraParams + mapOf(
 					LogAdParam.duration to (SystemClock.elapsedRealtime() - startShowTime),
 					LogAdParam.ad_source to (currentOpenAd?.responseInfo?.loadedAdapterResponseInfo?.adSourceName ?: LogAdParam.unknow),
 				)
 			)
 		}
 
-		fun logShowEventSafely(eventName: String, errorMessage: String) {
+		fun logShowEventSafely(eventName: String, errorMessage: String, extraParams: Map<String, Any> = emptyMap()) {
 			try {
-				logShowEvent(eventName)
+				logShowEvent(eventName, extraParams)
 			} catch (e: Exception) {
 				Log.e(TAG, errorMessage, e)
 			}
@@ -634,10 +647,10 @@ object AdmobShower {
 
 		// INFO: 处理广告展示回调
 		val contentCallback = object : FullScreenContentCallback() {
-			override fun onAdFailedToShowFullScreenContent(p0: AdError) {
+			override fun onAdFailedToShowFullScreenContent(error: AdError) {
 				// 后台填满开屏广告池
 				fillOpenPoolInBackground()
-				logShowEventSafely(LogAdEvent.ad_show_fail, "Failed to log open ad show failure")
+				logShowEventSafely(LogAdEvent.ad_show_fail, "Failed to log open ad show failure", error.toFailureLogParams())
 				fail(ShowFailResult.FAILED_TO_SHOW_CONTENT)
 			}
 
@@ -782,19 +795,19 @@ object AdmobShower {
 			return showStatus
 		}
 
-		fun logShowEvent(eventName: String) {
+		fun logShowEvent(eventName: String, extraParams: Map<String, Any> = emptyMap()) {
 			Core.log(
 				eventName,
-				callback.adContext.toAdLogParams() + mapOf(
+				callback.adContext.toAdLogParams() + extraParams + mapOf(
 					LogAdParam.duration to (SystemClock.elapsedRealtime() - startShowTime),
 					LogAdParam.ad_source to (currentInterAd?.responseInfo?.loadedAdapterResponseInfo?.adSourceName ?: LogAdParam.unknow),
 				)
 			)
 		}
 
-		fun logShowEventSafely(eventName: String, errorMessage: String) {
+		fun logShowEventSafely(eventName: String, errorMessage: String, extraParams: Map<String, Any> = emptyMap()) {
 			try {
-				logShowEvent(eventName)
+				logShowEvent(eventName, extraParams)
 			} catch (e: Exception) {
 				Log.e(TAG, errorMessage, e)
 			}
@@ -815,10 +828,10 @@ object AdmobShower {
 
 		// INFO: 处理广告展示回调
 		val contentCallback = object : FullScreenContentCallback() {
-			override fun onAdFailedToShowFullScreenContent(p0: AdError) {
+			override fun onAdFailedToShowFullScreenContent(error: AdError) {
 				// 后台填满插屏广告池
 				fillInterPoolInBackground()
-				logShowEventSafely(LogAdEvent.ad_show_fail, "Failed to log interstitial ad show failure")
+				logShowEventSafely(LogAdEvent.ad_show_fail, "Failed to log interstitial ad show failure", error.toFailureLogParams())
 				fail(ShowFailResult.FAILED_TO_SHOW_CONTENT)
 			}
 
@@ -963,19 +976,19 @@ object AdmobShower {
 			return showStatus
 		}
 
-		fun logShowEvent(eventName: String) {
+		fun logShowEvent(eventName: String, extraParams: Map<String, Any> = emptyMap()) {
 			Core.log(
 				eventName,
-				callback.adContext.toAdLogParams() + mapOf(
+				callback.adContext.toAdLogParams() + extraParams + mapOf(
 					LogAdParam.duration to (SystemClock.elapsedRealtime() - startShowTime),
 					LogAdParam.ad_source to (currentVideoAd?.responseInfo?.loadedAdapterResponseInfo?.adSourceName ?: LogAdParam.unknow),
 				)
 			)
 		}
 
-		fun logShowEventSafely(eventName: String, errorMessage: String) {
+		fun logShowEventSafely(eventName: String, errorMessage: String, extraParams: Map<String, Any> = emptyMap()) {
 			try {
-				logShowEvent(eventName)
+				logShowEvent(eventName, extraParams)
 			} catch (e: Exception) {
 				Log.e(TAG, errorMessage, e)
 			}
@@ -996,10 +1009,10 @@ object AdmobShower {
 
 		// INFO: 处理广告展示回调
 		val contentCallback = object : FullScreenContentCallback() {
-			override fun onAdFailedToShowFullScreenContent(p0: AdError) {
+			override fun onAdFailedToShowFullScreenContent(error: AdError) {
 				// 后台填满视频广告池
 				fillVideoPoolInBackground()
-				logShowEventSafely(LogAdEvent.ad_show_fail, "Failed to log rewarded ad show failure")
+				logShowEventSafely(LogAdEvent.ad_show_fail, "Failed to log rewarded ad show failure", error.toFailureLogParams())
 				fail(ShowFailResult.FAILED_TO_SHOW_CONTENT)
 			}
 
@@ -1147,8 +1160,16 @@ object AdmobShower {
 						Log.e(TAG, "Failed to log native ad event: $event", e)
 					}
 				}
-				fun fail(reason: ShowFailResult): NativeAd? {
-					logEvent(if (reason == ShowFailResult.LOAD_TIMEOUT) LogAdEvent.ad_show_timeout else LogAdEvent.ad_show_fail)
+				fun fail(reason: ShowFailResult, errorParams: Map<String, Any> = emptyMap()): NativeAd? {
+					logEvent(
+						if (reason == ShowFailResult.LOAD_TIMEOUT) LogAdEvent.ad_show_timeout else LogAdEvent.ad_show_fail,
+						adContext.toAdLogParams() + mapOf(
+							LogAdParam.failure_reason to reason.name,
+							LogAdParam.error_message to if (reason == ShowFailResult.ACTIVITY_IS_FINISHING) {
+								"Activity is finishing or destroyed"
+							} else reason.name,
+						) + errorParams,
+					)
 					callback.showFailed(reason)
 					return null
 				}
@@ -1156,10 +1177,15 @@ object AdmobShower {
 				if (!isActivityActive()) return@withContext fail(ShowFailResult.ACTIVITY_IS_FINISHING)
 				val ids = AdmobConfig.nativeIDs(adIndex)
 				if (ids.isEmpty()) {
-					AdLoadLogger.failed(adContext, "INVALID_CONFIG", "No native ad unit IDs configured for index $adIndex")
-					return@withContext fail(ShowFailResult.LOAD_AD_EXCEPTION)
+					val message = "No native ad unit IDs configured for index $adIndex"
+					AdLoadLogger.failed(adContext, "INVALID_CONFIG", message)
+					return@withContext fail(ShowFailResult.LOAD_AD_EXCEPTION, mapOf(
+						LogAdParam.failure_reason to "INVALID_CONFIG",
+						LogAdParam.error_message to message,
+					))
 				}
 				var loadFailure = ShowFailResult.LOAD_FAILED
+				var loadFailureParams: Map<String, Any> = emptyMap()
 				val timeoutMillis = AdmobConfig.nativeConfig.timeout.coerceAtLeast(0L)
 				var reportLoadTimeout: (() -> Unit)? = null
 				val loaded = withTimeoutOrNull(timeoutMillis) {
@@ -1167,6 +1193,7 @@ object AdmobShower {
 						currentCoroutineContext().ensureActive()
 						if (!isActivityActive()) {
 							loadFailure = ShowFailResult.ACTIVITY_IS_FINISHING
+							loadFailureParams = emptyMap()
 							return@withTimeoutOrNull false
 						}
 						adContext.adUnitId = id
@@ -1188,6 +1215,7 @@ object AdmobShower {
 									Log.e(TAG, "Native ad load failed ($id): ${error.message}")
 									AdLoadLogger.failed(requestContext, error)
 									loadFailure = ShowFailResult.LOAD_FAILED
+									loadFailureParams = error.toFailureLogParams()
 									continuation.resume(null)
 								}
 
@@ -1228,6 +1256,7 @@ object AdmobShower {
 									Log.e(TAG, "Failed to start loading native ad ($id)", e)
 									AdLoadLogger.failed(requestContext, e)
 									loadFailure = ShowFailResult.LOAD_AD_EXCEPTION
+									loadFailureParams = e.toFailureLogParams()
 									continuation.resume(null)
 								}
 							}
@@ -1236,6 +1265,7 @@ object AdmobShower {
 						currentCoroutineContext().ensureActive()
 						if (!isActivityActive()) {
 							loadFailure = ShowFailResult.ACTIVITY_IS_FINISHING
+							loadFailureParams = emptyMap()
 							return@withTimeoutOrNull false
 						}
 						try {
@@ -1256,6 +1286,7 @@ object AdmobShower {
 						} catch (e: Exception) {
 							Log.e(TAG, "Failed to set native ad paid listener", e)
 							loadFailure = ShowFailResult.LOAD_AD_EXCEPTION
+							loadFailureParams = e.toFailureLogParams()
 							return@withTimeoutOrNull false
 						}
 						return@withTimeoutOrNull true
@@ -1268,9 +1299,11 @@ object AdmobShower {
 						if (reportPending != null) reportPending() else {
 							AdLoadLogger.failed(adContext, "LOAD_TIMEOUT", "Native ad loading timeout is ${timeoutMillis}ms")
 						}
-						fail(ShowFailResult.LOAD_TIMEOUT)
+						fail(ShowFailResult.LOAD_TIMEOUT, mapOf(
+							LogAdParam.error_message to "Native ad loading exceeded the shared ${timeoutMillis}ms timeout",
+						))
 					}
-					false -> fail(loadFailure)
+					false -> fail(loadFailure, loadFailureParams)
 					true -> {
 						eventsEnabled = true
 						ownedAd

@@ -53,3 +53,18 @@ AdMob 开屏、插屏、激励视频、原生和 Banner 使用以下事件，预
 两个批量参数必须在打包资源 `log_config.json` 中提供，并设为正整数；同时支持本地保存和配置更新。条数在后续入队判断和取批次时读取最新值；等待时间从下一次批处理窗口生效，已开始的计时不重置。运行时下发的零、负数和非法数值不会覆盖当前有效配置。例如可在 `log_config.json` 中设置 `"reportBatchSize": 10`、`"reportFlushIntervalMillis": 2000`，改为累计 10 条或等待 2 秒发送。
 
 发送使用 `/report/data/report`，同一批只包含同一产品和账号的事件。只有响应 `code == 0` 才删除该批记录；每轮最多尝试 3 次，失败间隔为 1 秒、2 秒。连续失败后冷却 60 秒，保留原事件，由后续事件、登录或网络恢复再次触发。重试保留原账号、时间、`#uuid` 和 `#event_id`；进程重启后会在恢复对应登录身份时继续处理待发记录。
+
+## 广告展示失败
+
+AdMob 开屏、插屏、激励视频及组合比价广告收到 SDK 展示失败回调时，`ad_show_fail` 除广告上下文、耗时和广告来源外，还携带：
+
+| 字段 | 含义 |
+| --- | --- |
+| `failure_reason` | `SDK_ERROR`。 |
+| `error_code` | SDK 原始错误码，整数。 |
+| `error_domain` | SDK 原始错误域。 |
+| `error_message` | SDK 原始错误信息；为空白时使用包含错误码的说明。 |
+
+原生广告最终失败的 `ad_show_fail` 使用最后一档的错误信息：SDK 加载失败携带上述字段；请求或广告监听器设置异常携带 `failure_reason: "LOAD_EXCEPTION"`、`error_type` 和 `error_message`；无有效广告位和 Activity 不可用分别记录 `INVALID_CONFIG` 和 `ACTIVITY_IS_FINISHING` 及具体说明。没有 SDK 错误码时不填写 `error_code`、`error_domain`。原生加载超时仍记录 `ad_show_timeout`，附带 `LOAD_TIMEOUT` 和超时信息，不沿用前一档的错误码。
+
+`ad_show_fail` 沿用各渠道白名单配置；需要接收该事件的渠道应包含 `ad_show_fail` 或 `"*"`。

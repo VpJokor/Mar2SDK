@@ -35,6 +35,8 @@ object CommonConfig {
 	var autoLoginreflushtokenPath = "/server/user/autoLoginreflushtoken"
 	// 用户信息上传请求路径
 	var uploadUserPath = "/server/user/uploadUser"
+	// 用户配置查询请求路径
+	var searchConfigsPath = "/server/user/searchConfigs"
 
 	fun init() {
 		loadConfigFromRaw()
@@ -63,6 +65,7 @@ object CommonConfig {
 			platformLoginPath = getString("platformLoginPath")
 			autoLoginreflushtokenPath = getString("autoLoginreflushtokenPath")
 			uploadUserPath = getString("uploadUserPath")
+			searchConfigsPath = getString("searchConfigsPath")
 		}
 	}
 
@@ -82,6 +85,7 @@ object CommonConfig {
 			platformLoginPath = PreferenceUtil.getString(KEY_PLATFORM_LOGIN_PATH, platformLoginPath)
 			autoLoginreflushtokenPath = PreferenceUtil.getString(KEY_AUTO_LOGIN_REFLUSH_TOKEN_PATH, autoLoginreflushtokenPath)
 			uploadUserPath = PreferenceUtil.getString(KEY_UPLOAD_USER_PATH, uploadUserPath)
+			searchConfigsPath = PreferenceUtil.getString(KEY_SEARCH_CONFIGS_PATH, searchConfigsPath)
 		}
 	}
 
@@ -101,6 +105,7 @@ object CommonConfig {
 			PreferenceUtil.commitString(KEY_PLATFORM_LOGIN_PATH, platformLoginPath)
 			PreferenceUtil.commitString(KEY_AUTO_LOGIN_REFLUSH_TOKEN_PATH, autoLoginreflushtokenPath)
 			PreferenceUtil.commitString(KEY_UPLOAD_USER_PATH, uploadUserPath)
+			PreferenceUtil.commitString(KEY_SEARCH_CONFIGS_PATH, searchConfigsPath)
 		}
 	}
 
@@ -121,6 +126,7 @@ object CommonConfig {
 		platformLoginPath = config.optString("platformLoginPath", platformLoginPath)
 		autoLoginreflushtokenPath = config.optString("autoLoginreflushtokenPath", autoLoginreflushtokenPath)
 		uploadUserPath = config.optString("uploadUserPath", uploadUserPath)
+		searchConfigsPath = config.optString("searchConfigsPath", searchConfigsPath)
 		saveCommonConfig()
 	}
 

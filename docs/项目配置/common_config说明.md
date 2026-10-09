@@ -15,5 +15,6 @@
 | `PlayIntegrityID` | 整数 | `0` | Google Cloud 项目号，用于 Play Integrity。 |
 | `parseTokenPath` | 字符串 | `/parseToken` | Play Integrity Token 解析接口路径。 |
 | `ipInfoPath` | 字符串 | `/getIpInfoV2` | IP 信息接口路径。 |
+| `searchConfigsPath` | 字符串 | `/server/user/searchConfigs` | 登录成功后查询服务端用户类型和广告、通知配置的接口路径。 |
 
 请求通常将路径拼接到 `serverUrl`。路径应以 `/` 开头，修改服务地址前请确认后端接口兼容。示例资源：[`common_config.json`](../../core/src/main/res/raw/common_config.json)。

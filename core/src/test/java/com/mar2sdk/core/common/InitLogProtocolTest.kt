@@ -56,8 +56,11 @@ class InitLogProtocolTest {
 				"deviceOS" to "1",
 				"deviceType" to "Pixel+中文&variant=1",
 				"deviceDpi" to "420",
+				"manufacturer" to "Google",
+				"ram" to "8",
+				"disk" to "128",
 				// Independently calculated from the raw values, including channelID=0.
-				"sign" to "B749F91E7AC6561BF0AF7B956BF793B3"
+				"sign" to "C6CB86D99CE33378C206793695E8CD38"
 			),
 			fields
 		)
@@ -67,7 +70,13 @@ class InitLogProtocolTest {
 
 	@Test
 	fun omitsUnavailableDeviceDetailsAndLoginFields() {
-		val body = createRequest(deviceType = "", deviceDpi = "").body as FormBody
+		val body = createRequest(
+			deviceType = "",
+			deviceDpi = "",
+			manufacturer = "",
+			ram = "",
+			disk = "",
+		).body as FormBody
 		val fieldNames = (0 until body.size).map { body.name(it) }.toSet()
 
 		assertEquals(
@@ -148,7 +157,13 @@ class InitLogProtocolTest {
 		assertTrue(call.isCanceled())
 	}
 
-	private fun createRequest(deviceType: String = "Pixel_8", deviceDpi: String = "420"): Request =
+	private fun createRequest(
+		deviceType: String = "Pixel_8",
+		deviceDpi: String = "420",
+		manufacturer: String = "Google",
+		ram: String = "8",
+		disk: String = "128",
+	): Request =
 		InitLogProtocol.createRequest(
 			url = "https://example.test/server/user/initLog",
 			info = ServerRequestInfo(
@@ -162,7 +177,10 @@ class InitLogProtocolTest {
 			),
 			clientKey = "test-secret",
 			deviceType = deviceType,
-			deviceDpi = deviceDpi
+			deviceDpi = deviceDpi,
+			manufacturer = manufacturer,
+			ram = ram,
+			disk = disk,
 		)
 
 	private fun response(request: Request, status: Int, body: String): Response = Response.Builder()

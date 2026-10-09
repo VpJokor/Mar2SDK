@@ -9,6 +9,9 @@ internal object InitLogProtocol {
 		clientKey: String,
 		deviceType: String,
 		deviceDpi: String,
+		manufacturer: String = "",
+		ram: String = "",
+		disk: String = "",
 	): Request = ServerApiProtocol.createFormRequest(
 		url = url,
 		info = info,
@@ -19,6 +22,9 @@ internal object InitLogProtocol {
 			"deviceOS" to "1",
 			"deviceType" to deviceType,
 			"deviceDpi" to deviceDpi,
+			"manufacturer" to manufacturer,
+			"ram" to ram,
+			"disk" to disk,
 		),
 	)
 

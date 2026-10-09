@@ -1,6 +1,9 @@
 package com.mar2sdk.core.common.net
 
+import android.app.ActivityManager
 import android.os.Build
+import android.os.Environment
+import android.os.StatFs
 import android.provider.Settings
 import android.util.Log
 import cn.thinkingdata.analytics.TDAnalytics
@@ -31,6 +34,7 @@ import org.json.JSONArray
 import org.json.JSONObject
 import java.io.IOException
 import java.math.BigDecimal
+import java.math.RoundingMode
 import java.util.Locale
 import java.util.TimeZone
 import java.util.UUID
@@ -43,6 +47,7 @@ object NetUtil {
 	private const val TAG = "NetUtil"
 	private const val DEVICE_ID_KEY = "sf_device_id"
 	private const val ACCOUNT_ID_KEY = "sf_temp_uid"
+	private val BYTES_PER_GIGABYTE = BigDecimal.valueOf(1_073_741_824L)
 	private val networkScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
 	private val loginSessions = ConcurrentHashMap<Int, LoginSession>()
 	private val attributionSyncs = ConcurrentHashMap<Int, UserAttributionSync>()
@@ -216,6 +221,24 @@ object NetUtil {
 		)
 	}
 
+	private fun deviceRamGb(): String = runCatching {
+		val memoryInfo = ActivityManager.MemoryInfo()
+		Core.app.getSystemService(ActivityManager::class.java)?.getMemoryInfo(memoryInfo)
+		formatCapacityGb(memoryInfo.totalMem)
+	}.getOrDefault("")
+
+	private fun deviceDiskGb(): String = runCatching {
+		formatCapacityGb(StatFs(Environment.getDataDirectory().path).totalBytes)
+	}.getOrDefault("")
+
+	private fun formatCapacityGb(bytes: Long): String {
+		if (bytes <= 0) return ""
+		return BigDecimal.valueOf(bytes)
+			.divide(BYTES_PER_GIGABYTE, 1, RoundingMode.HALF_UP)
+			.stripTrailingZeros()
+			.toPlainString()
+	}
+
 	private fun requestUrl(path: String) = CommonConfig.serverUrl.trimEnd('/') + "/" + path.trimStart('/')
 
 	private fun loginUserKey(appID: Int) = "mar2sdk.login_user.$appID"
@@ -285,6 +308,9 @@ object NetUtil {
 				clientKey = CommonConfig.serverClientKey,
 				deviceType = Build.MODEL.orEmpty(),
 				deviceDpi = Core.app.resources.displayMetrics.densityDpi.toString(),
+				manufacturer = Build.MANUFACTURER.orEmpty(),
+				ram = deviceRamGb(),
+				disk = deviceDiskGb(),
 			)
 			requestInitLog(request)
 			Log.e(TAG, "SDK initialization report succeeded")

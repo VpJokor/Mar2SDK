@@ -3,6 +3,7 @@ package com.mar2sdk.core.common
 import android.util.Log
 import com.mar2sdk.core.Core
 import com.mar2sdk.core.R
+import com.mar2sdk.core.common.net.NetUtil
 import com.mar2sdk.core.common.status.RiskType
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
@@ -11,6 +12,7 @@ import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.Serializable
+import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import org.json.JSONArray
@@ -35,8 +37,18 @@ object IPUtil {
 		if (!requestInFlight.compareAndSet(false, true)) return
 		scope.launch {
 			try {
+				val ipInfoUrl = (CommonConfig.serverUrl.trimEnd('/') + "/" + CommonConfig.ipInfoPath.trimStart('/'))
+					.toHttpUrl()
+					.newBuilder()
+					.addQueryParameter("deviceID", NetUtil.deviceIdentifier())
+					.apply {
+						if (CommonConfig.serverAppID > 0) {
+							addQueryParameter("appID", CommonConfig.serverAppID.toString())
+						}
+					}
+					.build()
 				val request = Request.Builder()
-					.url(CommonConfig.serverUrl + CommonConfig.ipInfoPath)
+					.url(ipInfoUrl)
 					.get()
 					.build()
 

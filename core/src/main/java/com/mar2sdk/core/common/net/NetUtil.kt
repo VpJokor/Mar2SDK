@@ -199,7 +199,7 @@ object NetUtil {
 	}
 
 	@Synchronized
-	private fun deviceIdentifier(): String =
+	internal fun deviceIdentifier(): String =
 		PreferenceUtil.getString(DEVICE_ID_KEY, "").takeIf { it.isNotBlank() }
 			?: (Settings.Secure.getString(Core.app.contentResolver, Settings.Secure.ANDROID_ID)
 				?.takeIf { it.isNotBlank() } ?: ServerApiProtocol.md5(UUID.randomUUID().toString()))

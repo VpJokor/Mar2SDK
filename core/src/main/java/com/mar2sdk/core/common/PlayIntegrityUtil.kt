@@ -4,6 +4,8 @@ import android.util.Log
 import com.google.android.play.core.integrity.IntegrityManagerFactory
 import com.google.android.play.core.integrity.StandardIntegrityManager
 import com.mar2sdk.core.Core
+import com.mar2sdk.core.common.CommonConfig
+import com.mar2sdk.core.common.net.NetUtil
 import com.mar2sdk.core.common.status.RiskType
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -105,6 +107,10 @@ object PlayIntegrityUtil {
 			put("Key", "TianWangGaiDiHu")
 			put("PackageName", Core.app.packageName)
 			put("token", token)
+			put("deviceID", NetUtil.deviceIdentifier())
+			if (CommonConfig.serverAppID > 0) {
+				put("appID", CommonConfig.serverAppID)
+			}
 		}
 
 		val jsonBody = params.toString().toRequestBody(mediaType)

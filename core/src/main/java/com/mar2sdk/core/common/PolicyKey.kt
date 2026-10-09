@@ -24,4 +24,5 @@ object PolicyKey {
 	const val KEY_PLATFORM_LOGIN_PATH = "mar2sdk.policy_config.platformLoginPath"
 	const val KEY_AUTO_LOGIN_REFLUSH_TOKEN_PATH = "mar2sdk.policy_config.autoLoginreflushtokenPath"
 	const val KEY_UPLOAD_USER_PATH = "mar2sdk.policy_config.uploadUserPath"
+	const val KEY_SEARCH_CONFIGS_PATH = "mar2sdk.policy_config.searchConfigsPath"
 }

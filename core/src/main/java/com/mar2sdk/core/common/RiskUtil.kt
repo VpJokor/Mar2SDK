@@ -13,8 +13,15 @@ import com.mar2sdk.core.notify.NotificationConfig
 import com.mar2sdk.core.common.status.EcpmType
 import com.mar2sdk.core.common.status.RiskType
 import com.mar2sdk.core.common.status.UserType
+import com.mar2sdk.core.common.net.SearchConfigsResponse
+import com.mar2sdk.core.common.net.NetUtil
 import com.google.firebase.remoteconfig.FirebaseRemoteConfig
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.launch
 import org.json.JSONObject
+import java.util.Locale
 
 /**
  * 风控类
@@ -23,8 +30,15 @@ object RiskUtil {
 	private const val TAG = "RiskUtil"
 	@Volatile
 	private var activeRemoteConfig: FirebaseRemoteConfig? = null
+	@Volatile
+	private var serverAdConfigApplied = false
+	@Volatile
+	private var serverNotificationConfigApplied = false
+	private val configScope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
 
 	fun init() {
+		serverAdConfigApplied = false
+		serverNotificationConfigApplied = false
 		updateConfig()
 		judgeRisk()
 	}
@@ -90,7 +104,7 @@ object RiskUtil {
 			)
 			UserInfo.localUserType = UserType.RISK
 			applyUserType()
-			activeRemoteConfig?.let(::applyRemoteConfig)
+			scheduleActiveRemoteConfig()
 			return
 		}
 		if (UserInfo.network.equals("organic", ignoreCase = true) || UserInfo.network.isEmpty()) {
@@ -106,12 +120,57 @@ object RiskUtil {
 			Core.setUserAttr("userType", Core.userType.name)
 		}
 		UserInfo.saveUserInfo()
-		activeRemoteConfig?.let(::applyRemoteConfig)
+		scheduleActiveRemoteConfig()
 	}
 
 	// TODO: 读取服务端下发的用户类型和策略
 	fun judgeUserFromNet() {
+		NetUtil.scheduleSearchConfigsRefresh()
+	}
 
+	/** Applies the user type and policy configurations returned by searchConfigs. */
+	internal fun applyServerConfigs(response: SearchConfigsResponse) {
+		// 1060 means that this round should keep the already loaded local configuration.
+		if (response.code != 0) return
+		if ((Core.appMod == AppMod.TEST || Core.appMod == AppMod.DEBUG) && Core.testMod == TestMod.FORCE) {
+			return
+		}
+		serverAdConfigApplied = false
+		serverNotificationConfigApplied = false
+
+		val serverUserType = response.userType
+			?.uppercase(Locale.ROOT)
+			?.let { value -> runCatching { UserType.valueOf(value) }.getOrNull() }
+			?.takeUnless { it == UserType.UNKNOW }
+			?: run {
+				Log.w(TAG, "searchConfigs returned an invalid userType")
+				return
+			}
+
+		// The server result takes precedence over the local risk classification for
+		// subsequent calls to judgeUserType().
+		UserInfo.netUserType = serverUserType
+		Core.userType = serverUserType
+		Core.setUserAttr("userType", serverUserType.name)
+		response.items.forEach { item ->
+			if (item.code != 0 || item.config == null) return@forEach
+			runCatching {
+				when (item.type) {
+					"ad_config" -> {
+						AdConfig.applyConfig(item.config)
+						serverAdConfigApplied = true
+					}
+					"notification_config" -> {
+						NotificationConfig.applyConfig(item.config)
+						NotificationConfig.saveNotificationConfig()
+						serverNotificationConfigApplied = true
+					}
+				}
+			}.onFailure { error ->
+				Log.w(TAG, "Unable to apply searchConfigs item type=${item.type}", error)
+			}
+		}
+		if (!serverAdConfigApplied || !serverNotificationConfigApplied) scheduleActiveRemoteConfig()
 	}
 
 	/**
@@ -125,12 +184,22 @@ object RiskUtil {
 		FirebaseUtil.onRemoteConfigActivated = { remoteConfig, _ ->
 			Log.e(TAG, "updateConfig: 从RemoteConfig上抓取到新的配置" )
 			activeRemoteConfig = remoteConfig
-			applyRemoteConfig(remoteConfig)
+			scheduleActiveRemoteConfig()
+		}
+	}
+
+	private fun scheduleActiveRemoteConfig() {
+		activeRemoteConfig?.let { remoteConfig ->
+			configScope.launch { applyRemoteConfig(remoteConfig) }
 		}
 	}
 
 	private fun applyRemoteConfig(remoteConfig: FirebaseRemoteConfig) {
-		applyUserPolicyConfigs { key -> readJson(remoteConfig, key) }
+		applyUserPolicyConfigs(
+			readConfig = { key -> readJson(remoteConfig, key) },
+			applyAdConfig = !serverAdConfigApplied,
+			applyNotificationConfig = !serverNotificationConfigApplied,
+		)
 
 		applyJson(remoteConfig, "notification_content") { NotificationConfig.applyContentConfig(it) }
 		applyJson(remoteConfig, "common_config") { CommonConfig.applyConfig(it) }
@@ -141,20 +210,32 @@ object RiskUtil {
 	}
 
 	internal fun applyUserPolicyConfigs(readConfig: (String) -> JSONObject?) {
+		applyUserPolicyConfigs(readConfig, applyAdConfig = true, applyNotificationConfig = true)
+	}
+
+	private fun applyUserPolicyConfigs(
+		readConfig: (String) -> JSONObject?,
+		applyAdConfig: Boolean = true,
+		applyNotificationConfig: Boolean = true,
+	) {
 		val userType = Core.userType
-		val userAdConfig = readConfig("ad_config_${userType.name}")
+		val userAdConfig = if (applyAdConfig) {
+			readConfig("ad_config_${userType.name}")
+		} else {
+			null
+		}
 		// 原用户类型的配置控制开关；缺失时沿用资源或已保存的值。
 		val isRisk = userAdConfig?.optBoolean("isRisk", AdConfig.isRisk) ?: AdConfig.isRisk
 		val policyUserType = userType.forPolicy(isRisk)
 		val adConfig = if (policyUserType == userType) userAdConfig else readConfig("ad_config_${policyUserType.name}")
-		if (adConfig != null || isRisk != AdConfig.isRisk) {
+		if (applyAdConfig && (adConfig != null || isRisk != AdConfig.isRisk)) {
 			runCatching {
 				// 风险策略中的 isRisk 不覆盖用于选择策略的开关，避免配置来回切换。
 				val config = adConfig?.let { JSONObject(it.toString()) } ?: JSONObject()
 				AdConfig.applyConfig(config.put("isRisk", isRisk))
 			}
 		}
-		readConfig("notification_config_${policyUserType.name}")?.let { config ->
+		if (applyNotificationConfig) readConfig("notification_config_${policyUserType.name}")?.let { config ->
 			runCatching {
 				NotificationConfig.applyConfig(config)
 				NotificationConfig.saveNotificationConfig()

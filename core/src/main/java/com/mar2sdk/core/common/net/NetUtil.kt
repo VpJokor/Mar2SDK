@@ -10,6 +10,8 @@ import cn.thinkingdata.analytics.TDAnalytics
 import com.mar2sdk.core.Core
 import com.mar2sdk.core.common.CommonConfig
 import com.mar2sdk.core.common.PreferenceUtil
+import com.mar2sdk.core.common.RiskUtil
+import com.mar2sdk.core.common.UserInfo
 import com.mar2sdk.core.log.AdEventReporter
 import com.singular.sdk.Singular
 import kotlinx.coroutines.CancellationException
@@ -21,6 +23,7 @@ import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.async
 import kotlinx.coroutines.currentCoroutineContext
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.suspendCancellableCoroutine
@@ -35,6 +38,8 @@ import org.json.JSONObject
 import java.io.IOException
 import java.math.BigDecimal
 import java.math.RoundingMode
+import java.text.SimpleDateFormat
+import java.util.Date
 import java.util.Locale
 import java.util.TimeZone
 import java.util.UUID
@@ -51,6 +56,11 @@ object NetUtil {
 	private val networkScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
 	private val loginSessions = ConcurrentHashMap<Int, LoginSession>()
 	private val attributionSyncs = ConcurrentHashMap<Int, UserAttributionSync>()
+	private val searchConfigsJobs = ConcurrentHashMap<Int, Job>()
+	private val searchConfigsSnapshots = ConcurrentHashMap<Int, SearchConfigsSnapshot>()
+	private val searchConfigsReadyApps = ConcurrentHashMap.newKeySet<Int>()
+	private val searchConfigsLock = Any()
+	private const val SEARCH_CONFIGS_DEBOUNCE_MILLIS = 250L
 	private val client by lazy {
 		OkHttpClient.Builder().callTimeout(30, TimeUnit.SECONDS).build()
 	}
@@ -153,8 +163,10 @@ object NetUtil {
 		PreferenceUtil.commitString(loginUserKey(appID), PlatformLoginProtocol.encodeUser(user))
 		syncLoginIdentity(appID, user)
 		if (appID == CommonConfig.serverAppID) {
+			searchConfigsReadyApps.add(appID)
 			attributionSync(appID).onLogin(user.uid)
 			uploadUser(appID)
+			searchConfigs(appID, user)
 		}
 	}
 
@@ -162,6 +174,11 @@ object NetUtil {
 		currentCoroutineContext().ensureActive()
 		// 一旦删除凭据，必须同时清除分析身份；取消仍可阻止后续网络重登。
 		withContext(NonCancellable) {
+			synchronized(searchConfigsLock) {
+				searchConfigsReadyApps.remove(appID)
+				searchConfigsJobs.remove(appID)?.cancel()
+				searchConfigsSnapshots.remove(appID)
+			}
 			attributionSyncs[appID]?.clearUser()
 			PreferenceUtil.removeByKey(loginUserKey(appID))
 			syncLoginIdentity(appID, null)
@@ -243,6 +260,161 @@ object NetUtil {
 
 	private fun loginUserKey(appID: Int) = "mar2sdk.login_user.$appID"
 
+	/** Schedules a refresh after risk or attribution inputs change. */
+	internal fun scheduleSearchConfigsRefresh() {
+		val appID = CommonConfig.serverAppID
+		if (appID <= 0) return
+		if (!searchConfigsReadyApps.contains(appID)) return
+		val user = readLoginUser(appID) ?: return
+		val snapshot = searchConfigsSnapshot(appID, user)
+		synchronized(searchConfigsLock) {
+			if (searchConfigsSnapshots[appID] == snapshot) return
+			searchConfigsSnapshots[appID] = snapshot
+			searchConfigsJobs.remove(appID)?.cancel()
+			val job = networkScope.launch {
+				var requestSnapshot: SearchConfigsSnapshot? = null
+				try {
+					delay(SEARCH_CONFIGS_DEBOUNCE_MILLIS)
+					val currentUser = readLoginUser(appID) ?: return@launch
+					val currentSnapshot = searchConfigsSnapshot(appID, currentUser)
+					requestSnapshot = currentSnapshot
+					synchronized(searchConfigsLock) {
+						searchConfigsSnapshots[appID] = currentSnapshot
+					}
+					performSearchConfigs(appID, currentUser, currentSnapshot)
+				} catch (exception: CancellationException) {
+					throw exception
+				} catch (exception: Exception) {
+					clearSearchConfigsSnapshot(appID, requestSnapshot ?: snapshot)
+					logSearchConfigsFailure(exception)
+				}
+			}
+			searchConfigsJobs[appID] = job
+		}
+	}
+
+	private fun searchConfigs(appID: Int, user: PlatformLoginUser): Job {
+		val snapshot = searchConfigsSnapshot(appID, user)
+		synchronized(searchConfigsLock) {
+			searchConfigsJobs.remove(appID)?.cancel()
+			searchConfigsSnapshots[appID] = snapshot
+			val job = networkScope.launch {
+				try {
+					performSearchConfigs(appID, user, snapshot)
+				} catch (exception: CancellationException) {
+					throw exception
+				} catch (exception: Exception) {
+					clearSearchConfigsSnapshot(appID, snapshot)
+					logSearchConfigsFailure(exception)
+				}
+			}
+			searchConfigsJobs[appID] = job
+			return job
+		}
+	}
+
+	private suspend fun performSearchConfigs(
+		appID: Int,
+		user: PlatformLoginUser,
+		snapshot: SearchConfigsSnapshot,
+	) {
+		require(appID > 0) { "appID must be positive" }
+		if (appID != CommonConfig.serverAppID) return
+		val request = SearchConfigsProtocol.createRequest(
+			url = requestUrl(CommonConfig.searchConfigsPath),
+			info = requestInfo(appID, Core.SDK_VERSION, snapshot.deviceId),
+			uid = user.uid,
+			userType = snapshot.userType,
+			firstOpenTime = snapshot.firstOpenTime,
+			network = snapshot.network,
+			firstAdRevenue = snapshot.firstAdRevenue,
+			campaignId = snapshot.campaignId,
+			campaignName = snapshot.campaignName,
+			clientKey = CommonConfig.serverClientKey,
+		)
+		val response = requestSearchConfigs(request)
+		// A delayed response from a previous account must not change the current account's policy.
+		if (readLoginUser(appID)?.uid != user.uid || searchConfigsSnapshot(appID, user) != snapshot) return
+		val applied = withContext(Dispatchers.Main.immediate) {
+			if (readLoginUser(appID)?.uid != user.uid || searchConfigsSnapshot(appID, user) != snapshot) {
+				false
+			} else {
+				RiskUtil.applyServerConfigs(response)
+				true
+			}
+		}
+		if (!applied) return
+		synchronized(searchConfigsLock) {
+			if (readLoginUser(appID)?.uid == user.uid) {
+				searchConfigsSnapshots[appID] = searchConfigsSnapshot(appID, user)
+			}
+		}
+		Log.d(TAG, "searchConfigs succeeded: uid=${user.uid}, code=${response.code}")
+	}
+
+	private fun logSearchConfigsFailure(exception: Exception) {
+		val code = (exception as? ServerApiException)?.code
+		Log.w(TAG, "searchConfigs failed: code=$code, error=${exception.javaClass.simpleName}")
+	}
+
+	private fun clearSearchConfigsSnapshot(appID: Int, snapshot: SearchConfigsSnapshot) {
+		synchronized(searchConfigsLock) {
+			if (searchConfigsSnapshots[appID] == snapshot) searchConfigsSnapshots.remove(appID)
+		}
+	}
+
+	private fun searchConfigsSnapshot(appID: Int, user: PlatformLoginUser): SearchConfigsSnapshot =
+		SearchConfigsSnapshot(
+			appID = appID,
+			uid = user.uid,
+			deviceId = deviceIdentifier(),
+			userType = Core.userType.name,
+			firstOpenTime = formatFirstOpenTime(UserInfo.firstOpenTime),
+			network = UserInfo.network,
+			firstAdRevenue = formatFirstAdRevenue(UserInfo.firstAdRevenue),
+			campaignId = optionalAttributionValue(UserInfo.campaignId),
+			campaignName = optionalAttributionValue(UserInfo.campaignName),
+			localUserType = UserInfo.localUserType.name,
+			riskIP = UserInfo.riskIP.name,
+			riskPackage = UserInfo.riskPackage.name,
+			riskDevice = UserInfo.riskDevice.name,
+			ecpmType = UserInfo.ecpmType.name,
+		)
+
+	private data class SearchConfigsSnapshot(
+		val appID: Int,
+		val uid: Long,
+		val deviceId: String,
+		val userType: String,
+		val firstOpenTime: String,
+		val network: String,
+		val firstAdRevenue: String,
+		val campaignId: String,
+		val campaignName: String,
+		val localUserType: String,
+		val riskIP: String,
+		val riskPackage: String,
+		val riskDevice: String,
+		val ecpmType: String,
+	)
+
+	private fun formatFirstOpenTime(timeMillis: Long): String {
+		if (timeMillis <= 0L) return ""
+		return SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.ROOT).apply {
+			timeZone = TimeZone.getDefault()
+		}.format(Date(timeMillis))
+	}
+
+	private fun formatFirstAdRevenue(value: Double): String = runCatching {
+		if (!value.isFinite()) return@runCatching ""
+		BigDecimal.valueOf(value).stripTrailingZeros().toPlainString()
+	}.getOrDefault("")
+
+	private fun optionalAttributionValue(value: String): String =
+		value.takeUnless {
+			it.isBlank() || it.equals("unknow", ignoreCase = true) || it.equals("unknown", ignoreCase = true)
+		}.orEmpty()
+
 	internal suspend fun requestPlatformLogin(
 		request: Request,
 		callFactory: Call.Factory = client,
@@ -259,6 +431,11 @@ object NetUtil {
 		request: Request,
 		callFactory: Call.Factory = client,
 	): Unit = executeRequest(request, callFactory, UploadUserProtocol::parseResponse)
+
+	internal suspend fun requestSearchConfigs(
+		request: Request,
+		callFactory: Call.Factory = client,
+	): SearchConfigsResponse = executeRequest(request, callFactory, SearchConfigsProtocol::parseResponse)
 
 	internal suspend fun requestReport(
 		request: Request,

@@ -24,6 +24,23 @@ import org.json.JSONObject
 import java.util.Locale
 
 /**
+ * The user type used by each policy source.  A value of [UserType.UNKNOW]
+ * means that the corresponding source has not supplied a policy yet.
+ *
+ * This deliberately reports the source selectors rather than the currently
+ * applied configuration: a server response can override a Remote Config
+ * policy, while both values are still useful when diagnosing a build.
+ */
+data class PolicySourceSnapshot(
+	val localUserType: UserType = UserType.UNKNOW,
+	val serverUserType: UserType = UserType.UNKNOW,
+	val localAdPolicyUserType: UserType = UserType.UNKNOW,
+	val serverAdPolicyUserType: UserType = UserType.UNKNOW,
+	val localNotificationPolicyUserType: UserType = UserType.UNKNOW,
+	val serverNotificationPolicyUserType: UserType = UserType.UNKNOW,
+)
+
+/**
  * 风控类
  */
 object RiskUtil {
@@ -34,11 +51,18 @@ object RiskUtil {
 	private var serverAdConfigApplied = false
 	@Volatile
 	private var serverNotificationConfigApplied = false
+	private val policySourceLock = Any()
+	@Volatile
+	private var policySourceSnapshot = PolicySourceSnapshot()
 	private val configScope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
+
+	/** Returns an immutable snapshot of local and server policy source types. */
+	fun getPolicySourceSnapshot(): PolicySourceSnapshot = policySourceSnapshot
 
 	fun init() {
 		serverAdConfigApplied = false
 		serverNotificationConfigApplied = false
+		clearPolicySourceSnapshot()
 		updateConfig()
 		judgeRisk()
 	}
@@ -104,6 +128,7 @@ object RiskUtil {
 			)
 			UserInfo.localUserType = UserType.RISK
 			applyUserType()
+			updateLocalUserTypeSource(UserInfo.localUserType)
 			scheduleActiveRemoteConfig()
 			return
 		}
@@ -119,6 +144,7 @@ object RiskUtil {
 		if (Core.userType == UserInfo.localUserType) {
 			Core.setUserAttr("userType", Core.userType.name)
 		}
+		updateLocalUserTypeSource(UserInfo.localUserType)
 		UserInfo.saveUserInfo()
 		scheduleActiveRemoteConfig()
 	}
@@ -131,7 +157,13 @@ object RiskUtil {
 	/** Applies the user type and policy configurations returned by searchConfigs. */
 	internal fun applyServerConfigs(response: SearchConfigsResponse) {
 		// 1060 means that this round should keep the already loaded local configuration.
-		if (response.code != 0) return
+		if (response.code != 0) {
+			if (response.code == 1060) {
+				clearServerPolicySources()
+				updateServerUserTypeSource(UserType.UNKNOW)
+			}
+			return
+		}
 		if ((Core.appMod == AppMod.TEST || Core.appMod == AppMod.DEBUG) && Core.testMod == TestMod.FORCE) {
 			return
 		}
@@ -146,24 +178,29 @@ object RiskUtil {
 				Log.w(TAG, "searchConfigs returned an invalid userType")
 				return
 			}
+		clearServerPolicySources()
 
 		// The server result takes precedence over the local risk classification for
 		// subsequent calls to judgeUserType().
 		UserInfo.netUserType = serverUserType
+		updateServerUserTypeSource(serverUserType)
 		Core.userType = serverUserType
 		Core.setUserAttr("userType", serverUserType.name)
 		response.items.forEach { item ->
 			if (item.code != 0 || item.config == null) return@forEach
 			runCatching {
+				val itemUserType = parseUserType(item.userType).takeUnless { it == UserType.UNKNOW } ?: serverUserType
 				when (item.type) {
 					"ad_config" -> {
 						AdConfig.applyConfig(item.config)
 						serverAdConfigApplied = true
+						updateServerAdPolicySource(itemUserType)
 					}
 					"notification_config" -> {
 						NotificationConfig.applyConfig(item.config)
 						NotificationConfig.saveNotificationConfig()
 						serverNotificationConfigApplied = true
+						updateServerNotificationPolicySource(itemUserType)
 					}
 				}
 			}.onFailure { error ->
@@ -219,6 +256,8 @@ object RiskUtil {
 		applyNotificationConfig: Boolean = true,
 	) {
 		val userType = Core.userType
+		var localAdPolicyUserType = UserType.UNKNOW
+		var localNotificationPolicyUserType = UserType.UNKNOW
 		val userAdConfig = if (applyAdConfig) {
 			readConfig("ad_config_${userType.name}")
 		} else {
@@ -229,17 +268,79 @@ object RiskUtil {
 		val policyUserType = userType.forPolicy(isRisk)
 		val adConfig = if (policyUserType == userType) userAdConfig else readConfig("ad_config_${policyUserType.name}")
 		if (applyAdConfig && (adConfig != null || isRisk != AdConfig.isRisk)) {
-			runCatching {
+			val applied = runCatching {
 				// 风险策略中的 isRisk 不覆盖用于选择策略的开关，避免配置来回切换。
 				val config = adConfig?.let { JSONObject(it.toString()) } ?: JSONObject()
 				AdConfig.applyConfig(config.put("isRisk", isRisk))
-			}
+			}.isSuccess
+			if (applied && (userAdConfig != null || adConfig != null)) localAdPolicyUserType = policyUserType
 		}
 		if (applyNotificationConfig) readConfig("notification_config_${policyUserType.name}")?.let { config ->
-			runCatching {
+			val applied = runCatching {
 				NotificationConfig.applyConfig(config)
 				NotificationConfig.saveNotificationConfig()
-			}
+			}.isSuccess
+			if (applied) localNotificationPolicyUserType = policyUserType
+		}
+		if (applyAdConfig || applyNotificationConfig) {
+			updateLocalPolicySources(
+				adPolicyUserType = if (applyAdConfig) localAdPolicyUserType else null,
+				notificationPolicyUserType = if (applyNotificationConfig) localNotificationPolicyUserType else null,
+			)
+		}
+	}
+
+	private fun parseUserType(value: String?): UserType = value
+		?.uppercase(Locale.ROOT)
+		?.let { runCatching { UserType.valueOf(it) }.getOrNull() }
+		?: UserType.UNKNOW
+
+	private fun clearPolicySourceSnapshot() {
+		synchronized(policySourceLock) { policySourceSnapshot = PolicySourceSnapshot() }
+	}
+
+	private fun updateLocalUserTypeSource(userType: UserType) {
+		synchronized(policySourceLock) {
+			policySourceSnapshot = policySourceSnapshot.copy(localUserType = userType)
+		}
+	}
+
+	private fun updateServerUserTypeSource(userType: UserType) {
+		synchronized(policySourceLock) {
+			policySourceSnapshot = policySourceSnapshot.copy(serverUserType = userType)
+		}
+	}
+
+	private fun clearServerPolicySources() {
+		synchronized(policySourceLock) {
+			policySourceSnapshot = policySourceSnapshot.copy(
+				serverAdPolicyUserType = UserType.UNKNOW,
+				serverNotificationPolicyUserType = UserType.UNKNOW,
+			)
+		}
+	}
+
+	private fun updateServerAdPolicySource(userType: UserType) {
+		synchronized(policySourceLock) {
+			policySourceSnapshot = policySourceSnapshot.copy(serverAdPolicyUserType = userType)
+		}
+	}
+
+	private fun updateServerNotificationPolicySource(userType: UserType) {
+		synchronized(policySourceLock) {
+			policySourceSnapshot = policySourceSnapshot.copy(serverNotificationPolicyUserType = userType)
+		}
+	}
+
+	private fun updateLocalPolicySources(
+		adPolicyUserType: UserType?,
+		notificationPolicyUserType: UserType?,
+	) {
+		synchronized(policySourceLock) {
+			policySourceSnapshot = policySourceSnapshot.copy(
+				localAdPolicyUserType = adPolicyUserType ?: policySourceSnapshot.localAdPolicyUserType,
+				localNotificationPolicyUserType = notificationPolicyUserType ?: policySourceSnapshot.localNotificationPolicyUserType,
+			)
 		}
 	}
 

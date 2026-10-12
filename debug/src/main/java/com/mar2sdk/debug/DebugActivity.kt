@@ -25,6 +25,7 @@ import com.mar2sdk.core.ad.status.ShowFailResult
 import com.mar2sdk.core.notify.NotificationUtil
 import com.mar2sdk.core.notify.app.AppNotificationUtil
 import com.mar2sdk.core.common.TestMod
+import com.mar2sdk.core.common.RiskUtil
 import com.mar2sdk.core.common.UserInfo
 import com.mar2sdk.core.common.status.UserType
 import com.mar2sdk.impl.AdActivity
@@ -295,6 +296,13 @@ class DebugActivity : AppCompatActivity() {
 	fun refreshData() {
 		findViewById<TextView>(R.id.app_mod).text = Core.appMod.name
 		findViewById<TextView>(R.id.user_type).text = Core.userType.name
+		val policySource = RiskUtil.getPolicySourceSnapshot()
+		findViewById<TextView>(R.id.local_user_type).text = UserInfo.localUserType.name
+		findViewById<TextView>(R.id.server_user_type).text = policySource.serverUserType.name
+		findViewById<TextView>(R.id.local_ad_policy).text = policySource.localAdPolicyUserType.name
+		findViewById<TextView>(R.id.server_ad_policy).text = policySource.serverAdPolicyUserType.name
+		findViewById<TextView>(R.id.local_notification_policy).text = policySource.localNotificationPolicyUserType.name
+		findViewById<TextView>(R.id.server_notification_policy).text = policySource.serverNotificationPolicyUserType.name
 		findViewById<TextView>(R.id.risk_ip).text = UserInfo.riskIP.name
 		findViewById<TextView>(R.id.risk_package).text = UserInfo.riskPackage.name
 		findViewById<TextView>(R.id.ecpm_type).text = UserInfo.ecpmType.name
